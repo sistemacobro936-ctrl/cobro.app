@@ -29,6 +29,7 @@ class CajaCubit extends Cubit<CajaState> {
   ///
   ///
   final montoInicial = TextEditingController();
+  final dineroRecibido = TextEditingController();
 
   ///Eventos
   ///
@@ -49,7 +50,7 @@ class CajaCubit extends Cubit<CajaState> {
   ///Peticiones
   ///
   void listarCajar({required String rutaId}) async {
-    emit(state.copyWith(loading: true));
+    emit(state.copyWith(loading: true, showArqueo: false));
     final r = await _cajaRepo.obtenerCajas(
       rutaId: rutaId,
       fecha: DateUtil.formatDate(DateTime.now()),
@@ -111,6 +112,10 @@ class CajaCubit extends Cubit<CajaState> {
 
   //navegacion
   //
+void arqueo(int esperado){
+  int d = esperado - int.parse(dineroRecibido.text);
+  emit(state.copyWith(diferencia: d, showArqueo: true));
 
+}
   ///Otros
 }

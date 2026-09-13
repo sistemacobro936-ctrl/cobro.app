@@ -8,6 +8,8 @@ class CajaState extends Equatable {
   final bool btnEnabled;
   final DatumCajaEntity? cajas;
   final List<GastoElementEntity>? gastos;
+  final bool showArqueo;
+  final int diferencia;
   const CajaState({
     required this.context,
     this.child = const SizedBox(),
@@ -16,6 +18,8 @@ class CajaState extends Equatable {
     this.btnEnabled = false,
     this.cajas,
     this.gastos,
+    this.showArqueo = false,
+    this.diferencia =0,
   });
 
   @override
@@ -27,6 +31,8 @@ class CajaState extends Equatable {
     child,
     cajas,
     gastos,
+    showArqueo,
+    diferencia
   ];
   CajaState copyWith({
     BuildContext? context,
@@ -36,6 +42,8 @@ class CajaState extends Equatable {
     bool? btnEnabled,
     DatumCajaEntity? cajas,
     List<GastoElementEntity>? gastos,
+    bool? showArqueo,
+    int? diferencia,
   }) => CajaState(
     context: context ?? this.context,
     child: child ?? this.child,
@@ -44,5 +52,7 @@ class CajaState extends Equatable {
     cajas: cajas ?? this.cajas,
     btnEnabled: btnEnabled ?? this.btnEnabled,
     gastos: gastos ?? this.gastos,
+    showArqueo: showArqueo ?? this.showArqueo,
+    diferencia: diferencia ?? this.diferencia,
   );
 }

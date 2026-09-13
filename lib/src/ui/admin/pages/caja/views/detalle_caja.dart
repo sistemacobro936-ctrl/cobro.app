@@ -6,6 +6,7 @@ import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/domain/entities/caja_entity.dart';
 import 'package:personal/src/ui/admin/pages/caja/cubit/caja_cubit.dart';
+import 'package:personal/src/ui/admin/pages/caja/views/dialogo_arqueo.dart';
 
 class DetalleCaja extends StatelessWidget {
   DetalleCaja({super.key});
@@ -54,11 +55,38 @@ class DetalleCaja extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
-                _buildArqueo(),
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      mostrarModalArqueo(
+                        context,
+                        context.read<CajaCubit>(),
+                        caja.montoEsperado,
+                      );
+                    },
+                    icon: const Icon(Icons.calculate_outlined, size: 18),
+                    label: const Text('Realizar arqueo'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.primaryColor,
+                      side: BorderSide(color: AppTheme.primaryColor),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                Visibility(visible: state.showArqueo, child: _buildArqueo()),
 
                 const SizedBox(height: 18),
 
-                _buildCerrarCaja(),
+                Visibility(
+                  visible: state.showArqueo,
+                  child: _buildCerrarCaja(),
+                ),
               ],
             ),
           ),
@@ -298,10 +326,7 @@ class DetalleCaja extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          _infoRow(
-            Icons.info_outline_rounded,
-            '3 préstamos nuevos registrados hoy',
-          ),
+          
         ],
       ),
     );
@@ -361,151 +386,163 @@ class DetalleCaja extends StatelessWidget {
     // contado = 300.000
     // diferencia = 0
 
-    const saldoEsperado = 300000;
-    const dineroContado = 300000;
-    const diferencia = dineroContado - saldoEsperado;
+    return BlocBuilder<CajaCubit, CajaState>(
+      builder: (context, state) {
+        int saldoEsperado = caja.montoEsperado;
+        int dineroContado = int.parse(
+          context.read<CajaCubit>().dineroRecibido.text,
+        );
+        int diferencia = dineroContado - saldoEsperado;
 
-    final equilibrada = diferencia == 0;
-    final falta = diferencia < 0;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: equilibrada
-            ? Colors.green.withValues(alpha: .06)
-            : Colors.red.withValues(alpha: .06),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: equilibrada
-              ? Colors.green.withValues(alpha: .15)
-              : Colors.red.withValues(alpha: .15),
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
+        final equilibrada = diferencia == 0;
+        final falta = diferencia < 0;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: equilibrada
+                ? Colors.green.withValues(alpha: .06)
+                : falta
+                ? Colors.red.withValues(alpha: .06)
+                : Colors.blue.withValues(alpha: .06),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: equilibrada
+                  ? Colors.green.withValues(alpha: .15)
+                  : falta
+                  ? Colors.red.withValues(alpha: .15)
+                  : Colors.blue.withValues(alpha: .15),
+            ),
+          ),
+          child: Column(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: equilibrada
-                      ? Colors.green.withValues(alpha: .10)
-                      : Colors.red.withValues(alpha: .10),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  equilibrada
-                      ? Icons.check_circle_outline_rounded
-                      : Icons.warning_amber_rounded,
-                  color: equilibrada ? Colors.green : Colors.redAccent,
-                ),
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: equilibrada
+                          ? Colors.green.withValues(alpha: .10)
+                          : falta
+                          ? Colors.redAccent.withValues(alpha: .10)
+                          : Colors.blueAccent.withValues(alpha: .10),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      equilibrada
+                          ? Icons.check_circle_outline_rounded
+                          : Icons.warning_amber_rounded,
+                      color: equilibrada
+                          ? Colors.green
+                          : falta
+                          ? Colors.red
+                          : Colors.blue,
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          equilibrada
+                              ? 'Caja equilibrada'
+                              : falta
+                              ? 'Falta dinero'
+                              : 'Sobra dinero',
+                          style: TextStyle(
+                            color: equilibrada
+                                ? Colors.green
+                                : falta
+                                ? Colors.redAccent
+                                : Colors.blueAccent,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          equilibrada
+                              ? 'El dinero recibido coincide con el saldo esperado.'
+                              : falta
+                              ? 'El dinero recibido es inferior al esperado.'
+                              : 'El dinero recibido es superior al esperado.',
+                          style: const TextStyle(color: Color(0xFF929BAB)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
 
-              const SizedBox(width: 12),
+              const SizedBox(height: 18),
 
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                children: [
+                  Expanded(
+                    child: _datoCaja(
+                      'Saldo esperado',
+                      '\$ ${caja.montoEsperado + caja.cobrado}',
+                    ),
+                  ),
+                  Expanded(
+                    child: _datoCaja(
+                      'Dinero recibido',
+                      '\$ ${context.read<CajaCubit>().dineroRecibido.text}',
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
                   children: [
-                    Text(
-                      equilibrada
-                          ? 'Caja equilibrada'
-                          : falta
-                          ? 'Falta dinero'
-                          : 'Sobra dinero',
-                      style: TextStyle(
-                        color: equilibrada ? Colors.green : Colors.redAccent,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                    const Expanded(
+                      child: Text(
+                        'Diferencia',
+                        style: TextStyle(
+                          color: Color(0xFF394354),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 3),
                     Text(
-                      equilibrada
-                          ? 'El dinero contado coincide con el saldo esperado.'
-                          : falta
-                          ? 'El dinero contado es inferior al esperado.'
-                          : 'El dinero contado es superior al esperado.',
-                      style: const TextStyle(
-                        color: Color(0xFF929BAB),
-                        fontSize: 11,
+                      diferencia == 0
+                          ? '\$0'
+                          : '${falta ? '-' : '+'}\$${diferencia.abs()}',
+                      style: TextStyle(
+                        color: equilibrada
+                            ? Colors.green
+                            : falta
+                            ? Colors.redAccent
+                            : Colors.blueAccent,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
                 ),
               ),
+
+              const SizedBox(height: 14),
             ],
           ),
-
-          const SizedBox(height: 18),
-
-          Row(
-            children: [
-              Expanded(
-                child: _datoCaja('Saldo esperado', '\$ ${caja.montoEsperado + caja.cobrado}'),
-              ),
-              Expanded(child: _datoCaja('Dinero recibido', '\$ ${caja.montoReal}')),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text(
-                    'Diferencia',
-                    style: TextStyle(
-                      color: Color(0xFF394354),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Text(
-                  diferencia == 0
-                      ? '\$0'
-                      : '${falta ? '-' : '+'}\$${diferencia.abs()}',
-                  style: TextStyle(
-                    color: equilibrada ? Colors.green : Colors.redAccent,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                // Abrir modal para ingresar dinero contado
-              },
-              icon: const Icon(Icons.calculate_outlined, size: 18),
-              label: const Text('Realizar arqueo'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.primaryColor,
-                side: BorderSide(color: AppTheme.primaryColor),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(11),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
