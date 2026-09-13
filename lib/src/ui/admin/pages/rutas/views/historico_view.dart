@@ -213,6 +213,29 @@ class HistoricoView extends StatelessWidget {
         ),
 
         const SizedBox(height: 12),
+        Visibility(
+          visible: caja.estado == "CERRADA",
+          child: Row(
+            children: [
+              Expanded(
+                child: _dato(
+                  'Monto real',
+                  caja.montoReal,
+                  Icons.shield_outlined,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _dato(
+                  'Recibido',
+                  caja.diferencia,
+                  Icons.account_balance_wallet_outlined,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Text("${caja.observacion}"),
       ],
     );
   }
@@ -332,19 +355,12 @@ class HistoricoView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  titulo,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF929BAB),
-                  ),
-                ),
+                Text(titulo, style: const TextStyle(color: Color(0xFF929BAB))),
                 const SizedBox(height: 2),
                 Text(
                   _moneda(valor),
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF394354),
                   ),
@@ -398,11 +414,7 @@ class HistoricoView extends StatelessWidget {
   }
 
   String _moneda(num? valor) {
-    return NumberFormat.currency(
-      locale: 'es_CO',
-      symbol: '\$',
-      decimalDigits: 0,
-    ).format(valor ?? 0);
+    return "\$ $valor";
   }
 
   String _fecha(String fecha) {

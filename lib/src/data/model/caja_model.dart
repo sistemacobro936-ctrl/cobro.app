@@ -43,11 +43,13 @@ class DatumCajaModel extends DatumCajaEntity {
     super.pagos,
     super.gastosCaja,
     super.pagination,
+    super.observacion,
   });
 
   factory DatumCajaModel.fromJson(Map<String, dynamic> json) => DatumCajaModel(
     id: json["id"] ?? "",
     rutaId: json["rutaId"] ?? "",
+    observacion: json["observacion"] ?? "",
     abiertaPorId: json["abiertaPorId"] ?? "",
     cobroEsperado: json["cobroEsperado"] ?? 0,
     montoInicial: json["montoInicial"] ?? 0,

@@ -30,6 +30,7 @@ class DatumCajaEntity {
     final dynamic montoReal;
     final dynamic diferencia;
     final String estado;
+    final String? observacion;
     final DateTime fechaApertura;
     final dynamic fechaCierre;
     final DateTime createdAt;
@@ -60,6 +61,7 @@ class DatumCajaEntity {
         required this.interesGenerado,
         required this.saldoSeguros,
         this.pagos,
+        this.observacion,
         this.gastosCaja,
         this.pagination
     });
