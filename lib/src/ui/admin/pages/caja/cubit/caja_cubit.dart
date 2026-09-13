@@ -30,6 +30,7 @@ class CajaCubit extends Cubit<CajaState> {
   ///
   final montoInicial = TextEditingController();
   final dineroRecibido = TextEditingController();
+  final observacion = TextEditingController();
 
   ///Eventos
   ///
@@ -110,12 +111,36 @@ class CajaCubit extends Cubit<CajaState> {
     emit(state.copyWith(loading: false));
   }
 
+  void cerrar() async {
+    emit(state.copyWith(loading: true));
+    final r = await _cajaRepo.cerrar(
+      cajaId: state.cajas!.id,
+      dto: CajaDto(
+        diferencia: state.diferencia,
+        montoReal: int.parse(dineroRecibido.text),
+        observacion: observacion.text,
+      ),
+    );
+    r.fold(
+      (l) {
+        AppDialogUtil.error(state.context, message: l.props[0].toString());
+      },
+      (r) {
+        AppDialogUtil.success(
+          state.context,
+          message: "Cierre de caja exitoso.",
+        );
+      },
+    );
+    emit(state.copyWith(loading: false));
+  }
+
   //navegacion
   //
-void arqueo(int esperado){
-  int d = esperado - int.parse(dineroRecibido.text);
-  emit(state.copyWith(diferencia: d, showArqueo: true));
+  void arqueo(int esperado) {
+    int d = esperado - int.parse(dineroRecibido.text);
+    emit(state.copyWith(diferencia: d, showArqueo: true));
+  }
 
-}
   ///Otros
 }

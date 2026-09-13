@@ -35,7 +35,7 @@ class _CajaPageState extends State<CajaPage> {
         child: BlocBuilder<CajaCubit, CajaState>(
           builder: (context, state) {
             return state.loading
-                ? Center(child: CircularProgressIndicator.adaptive())
+                ? Scaffold(body: Center(child: CircularProgressIndicator.adaptive()))
                 : state.child;
           },
         ),

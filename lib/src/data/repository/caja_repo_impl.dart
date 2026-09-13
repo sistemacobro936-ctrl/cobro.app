@@ -60,4 +60,21 @@ class CajaRepoImpl implements CajaRepo {
       return Left(failure);
     }
   }
+
+  @override
+  Future<Either<Failure, dynamic>> cerrar({
+    required String cajaId,
+    required CajaDto dto,
+  }) async {
+    try {
+      final response = await cajaService.cerrar(cajaId: cajaId, dto: dto);
+      return Right(response);
+    } on ServerExceptions catch (e) {
+      final failure = ServerFailure(message: e.message);
+      return Left(failure);
+    } catch (e) {
+      final failure = ServerFailure(message: "Error inesperado: $e");
+      return Left(failure);
+    }
+  }
 }

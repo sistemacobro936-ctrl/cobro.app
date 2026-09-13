@@ -11,5 +11,7 @@ abstract class CajaRepo {
 
   Future<Either<Failure, dynamic>> crearCaja({required CajaDto dto});
 
+  Future<Either<Failure, dynamic>> cerrar({required String cajaId,required CajaDto dto});
+
 Future<Either<Failure, CajaEntity>> historico({required String rutaID});
 }

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/src/common/theme/theme.dart';
-import 'package:personal/src/data/model/caja_model.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
-import 'package:personal/src/domain/entities/detalle_ruta_entity.dart';
 import 'package:personal/src/domain/entities/ruta_entity.dart';
 import 'package:personal/src/ui/admin/pages/rutas/cubit/ruta_cubit.dart';
 import 'package:personal/src/ui/admin/pages/rutas/views/ruta_home.dart';

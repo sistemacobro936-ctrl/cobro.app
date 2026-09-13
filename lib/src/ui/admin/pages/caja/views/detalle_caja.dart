@@ -7,6 +7,7 @@ import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/domain/entities/caja_entity.dart';
 import 'package:personal/src/ui/admin/pages/caja/cubit/caja_cubit.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/dialogo_arqueo.dart';
+import 'package:personal/src/ui/admin/pages/caja/views/dialogo_cerrar_caja.dart';
 
 class DetalleCaja extends StatelessWidget {
   DetalleCaja({super.key});
@@ -55,28 +56,33 @@ class DetalleCaja extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 44,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      mostrarModalArqueo(
-                        context,
-                        context.read<CajaCubit>(),
-                        caja.montoEsperado,
-                      );
-                    },
-                    icon: const Icon(Icons.calculate_outlined, size: 18),
-                    label: const Text('Realizar arqueo'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.primaryColor,
-                      side: BorderSide(color: AppTheme.primaryColor),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(11),
+                Visibility(
+                  visible: caja.estado == "ABIERTA",
+                  child: SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        mostrarModalArqueo(
+                          context,
+                          context.read<CajaCubit>(),
+                          caja.montoEsperado,
+                        );
+                      },
+                      icon: const Icon(Icons.calculate_outlined, size: 18),
+                      label: const Text('Realizar arqueo'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.primaryColor,
+                        side: BorderSide(color: AppTheme.primaryColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(11),
+                        ),
                       ),
                     ),
                   ),
                 ),
+                const SizedBox(height: 18),
+                Center(child: TextButton(onPressed: () {}, child: Text("Ver movimientos"))),
                 const SizedBox(height: 18),
 
                 Visibility(visible: state.showArqueo, child: _buildArqueo()),
@@ -129,7 +135,7 @@ class DetalleCaja extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Caja abierta',
+                  'Caja ${caja.estado.toLowerCase()}',
                   style: TextStyle(
                     color: Color(0xFF202838),
                     fontSize: 15,
@@ -148,13 +154,15 @@ class DetalleCaja extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: .10),
+              color: caja.estado == "ABIERTA"
+                  ? Colors.green.withValues(alpha: .10)
+                  : Colors.grey.withValues(alpha: .10),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text(
-              'ABIERTA',
+            child: Text(
+              caja.estado,
               style: TextStyle(
-                color: Colors.green,
+                color: caja.estado == "ABIERTA" ? Colors.green : Colors.grey,
                 fontSize: 10,
                 fontWeight: FontWeight.w700,
               ),
@@ -325,8 +333,6 @@ class DetalleCaja extends StatelessWidget {
           ),
 
           const SizedBox(height: 14),
-
-          
         ],
       ),
     );
@@ -551,25 +557,30 @@ class DetalleCaja extends StatelessWidget {
   // ============================================================
 
   Widget _buildCerrarCaja() {
-    return SizedBox(
-      width: double.infinity,
-      height: 48,
-      child: ElevatedButton.icon(
-        onPressed: () {},
-        icon: const Icon(Icons.lock_outline_rounded, size: 19),
-        label: const Text(
-          'Cerrar caja',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF202838),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+    return BlocBuilder<CajaCubit, CajaState>(
+      builder: (context, state) {
+        return SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton.icon(
+            onPressed: () =>
+                mostrarDialogoCerrarCaja(context, context.read<CajaCubit>()),
+            icon: const Icon(Icons.lock_outline_rounded, size: 19),
+            label: const Text(
+              'Cerrar caja',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF202838),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

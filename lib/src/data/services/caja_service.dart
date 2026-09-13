@@ -10,6 +10,7 @@ abstract class CajaService {
     required String fecha,
   });
   Future<dynamic> crearCaja({required CajaDto dto});
+  Future<dynamic> cerrar({required String cajaId, required CajaDto dto});
   Future<CajaModel> historico({required String rutaID});
 }
 
@@ -39,7 +40,7 @@ class CajaServiceImpl implements CajaService {
   @override
   Future<dynamic> crearCaja({required CajaDto dto}) async {
     try {
-      await apiClient.dio.post("/caja", data: dto.tojson());
+      await apiClient.dio.post("/caja", data: dto.toJson());
       return true;
     } on DioException catch (e) {
       throw ServerExceptions(message: e.response!.data["message"]);
@@ -53,6 +54,18 @@ class CajaServiceImpl implements CajaService {
     try {
       final r = await apiClient.dio.get("/caja/detalle/$rutaID");
       return CajaModel.fromJson(r.data);
+    } on DioException catch (e) {
+      throw ServerExceptions(message: e.response!.data["message"]);
+    } catch (e) {
+      throw Exception("Error inesperado");
+    }
+  }
+
+  @override
+  Future<dynamic> cerrar({required String cajaId, required CajaDto dto}) async {
+    try {
+      await apiClient.dio.post("/caja/cerrar/$cajaId", data: dto.toJson());
+      return true;
     } on DioException catch (e) {
       throw ServerExceptions(message: e.response!.data["message"]);
     } catch (e) {
