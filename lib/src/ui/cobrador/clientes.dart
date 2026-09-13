@@ -1,6 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/src/common/theme/theme.dart';
+import 'package:personal/src/domain/entities/cliente_entity.dart';
+import 'package:personal/src/domain/entities/detalle_ruta_entity.dart';
 import 'package:personal/src/domain/entities/prestamo_entity.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/views/cobrar.dart';
 import 'package:personal/src/ui/cobrador/c_home.dart';
@@ -63,29 +67,6 @@ class Clientes extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  void _onCobrar(BuildContext context, CobradorRCubit c, dynamic cliente) {
-    if (cliente.cliente.prestamos!.length == 1) {
-      showCobroBottomSheet(
-        context,
-        clienteNombre: cliente.cliente.nombres,
-        cuota: cliente.cliente.prestamos!.first.valorCuota,
-        deudaActual: cliente.cliente.prestamos!.first.deudaActual,
-        onConfirmar: (String value) async {
-          c.pagar(
-            prestamoId: cliente.cliente.prestamos!.first.id,
-            valorPago: int.parse(value),
-          );
-        },
-      );
-      return;
-    }
-    _showSeleccionPrestamo(
-      context,
-      cliente.cliente.nombres,
-      cliente.cliente.prestamos ?? [],
     );
   }
 
@@ -179,7 +160,7 @@ class Clientes extends StatelessWidget {
 // ============================================================
 
 class _PendientesTab extends StatelessWidget {
-  final dynamic clienteActual;
+  final DetalleRutaEntity? clienteActual;
   final List<dynamic> proximos;
   final num totalPendiente;
   final CobradorRState state;
@@ -221,7 +202,7 @@ class _PendientesTab extends StatelessWidget {
         const SizedBox(height: 8),
 
         _ClienteActualCard(
-          cliente: clienteActual,
+          cliente: clienteActual!,
           btnLoading: state.btnLoading,
           onVerCliente: () {},
           onCobrar: () => onCobrar(clienteActual),
@@ -434,7 +415,7 @@ class _CountPill extends StatelessWidget {
 // ============================================================
 
 class _ClienteActualCard extends StatelessWidget {
-  final dynamic cliente;
+  final DetalleRutaEntity cliente;
   final bool btnLoading;
   final VoidCallback onVerCliente;
   final VoidCallback onCobrar;
@@ -634,62 +615,6 @@ class _ProximoClienteCard extends StatelessWidget {
   }
 }
 
-void _showSeleccionPrestamo(
-  BuildContext context,
-  String clienteNombre,
-  List<DatumPEntity> prestamos,
-) {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) {
-      return Container(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 38,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD8DCE5),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              'Selecciona el préstamo',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF202838),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              clienteNombre,
-              style: const TextStyle(fontSize: 13, color: Color(0xFF929BAB)),
-            ),
-            const SizedBox(height: 18),
-            ...prestamos.map(
-              (prestamo) => _itemPrestamo(context, clienteNombre, prestamo),
-            ),
-            const SizedBox(height: 48),
-          ],
-        ),
-      );
-    },
-  );
-}
-
 Widget _itemPrestamo(
   BuildContext context,
   String clienteNombre,
@@ -798,7 +723,7 @@ Widget _itemPrestamo(
 // ============================================================
 
 class _PagadosTab extends StatelessWidget {
-  final List<dynamic> clientesPagados;
+  final List<DetalleRutaEntity> clientesPagados;
 
   const _PagadosTab({required this.clientesPagados});
 
@@ -876,13 +801,13 @@ class _PagadosTab extends StatelessWidget {
 }
 
 class _ClientePagadoCard extends StatelessWidget {
-  final dynamic detalle;
+  final DetalleRutaEntity detalle;
 
   const _ClientePagadoCard({required this.detalle});
 
   @override
   Widget build(BuildContext context) {
-    final cliente = detalle.cliente;
+    final cliente = detalle;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -891,57 +816,148 @@ class _ClientePagadoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(13),
         border: Border.all(color: Colors.green.withValues(alpha: .10)),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: .08),
-              borderRadius: BorderRadius.circular(11),
-            ),
-            child: const Icon(
-              Icons.check_circle_outline_rounded,
-              color: Colors.green,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${cliente.nombres} ${cliente.apellidos}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF202838),
-                  ),
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: .08),
+                  borderRadius: BorderRadius.circular(11),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  'CC: ${cliente.cedula}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF929BAB),
-                  ),
+                child: const Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: Colors.green,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${cliente.cliente.nombres} ${cliente.cliente.apellidos}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF202838),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'CC: ${cliente.cliente.cedula}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF929BAB),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Pagado',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.green,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          const Text(
-            'Pagado',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Colors.green,
+          Center(
+            child: TextButton(
+              onPressed: () {
+                _onCobrar(context, context.read<CobradorRCubit>(), cliente);
+              },
+              child: Text("Volver a cobrar"),
             ),
           ),
         ],
       ),
     );
   }
+}
+
+void _onCobrar(BuildContext context, CobradorRCubit c, DetalleRutaEntity   cliente) {
+  if (cliente.cliente.prestamos!.length == 1) {
+    showCobroBottomSheet(
+      context,
+      clienteNombre: cliente.cliente.nombres,
+      cuota: cliente.cliente.prestamos!.first.valorCuota,
+      deudaActual: cliente.cliente.prestamos!.first.deudaActual,
+      onConfirmar: (String value) async {
+        c.pagar(
+          prestamoId: cliente.cliente.prestamos!.first.id,
+          valorPago: int.parse(value),
+        );
+      },
+    );
+    return;
+  }
+  _showSeleccionPrestamo(
+    context,
+    cliente.cliente.nombres,
+    cliente.cliente.prestamos ?? [],
+  );
+}
+
+void _showSeleccionPrestamo(
+  BuildContext context,
+  String clienteNombre,
+  List<DatumPEntity> prestamos,
+) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) {
+      return Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 38,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD8DCE5),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'Selecciona el préstamo',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF202838),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              clienteNombre,
+              style: const TextStyle(fontSize: 13, color: Color(0xFF929BAB)),
+            ),
+            const SizedBox(height: 18),
+            ...prestamos.map(
+              (prestamo) => _itemPrestamo(context, clienteNombre, prestamo),
+            ),
+            const SizedBox(height: 48),
+          ],
+        ),
+      );
+    },
+  );
 }

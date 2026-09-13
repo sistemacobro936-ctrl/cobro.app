@@ -349,7 +349,7 @@ class _CHomeState extends State<CHome> {
                         Expanded(
                           child: _dato(
                             'Monto esperado',
-                            '\$ ${montoEsperado + cobrado}',
+                            '\$ $montoEsperado',
                           ),
                         ),
                         Expanded(
