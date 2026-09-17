@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/src/ui/auth/cubit/auth_cubit.dart';
+import 'package:personal/src/ui/auth/registro_page.dart';
 import 'package:personal/src/ui/auth/views/banner_auth_view.dart';
 import 'package:personal/src/ui/auth/views/form_auth_view..dart';
 import 'package:personal/src/ui/widgets/btn_widget.dart';
@@ -74,7 +75,28 @@ class AuthPage extends StatelessWidget {
                             ),
                           ),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 18),
+
+                          Center(
+                            child: TextButton(
+                              onPressed: state.loading
+                                  ? null
+                                  : () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => const RegistroPage(),
+                                        ),
+                                      );
+                                    },
+                              child: const Text(
+                                '¿No tienes una cuenta? Regístrate',
+                                style: TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 6),
 
                           Center(
                             child: Row(

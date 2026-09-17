@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:personal/src/common/shared/shared.dart';
 import 'package:personal/src/common/theme/theme.dart';
+import 'package:personal/src/domain/entities/reporte_entity.dart';
 import 'package:personal/src/domain/entities/ruta_entity.dart';
+import 'package:personal/src/ui/admin/pages/contabilidad/cubit/contabilidad_cubit.dart';
 
 class ContabilidadPage extends StatefulWidget {
   const ContabilidadPage({super.key});
@@ -12,95 +14,153 @@ class ContabilidadPage extends StatefulWidget {
 }
 
 class _ContabilidadPageState extends State<ContabilidadPage> {
-  DateTime _fechaSeleccionada = DateTime.now();
+  late ContabilidadCubit _cubit;
+
+  @override
+  void initState() {
+    super.initState();
+    _cubit = ContabilidadCubit(context: context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF7F8FC),
-        appBar: AppBar(
-          leading: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: Icon(Icons.arrow_back, color: Colors.white),
-          ),
-          backgroundColor: AppTheme.primaryColor,
-          elevation: 0,
-          title: const Text(
-            'Contabilidad',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+      child: BlocProvider(
+        create: (_) => _cubit,
+        child: BlocBuilder<ContabilidadCubit, ContabilidadState>(
+          builder: (context, state) {
+            final ResumenReporteEntity? reporte = state.rutaSeleccionada == null
+                ? state.totales
+                : state.cajaRuta;
+
+            return Scaffold(
+              backgroundColor: const Color(0xFFF7F8FC),
+              appBar: AppBar(
+                leading: IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                ),
+                backgroundColor: AppTheme.primaryColor,
+                elevation: 0,
+                title: const Text(
+                  'Contabilidad',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              body: RefreshIndicator(
+                onRefresh: () async => _cubit.cargarReporte(),
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildFecha(context, state),
+                      const SizedBox(height: 12),
+                      _buildRuta(context, state),
+                      const SizedBox(height: 12),
+
+                      if (state.loading)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 60),
+                          child: Center(
+                            child: CircularProgressIndicator.adaptive(),
+                          ),
+                        )
+                      else if (reporte == null)
+                        _buildSinDatos()
+                      else ...[
+                        _buildSeccion(
+                          titulo: 'Operación',
+                          icono: Icons.receipt_long_outlined,
+                          children: [
+                            _dato('Total boletas', reporte.totalBoletas.toString()),
+                            _dato('Cantidad recibida', _money(reporte.cantidadRecibida)),
+                            _dato('Cantidad de abonos', reporte.cantidadAbonos.toString()),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        _buildSeccion(
+                          titulo: 'Préstamos',
+                          icono: Icons.account_balance_wallet_outlined,
+                          children: [
+                            _dato('Préstamos', _money(reporte.cantidadPrestada)),
+                            _dato('Cantidad de préstamos', reporte.cantidadPrestamos.toString()),
+                            _dato('Seguro', _money(reporte.seguro)),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        _buildSeccion(
+                          titulo: 'Cobro',
+                          icono: Icons.payments_outlined,
+                          children: [
+                            _dato('Esperado a cobrar', _money(reporte.esperadoACobrar)),
+                            _dato('Recibido', _money(reporte.cantidadRecibida)),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        _buildSeccion(
+                          titulo: 'Caja',
+                          icono: Icons.point_of_sale_outlined,
+                          children: [
+                            _dato('Gastos', _money(reporte.gastos)),
+                            _dato('Inyección de capital', _money(reporte.inyeccionCapital)),
+                            _dato('Base', _money(reporte.base)),
+                          ],
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        _buildResultado(reporte),
+
+                        const SizedBox(height: 12),
+
+                        _buildArqueo(reporte),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildFecha(),
-              const SizedBox(height: 12),
-              _buildRuta(),
-              const SizedBox(height: 12),
+      ),
+    );
+  }
 
-              _buildSeccion(
-                titulo: 'Operación',
-                icono: Icons.receipt_long_outlined,
-                children: [
-                  _dato('Total boletas', '125'),
-                  _dato('Cantidad recibida', '\$850.000'),
-                  _dato('Cantidad de abonos', '42'),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              _buildSeccion(
-                titulo: 'Préstamos',
-                icono: Icons.account_balance_wallet_outlined,
-                children: [
-                  _dato('Préstamos', '\$600.000'),
-                  _dato('Cantidad de préstamos', '8'),
-                  _dato('Seguro', '\$30.000'),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              _buildSeccion(
-                titulo: 'Cobro',
-                icono: Icons.payments_outlined,
-                children: [
-                  _dato('Esperado a cobrar', '\$720.000'),
-                  _dato('Recibido', '\$850.000'),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              _buildSeccion(
-                titulo: 'Caja',
-                icono: Icons.point_of_sale_outlined,
-                children: [
-                  _dato('Gastos', '\$50.000'),
-                  _dato('Inyección de capital', '\$100.000'),
-                  _dato('Base', '\$200.000'),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              _buildResultado(),
-
-              const SizedBox(height: 12),
-
-              _buildArqueo(),
-            ],
+  Widget _buildSinDatos() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withValues(alpha: .05)),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.inbox_outlined,
+            size: 40,
+            color: Colors.grey.withValues(alpha: .5),
           ),
-        ),
+          const SizedBox(height: 12),
+          const Text(
+            'No hay información de caja para la fecha y ruta seleccionadas.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Color(0xFF929BAB), fontSize: 13),
+          ),
+        ],
       ),
     );
   }
@@ -140,7 +200,7 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
           const SizedBox(height: 16),
 
           ...children,
-          Divider(),
+          const Divider(),
         ],
       ),
     );
@@ -170,7 +230,7 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
     );
   }
 
-  Widget _buildResultado() {
+  Widget _buildResultado(ResumenReporteEntity reporte) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -190,14 +250,14 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
             ),
           ),
           const SizedBox(height: 16),
-          _dato('Utilidad', '\$200.000'),
-          _dato('Retiro de seguro', '\$30.000'),
+          _dato('Utilidad', _money(reporte.utilidad)),
+          _dato('Retiro de seguro', _money(reporte.retiroSeguro)),
         ],
       ),
     );
   }
 
-  Widget _buildArqueo() {
+  Widget _buildArqueo(ResumenReporteEntity reporte) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -217,16 +277,21 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
             ),
           ),
           const SizedBox(height: 16),
-          _dato('Efectivo recibido', '\$820.000'),
-          _dato('Diferencia', '-\$30.000'),
+          _dato(
+            'Efectivo recibido',
+            reporte.efectivoRecibido == null
+                ? 'Pendiente'
+                : _money(reporte.efectivoRecibido!),
+          ),
+          _dato('Diferencia', _diferencia(reporte.diferencia)),
         ],
       ),
     );
   }
 
-  Widget _buildFecha() {
+  Widget _buildFecha(BuildContext context, ContabilidadState state) {
     return InkWell(
-      onTap: _seleccionarFecha,
+      onTap: () => _seleccionarFecha(context, state),
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -245,7 +310,7 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                DateFormat('dd/MM/yyyy', 'es_CO').format(_fechaSeleccionada),
+                DateFormat('dd/MM/yyyy', 'es_CO').format(state.fecha),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -263,45 +328,62 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
     );
   }
 
-  Widget _buildRuta() => DropdownButtonFormField<DatumREntity>(
-    // initialValue: ,
-    isExpanded: true,
-    decoration: InputDecoration(
-      hintText: 'Seleccione una ruta',
-      prefixIcon: const Icon(Icons.route_outlined),
-      filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
-        borderSide: BorderSide(color: Colors.grey.withValues(alpha: .15)),
-      ),
-     
-    ),
-    items: Shared.getRutas!.map((ruta) {
-      return DropdownMenuItem<DatumREntity>(
-        value: ruta,
-        child: Text(ruta.nombre, overflow: TextOverflow.ellipsis),
+  Widget _buildRuta(BuildContext context, ContabilidadState state) =>
+      DropdownButtonFormField<DatumREntity?>(
+        initialValue: state.rutaSeleccionada,
+        isExpanded: true,
+        decoration: InputDecoration(
+          hintText: 'Seleccione una ruta',
+          prefixIcon: const Icon(Icons.route_outlined),
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.grey.withValues(alpha: .15)),
+          ),
+        ),
+        items: [
+          const DropdownMenuItem<DatumREntity?>(
+            value: null,
+            child: Text('Todas las rutas'),
+          ),
+          ...state.rutas.map((ruta) {
+            return DropdownMenuItem<DatumREntity?>(
+              value: ruta,
+              child: Text(ruta.nombre, overflow: TextOverflow.ellipsis),
+            );
+          }),
+        ],
+        onChanged: (ruta) => _cubit.seleccionarRuta(ruta),
       );
-    }).toList(),
-    onChanged: (e) {},
-  );
 
-  Future<void> _seleccionarFecha() async {
+  Future<void> _seleccionarFecha(
+    BuildContext context,
+    ContabilidadState state,
+  ) async {
     final fecha = await showDatePicker(
       context: context,
-      initialDate: _fechaSeleccionada,
+      initialDate: state.fecha,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
 
     if (fecha == null) return;
 
-    setState(() {
-      _fechaSeleccionada = fecha;
-    });
+    _cubit.seleccionarFecha(fecha);
+  }
+
+  String _money(int valor) =>
+      '\$${NumberFormat('#,##0', 'es_CO').format(valor)}';
+
+  String _diferencia(int? diferencia) {
+    if (diferencia == null) return 'Pendiente';
+    if (diferencia == 0) return '\$0';
+    final signo = diferencia < 0 ? '-' : '+';
+    return '$signo${_money(diferencia.abs())}';
   }
 }

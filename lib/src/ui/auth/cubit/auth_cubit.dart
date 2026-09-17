@@ -65,6 +65,7 @@ class AuthCubit extends Cubit<AuthState> {
       },
       (r) async {
         await SecureStorageUtil().write("token", r.accessToken);
+        await SecureStorageUtil().write("usuario_id", r.usuario.id);
         _validateToken();
       },
     );

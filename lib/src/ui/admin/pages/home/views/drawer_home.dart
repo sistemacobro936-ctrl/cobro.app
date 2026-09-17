@@ -4,6 +4,7 @@ import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/secure_storage_util.dart';
 import 'package:personal/src/ui/admin/pages/config/config_page.dart';
 import 'package:personal/src/ui/admin/pages/contabilidad/contabilidad_page.dart';
+import 'package:personal/src/ui/admin/pages/perfil/perfil_page.dart';
 import 'package:personal/src/ui/admin/pages/rutas/ruta_page.dart';
 import 'package:personal/src/ui/auth/auth_page.dart';
 
@@ -33,12 +34,10 @@ class DrawerHome extends StatelessWidget {
                     onTap: () {
                       Navigator.pop(context);
 
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (_) => const PerfilView(),
-                      //   ),
-                      // );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const PerfilPage()),
+                      );
                     },
                   ),
                   SizedBox(height: 18),

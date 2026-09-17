@@ -233,7 +233,7 @@ class DetalleCaja extends StatelessWidget {
               Expanded(
                 child: _datoCaja(
                   'Nivel de eficacia',
-                  '\$ ${((caja.cobrado / caja.cobroEsperado) * 100).toInt()} %',
+                 caja.cobroEsperado==0?'-' :'\$ ${((caja.cobrado / caja.cobroEsperado) * 100).toInt()} %',
                   color: Colors.blue,
                 ),
               ),

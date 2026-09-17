@@ -102,14 +102,13 @@ class ResumeHomeView extends StatelessWidget {
                       children: [
                         Text(
                           'Bienvenido 👋',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                          style: TextStyle(color: Colors.white70),
                         ),
                         SizedBox(height: 3),
                         Text(
                           'Administrador',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 17,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -123,7 +122,7 @@ class ResumeHomeView extends StatelessWidget {
 
               Text(
                 _formatDate(now),
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                style: const TextStyle(color: Colors.white70),
               ),
 
               const SizedBox(height: 5),
