@@ -151,7 +151,8 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
                         ),
                   Visibility(
                     visible:
-                        !state.loading && state.paginationClientes!.hasNextPage,
+                        !state.loading &&
+                        (state.paginationClientes?.hasNextPage ?? false),
                     child: TextButton(
                       onPressed: () {
                         c.clienteRuta(

@@ -32,7 +32,7 @@ class DataConModel extends DataConEntity {
 class ConfiguracionModel extends ConfiguracionEntity {
   ConfiguracionModel({
     required super.id,
-    required super.adminId,
+    required super.negocioId,
     required super.interesDefault,
     required super.seguroDefault,
     required super.estado,
@@ -43,7 +43,7 @@ class ConfiguracionModel extends ConfiguracionEntity {
   factory ConfiguracionModel.fromJson(Map<String, dynamic> json) =>
       ConfiguracionModel(
         id: json["id"],
-        adminId: json["adminId"],
+        negocioId: json["negocioId"],
         interesDefault: json["interesDefault"],
         seguroDefault: json["seguroDefault"],
         estado: json["estado"],
@@ -55,7 +55,7 @@ class ConfiguracionModel extends ConfiguracionEntity {
 class SCobroModel extends SCobroEntity {
   SCobroModel({
     required super.id,
-    required super.adminId,
+    required super.negocioId,
     super.diaSemana,
     super.cuotas,
     required super.nombre,
@@ -68,7 +68,7 @@ class SCobroModel extends SCobroEntity {
 
   factory SCobroModel.fromJson(Map<String, dynamic> json) => SCobroModel(
     id: json["id"],
-    adminId: json["adminId"],
+    negocioId: json["negocioId"],
     diaSemana: json["diaSemana"],
     cuotas: json["cuotas"],
     nombre: json["nombre"],

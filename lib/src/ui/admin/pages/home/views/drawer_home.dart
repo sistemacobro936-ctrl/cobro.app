@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/secure_storage_util.dart';
 import 'package:personal/src/ui/admin/pages/config/config_page.dart';
+import 'package:personal/src/ui/admin/pages/contabilidad/contabilidad_page.dart';
 import 'package:personal/src/ui/admin/pages/rutas/ruta_page.dart';
 import 'package:personal/src/ui/auth/auth_page.dart';
 
@@ -56,6 +57,18 @@ class DrawerHome extends StatelessWidget {
                     },
                   ),
 
+                  _drawerItem(
+                    icon: Icons.account_balance,
+                    title: 'Contabilidad',
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ContabilidadPage()),
+                      );
+                    },
+                  ),
                   _drawerItem(
                     icon: Icons.settings_outlined,
                     title: 'Configuración',

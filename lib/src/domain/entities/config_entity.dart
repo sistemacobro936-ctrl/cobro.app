@@ -40,7 +40,7 @@ class DataConEntity {
 
 class ConfiguracionEntity {
   final String id;
-  final String adminId;
+  final String negocioId;
   final int interesDefault;
   final int seguroDefault;
   final String estado;
@@ -49,7 +49,7 @@ class ConfiguracionEntity {
 
   ConfiguracionEntity({
     required this.id,
-    required this.adminId,
+    required this.negocioId,
     required this.interesDefault,
     required this.seguroDefault,
     required this.estado,
@@ -59,7 +59,7 @@ class ConfiguracionEntity {
 
   ConfiguracionEntity copyWith({
     String? id,
-    String? adminId,
+    String? negocioId,
     int? interesDefault,
     int? seguroDefault,
     String? estado,
@@ -68,7 +68,7 @@ class ConfiguracionEntity {
   }) {
     return ConfiguracionEntity(
       id: id ?? this.id,
-      adminId: adminId ?? this.adminId,
+      negocioId: negocioId ?? this.negocioId,
       interesDefault: interesDefault ?? this.interesDefault,
       seguroDefault: seguroDefault ?? this.seguroDefault,
       estado: estado ?? this.estado,
@@ -80,7 +80,7 @@ class ConfiguracionEntity {
 
 class SCobroEntity {
   final String id;
-  final String adminId;
+  final String negocioId;
   final int? diaSemana;
   final int? cuotas;
   final String nombre;
@@ -92,7 +92,7 @@ class SCobroEntity {
 
   SCobroEntity({
     required this.id,
-    required this.adminId,
+    required this.negocioId,
     this.diaSemana,
     required this.nombre,
     required this.habilitado,
@@ -105,7 +105,7 @@ class SCobroEntity {
 
   SCobroEntity copyWith({
     String? id,
-    String? adminId,
+    String? negocioId,
     int? diaSemana,
     String? nombre,
     bool? habilitado,
@@ -117,7 +117,7 @@ class SCobroEntity {
   }) {
     return SCobroEntity(
       id: id ?? this.id,
-      adminId: adminId ?? this.adminId,
+      negocioId: negocioId ?? this.negocioId,
       diaSemana: diaSemana ?? this.diaSemana,
       nombre: nombre ?? this.nombre,
       habilitado: habilitado ?? this.habilitado,
