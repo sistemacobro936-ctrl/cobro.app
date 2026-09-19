@@ -1,9 +1,6 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/src/common/theme/theme.dart';
-import 'package:personal/src/domain/entities/cliente_entity.dart';
 import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/domain/dto/no_pago_dto.dart';
 import 'package:personal/src/domain/entities/detalle_ruta_entity.dart';
@@ -41,16 +38,6 @@ class Clientes extends StatelessWidget {
           );
         }
 
-        final clienteActual = clientes.isNotEmpty ? clientes.first : null;
-        final proximos = clientes.isNotEmpty
-            ? clientes.skip(1).toList()
-            : <dynamic>[];
-
-        final totalPendiente = clientes.fold<num>(
-          0,
-          (sum, detalle) => sum + (detalle.deudaActual as num),
-        );
-
         return DefaultTabController(
           length: 3,
           initialIndex: clientes.isNotEmpty
@@ -69,11 +56,15 @@ class Clientes extends StatelessWidget {
             body: TabBarView(
               children: [
                 _PendientesTab(
-                  clienteActual: clienteActual,
-                  proximos: proximos,
-                  totalPendiente: totalPendiente,
+                  clientes: clientes,
                   state: state,
-                  onCobrar: (detalle) => _onCobrar(context, c, detalle),
+                  onCobrar: (detalle) => _onCobrar(
+                    context,
+                    c,
+                    detalle,
+                    soloPendientes: true,
+                    noPagosInfo: state.noPagosInfo,
+                  ),
                 ),
                 _PagadosTab(clientesPagados: clientesPagados),
                 _NoPagadosTab(
@@ -182,85 +173,139 @@ class Clientes extends StatelessWidget {
 // TAB: PENDIENTES (resumen + cliente actual + próximos)
 // ============================================================
 
-class _PendientesTab extends StatelessWidget {
-  final DetalleRutaEntity? clienteActual;
-  final List<dynamic> proximos;
-  final num totalPendiente;
+class _PendientesTab extends StatefulWidget {
+  final List<DetalleRutaEntity> clientes;
   final CobradorRState state;
-  final void Function(dynamic detalle) onCobrar;
+  final void Function(DetalleRutaEntity detalle) onCobrar;
 
   const _PendientesTab({
-    required this.clienteActual,
-    required this.proximos,
-    required this.totalPendiente,
+    required this.clientes,
     required this.state,
     required this.onCobrar,
   });
 
   @override
+  State<_PendientesTab> createState() => _PendientesTabState();
+}
+
+class _PendientesTabState extends State<_PendientesTab> {
+  final _ccController = TextEditingController();
+  String _filtroCc = '';
+
+  @override
+  void dispose() {
+    _ccController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (clienteActual == null) {
+    if (widget.clientes.isEmpty) {
       return _SinPendientesState();
     }
+
+    // Filtro por cédula: coincide si la CC contiene lo escrito.
+    // Se calcula sobre la lista del estado, así un cliente que ya pagó
+    // o no pagó desaparece también de los resultados de la búsqueda.
+    final filtrados = _filtroCc.isEmpty
+        ? widget.clientes
+        : widget.clientes
+              .where((d) => d.cliente.cedula.startsWith(_filtroCc))
+              .toList();
+
+    final clienteActual = filtrados.isNotEmpty ? filtrados.first : null;
+    final proximos = filtrados.skip(1).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        InputWidget.input(
+          label: 'Buscar por CC',
+          controller: _ccController,
+          prefixIcon: Icons.search_rounded,
+          keyboardType: TextInputType.number,
+          suffixIcon: _filtroCc.isEmpty ? null : Icons.close_rounded,
+          onSuffixPressed: () {
+            _ccController.clear();
+            setState(() => _filtroCc = '');
+          },
+          onChanged: (value) => setState(() => _filtroCc = value.trim()),
+        ),
+
+        const SizedBox(height: 16),
+
         _ResumenCard(
-          totalClientes: proximos.length + 1,
-          totalPendiente: totalPendiente,
-        ),
-
-        const SizedBox(height: 20),
-
-        const Text(
-          'Cobro actual',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF202838),
+          totalClientes: filtrados.length,
+          totalPendiente: filtrados.fold<num>(
+            0,
+            (sum, detalle) => sum + detalle.deudaActual,
           ),
         ),
 
-        const SizedBox(height: 8),
+        if (clienteActual == null)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Text(
+              'Ningún cliente pendiente coincide con esa cédula.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Color(0xFF929BAB)),
+            ),
+          )
+        else ...[
+          const SizedBox(height: 20),
 
-        _ClienteActualCard(
-          cliente: clienteActual!,
-          btnLoading: state.btnLoading,
-          onVerCliente: () {},
-          onCobrar: () => onCobrar(clienteActual),
-        ),
-
-        if (proximos.isNotEmpty) ...[
-          const SizedBox(height: 24),
-
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Próximos cobros',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF202838),
-                  ),
-                ),
-              ),
-              _CountPill(count: proximos.length, color: AppTheme.primaryColor),
-            ],
-          ),
-
-          const SizedBox(height: 10),
-
-          ...proximos.map(
-            (detalle) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _ProximoClienteCard(
-                detalle: detalle,
-                onCobrar: () => onCobrar(detalle),
-              ),
+          const Text(
+            'Cobro actual',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF202838),
             ),
           ),
+
+          const SizedBox(height: 8),
+
+          _ClienteActualCard(
+            cliente: clienteActual,
+            btnLoading: widget.state.btnLoading,
+            onVerCliente: () {},
+            onCobrar: () => widget.onCobrar(clienteActual),
+          ),
+
+          if (proximos.isNotEmpty) ...[
+            const SizedBox(height: 24),
+
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Próximos cobros',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF202838),
+                    ),
+                  ),
+                ),
+                _CountPill(
+                  count: proximos.length,
+                  color: AppTheme.primaryColor,
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            ...proximos.map(
+              (detalle) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _ProximoClienteCard(
+                  detalle: detalle,
+                  onCobrar: () => widget.onCobrar(detalle),
+                ),
+              ),
+            ),
+          ],
         ],
 
         const SizedBox(height: 24),
@@ -488,7 +533,7 @@ class _ClienteActualCard extends StatelessWidget {
 
           Text(
             'CC: ${data.cedula}',
-            style: const TextStyle(fontSize: 13, color: Color(0xFF929BAB)),
+            style: const TextStyle(color: Color(0xFF929BAB)),
           ),
 
           const SizedBox(height: 20),
@@ -504,7 +549,7 @@ class _ClienteActualCard extends StatelessWidget {
               children: [
                 const Text(
                   'Deuda pendiente',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF929BAB)),
+                  style: TextStyle(color: Color(0xFF929BAB)),
                 ),
                 const SizedBox(height: 5),
                 Text(
@@ -531,13 +576,6 @@ class _ClienteActualCard extends StatelessWidget {
           ),
 
           const SizedBox(height: 8),
-
-          TextButton.icon(
-            onPressed: onVerCliente,
-            icon: const Icon(Icons.person_outline_rounded, size: 18),
-            label: const Text('Ver información del cliente'),
-            style: TextButton.styleFrom(foregroundColor: AppTheme.primaryColor),
-          ),
         ],
       ),
     );
@@ -591,18 +629,18 @@ class _ProximoClienteCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF202838),
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'CC: ${cliente.cedula} · \$ ${detalle.deudaActual}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF929BAB),
-                  ),
+                  'CC: ${cliente.cedula}',
+                  style: const TextStyle(color: Color(0xFF929BAB)),
+                ),
+                Text(
+                  'Deuda: \$ ${detalle.deudaActual}',
+                  style: const TextStyle(color: Color(0xFF929BAB)),
                 ),
               ],
             ),
@@ -629,9 +667,9 @@ class _ProximoClienteCard extends StatelessWidget {
 Widget _itemPrestamo(
   BuildContext context,
   String clienteNombre,
-  DatumPEntity prestamo,
-  {bool showNoPago= true}
-) {
+  DatumPEntity prestamo, {
+  bool showNoPago = true,
+}) {
   return InkWell(
     borderRadius: BorderRadius.circular(14),
     onTap: prestamo.yaPago!
@@ -943,9 +981,14 @@ class _ClientePagadoCard extends StatelessWidget {
           Center(
             child: TextButton(
               onPressed: () {
-                _onCobrar(context, context.read<CobradorRCubit>(), cliente, showNoPago: false);
+                _onCobrar(
+                  context,
+                  context.read<CobradorRCubit>(),
+                  cliente,
+                  showNoPago: false,
+                );
               },
-              child: Text("Volver a cobrar", ),
+              child: Text("Volver a cobrar"),
             ),
           ),
         ],
@@ -965,26 +1008,7 @@ class _PagoRow extends StatefulWidget {
 }
 
 class _PagoRowState extends State<_PagoRow> {
-  bool _loading = false;
-
   bool get _reversado => widget.pago.estado == 'REVERSADO';
-
-  /// Solo se pueden revertir los pagos aplicados del día
-  bool get _puedeRevertir {
-    final fecha = widget.pago.fechaPago;
-    if (_reversado || fecha == null) return false;
-    return DateUtil.formatDate(fecha) == DateUtil.formatDate(DateTime.now());
-  }
-
-  Future<void> _revertir() async {
-    final cubit = context.read<CobradorRCubit>();
-    final confirmo = await confirmarReversionPago(context);
-    if (!confirmo) return;
-
-    setState(() => _loading = true);
-    await cubit.revertirPago(pagoId: widget.pago.id);
-    if (mounted) setState(() => _loading = false);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -1014,47 +1038,11 @@ class _PagoRowState extends State<_PagoRow> {
           Text(
             '\$${pago.valor}',
             style: TextStyle(
-              fontSize: 13,
               fontWeight: FontWeight.w800,
               color: _reversado ? color : const Color(0xFF202838),
               decoration: _reversado ? TextDecoration.lineThrough : null,
             ),
           ),
-          if (_puedeRevertir) ...[
-            const SizedBox(width: 8),
-            _loading
-                ? const SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: Padding(
-                      padding: EdgeInsets.all(5),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Color(0xFFE05252),
-                      ),
-                    ),
-                  )
-                : Tooltip(
-                    message: 'Revertir pago',
-                    child: InkWell(
-                      onTap: _revertir,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF1F1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.undo_rounded,
-                          color: Color(0xFFE05252),
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-          ],
         ],
       ),
     );
@@ -1265,23 +1253,32 @@ void _onCobrar(
   CobradorRCubit c,
   DetalleRutaEntity cliente, {
   bool showNoPago = true,
+  bool soloPendientes = false,
+  Map<String, NoPagoRutaEntity> noPagosInfo = const {},
 }) {
-  if (cliente.cliente.prestamos!.length == 1) {
+  final todos = cliente.cliente.prestamos ?? <DatumPEntity>[];
+
+  // Desde "Pendientes" no se ofrecen los préstamos que ya tienen pago o no pago hoy
+  final prestamos = soloPendientes
+      ? todos
+            .where((p) => p.yaPago != true && !noPagosInfo.containsKey(p.id))
+            .toList()
+      : todos;
+
+  if (prestamos.length == 1) {
+    final prestamo = prestamos.first;
     showCobroBottomSheet(
       context,
       showNPago: showNoPago,
       clienteNombre: cliente.cliente.nombres,
-      cuota: cliente.cliente.prestamos!.first.valorCuota,
-      deudaActual: cliente.cliente.prestamos!.first.deudaActual,
+      cuota: prestamo.valorCuota,
+      deudaActual: prestamo.deudaActual,
       onConfirmar: (String value) async {
-        c.pagar(
-          prestamoId: cliente.cliente.prestamos!.first.id,
-          valorPago: int.parse(value),
-        );
+        c.pagar(prestamoId: prestamo.id, valorPago: int.parse(value));
       },
       onNoPago: (data) {
         c.noPago(
-          prestamoId: cliente.cliente.prestamos!.first.id,
+          prestamoId: prestamo.id,
           motivo: data.motivo,
           observacion: data.observacion,
           fechaPromesa: data.fechaPromesa,
@@ -1293,19 +1290,20 @@ void _onCobrar(
   _showSeleccionPrestamo(
     context,
     cliente.cliente.nombres,
-    cliente.cliente.prestamos ?? [],
+    prestamos,
+    showNoPago: showNoPago,
   );
 }
 
 void _showSeleccionPrestamo(
   BuildContext context,
   String clienteNombre,
-  List<DatumPEntity> prestamos,
-{bool showNoPago =true}
-) {
+  List<DatumPEntity> prestamos, {
+  bool showNoPago = true,
+}) {
   showModalBottomSheet(
     context: context,
-    
+
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) {
@@ -1345,7 +1343,12 @@ void _showSeleccionPrestamo(
             ),
             const SizedBox(height: 18),
             ...prestamos.map(
-              (prestamo) => _itemPrestamo(context, clienteNombre, prestamo, showNoPago:showNoPago),
+              (prestamo) => _itemPrestamo(
+                context,
+                clienteNombre,
+                prestamo,
+                showNoPago: showNoPago,
+              ),
             ),
             const SizedBox(height: 48),
           ],

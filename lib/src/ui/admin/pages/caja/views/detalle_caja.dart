@@ -8,7 +8,10 @@ import 'package:personal/src/domain/entities/caja_entity.dart';
 import 'package:personal/src/ui/admin/pages/caja/cubit/caja_cubit.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/dialogo_arqueo.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/dialogo_cerrar_caja.dart';
+import 'package:personal/src/ui/admin/pages/caja/views/dialogo_gasto_caja.dart';
+import 'package:personal/src/ui/admin/pages/caja/views/dialogo_inyeccion_capital.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/gestion_cobros.dart';
+import 'package:personal/src/ui/admin/pages/caja/views/movimientos_caja_view.dart';
 
 class DetalleCaja extends StatelessWidget {
   DetalleCaja({super.key});
@@ -63,6 +66,35 @@ class DetalleCaja extends StatelessWidget {
 
                 Visibility(
                   visible: caja.estado == "ABIERTA",
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: OutlinedButton.icon(
+                        onPressed: () => mostrarDialogoInyeccionCapital(
+                          context,
+                          context.read<CajaCubit>(),
+                        ),
+                        icon: const Icon(
+                          Icons.add_circle_outline_rounded,
+                          size: 18,
+                        ),
+                        label: const Text('Agregar dinero a la caja'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primaryColor,
+                          side: BorderSide(color: AppTheme.primaryColor),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(11),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                Visibility(
+                  visible: caja.estado == "ABIERTA",
                   child: SizedBox(
                     width: double.infinity,
                     height: 44,
@@ -87,7 +119,15 @@ class DetalleCaja extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 18),
-                Center(child: TextButton(onPressed: () {}, child: Text("Ver movimientos"))),
+                Center(
+                  child: TextButton(
+                    onPressed: () => abrirMovimientosCaja(
+                      context,
+                      context.read<CajaCubit>(),
+                    ),
+                    child: const Text("Ver movimientos"),
+                  ),
+                ),
                 const SizedBox(height: 18),
 
                 Visibility(visible: state.showArqueo, child: _buildArqueo()),
@@ -380,6 +420,28 @@ class DetalleCaja extends StatelessWidget {
                   ),
                 ],
               ),
+              if (caja.estado == "ABIERTA") ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 40,
+                  child: OutlinedButton.icon(
+                    onPressed: () => mostrarDialogoGastoCaja(
+                      context,
+                      context.read<CajaCubit>(),
+                    ),
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Agregar gasto'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: const BorderSide(color: Colors.redAccent),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );
@@ -717,15 +779,4 @@ class DetalleCaja extends StatelessWidget {
     );
   }
 
-  Widget _infoRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 15, color: const Color(0xFF929BAB)),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(text, style: const TextStyle(color: Color(0xFF929BAB))),
-        ),
-      ],
-    );
-  }
 }

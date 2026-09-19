@@ -47,7 +47,10 @@ class PrestamoCubit extends Cubit<PrestamoState> {
   final montoController = TextEditingController();
   final interesController = TextEditingController();
   final seguroController = TextEditingController();
+  final seguroValorController = TextEditingController();
   final cuotasController = TextEditingController();
+
+  static const maxCuotas = 365;
 
   ///Eventos
   ///
@@ -60,8 +63,31 @@ class PrestamoCubit extends Cubit<PrestamoState> {
     emit(state.copyWith(cliente: c));
   }
 
+  /// Al elegir la frecuencia, las cuotas toman el valor por defecto de esa
+  /// frecuencia; el usuario puede modificarlas después.
   void onGetPeriodo(SCobroEntity p) {
+    cuotasController.text = p.cuotas?.toString() ?? '';
     emit(state.copyWith(periodoSeleccionado: p));
+  }
+
+  void restablecerCuotas() {
+    cuotasController.text = state.periodoSeleccionado?.cuotas?.toString() ?? '';
+    fechaFinal();
+  }
+
+  void onAplicaSeguro(bool aplica) {
+    emit(state.copyWith(aplicaSeguro: aplica));
+    if (aplica) recalcularSeguro();
+  }
+
+  /// Valor del seguro = monto × %. Se puede editar a mano; cambiar el monto
+  /// o el % lo vuelve a calcular.
+  void recalcularSeguro() {
+    final monto = int.tryParse(montoController.text) ?? 0;
+    final pct = num.tryParse(seguroController.text) ?? 0;
+    final valor = (monto * pct / 100).round();
+
+    seguroValorController.text = monto > 0 && pct > 0 ? '$valor' : '';
   }
 
   /// Una fecha inicial anterior a hoy marca el préstamo como existente
@@ -109,6 +135,7 @@ class PrestamoCubit extends Cubit<PrestamoState> {
     seguroController.value = seguroController.value.copyWith(
       text: Shared.getConfig!.configuracion.seguroDefault.toString(),
     );
+    recalcularSeguro();
     emit(state.copyWith(loading: false));
   }
 
@@ -121,19 +148,15 @@ class PrestamoCubit extends Cubit<PrestamoState> {
             .toInt();
     final cuota =
         ((int.parse(montoController.text) + interes) /
-                state.periodoSeleccionado!.cuotas!)
+                numeroCuotas)
             .toInt();
     final r = await _prestamosRepo.crear(
       dto: CrearPrestamoDto(
-        valorSeguro:
-            (int.parse(montoController.text) *
-                    (int.tryParse(seguroController.text) ?? 0) /
-                    100)
-                .toInt(),
+        valorSeguro: valorSeguro,
         clienteId: state.cliente!.id,
         monto: int.parse(montoController.text),
         interes: int.parse(interesController.text),
-        numeroCuotas: state.periodoSeleccionado!.cuotas!,
+        numeroCuotas: numeroCuotas,
         montoInteres: interes,
         valorCuota: cuota,
         frecuencia: state.periodoSeleccionado!.codigo!,
@@ -185,19 +208,15 @@ class PrestamoCubit extends Cubit<PrestamoState> {
             .toInt();
     final cuota =
         ((int.parse(montoController.text) + interes) /
-                state.periodoSeleccionado!.cuotas!)
+                numeroCuotas)
             .toInt();
     final r = await _prestamosRepo.crearHistorico(
       dto: CrearPrestamoDto(
         clienteId: state.cliente!.id,
-        valorSeguro:
-            (int.parse(montoController.text) *
-                    (int.tryParse(seguroController.text) ?? 0) /
-                    100)
-                .toInt(),
+        valorSeguro: valorSeguro,
         monto: int.parse(montoController.text),
         interes: int.parse(interesController.text),
-        numeroCuotas: state.periodoSeleccionado!.cuotas!,
+        numeroCuotas: numeroCuotas,
         montoInteres: interes,
         valorCuota: cuota,
         frecuencia: state.periodoSeleccionado!.codigo!,
@@ -325,7 +344,7 @@ class PrestamoCubit extends Cubit<PrestamoState> {
       return;
     }
 
-    final totalCuotas = periodo.cuotas ?? 0;
+    final totalCuotas = numeroCuotas;
 
     if (totalCuotas <= 0 || state.fechaInicial == null) {
       return;
@@ -388,9 +407,9 @@ class PrestamoCubit extends Cubit<PrestamoState> {
       return [];
     }
 
-    final cuotas = periodo.cuotas;
+    final cuotas = numeroCuotas;
 
-    if (cuotas == null || cuotas <= 0) {
+    if (cuotas <= 0) {
       return [];
     }
 
@@ -497,15 +516,36 @@ class PrestamoCubit extends Cubit<PrestamoState> {
     }).toList();
   }
 
+  /// Valor del seguro a cobrar: 0 si el seguro está desactivado
+  int get valorSeguro =>
+      state.aplicaSeguro ? (int.tryParse(seguroValorController.text) ?? 0) : 0;
+
+  /// Cuotas del préstamo: las de la frecuencia por defecto o las que editó el
+  /// usuario. 0 si no hay frecuencia o el valor no es válido.
+  int get numeroCuotas {
+    if (state.periodoSeleccionado == null) return 0;
+    final n = int.tryParse(cuotasController.text.trim()) ?? 0;
+    return n > 0 && n <= maxCuotas ? n : 0;
+  }
+
+  String? get cuotasError {
+    final texto = cuotasController.text.trim();
+    if (texto.isEmpty || numeroCuotas > 0) return null;
+    return 'Ingresa entre 1 y $maxCuotas cuotas';
+  }
+
   void clear() {
     emit(
       state.copyWith(
         limpiarCliente: true,
         limpiarPeriodo: true,
         isPrevious: false,
+        aplicaSeguro: true,
         fechaInicial: DateTime.now(),
       ),
     );
     montoController.clear();
+    cuotasController.clear();
+    seguroValorController.clear();
   }
 }

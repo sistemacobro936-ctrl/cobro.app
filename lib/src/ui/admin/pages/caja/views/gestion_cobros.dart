@@ -261,7 +261,7 @@ class _GestionCobrosState extends State<GestionCobros> {
                 trailing,
                 style: TextStyle(
                   color: trailingColor,
-                  fontSize: 12,
+                 
                   fontWeight: FontWeight.w800,
                 ),
               ),

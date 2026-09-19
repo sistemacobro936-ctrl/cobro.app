@@ -26,12 +26,17 @@ class _CrearPrestamoViewState extends State<CrearPrestamoView> {
         // ── Cálculos centralizados ──────────────────────────────
         final monto = int.tryParse(cubit.montoController.text) ?? 0;
         final interes = int.tryParse(cubit.interesController.text) ?? 0;
-        final seguro =
-            monto * int.tryParse(cubit.seguroController.text)!.toInt() / 100;
+        final seguro = cubit.valorSeguro;
+        final seguroPct = cubit.seguroController.text;
         final interesMonto = (monto * interes / 100).toInt();
         final total = monto + interesMonto;
-        final cuotas = state.periodoSeleccionado?.cuotas ?? 0;
+        final cuotas = cubit.numeroCuotas;
         final valorCuota = cuotas > 0 ? (total / cuotas).toInt() : 0;
+        final seguroLabel = !state.aplicaSeguro
+            ? 'Seguro (no aplica)'
+            : seguro == (monto * (num.tryParse(seguroPct) ?? 0) / 100).round()
+            ? 'Seguro ($seguroPct%)'
+            : 'Seguro (editado)';
         final canCreate = monto > 0 && valorCuota > 0;
 
         return Scaffold(
@@ -67,42 +72,26 @@ class _CrearPrestamoViewState extends State<CrearPrestamoView> {
                   controller: cubit.montoController,
                   keyboardType: TextInputType.number,
                   onChanged: (_) {
+                    cubit.recalcularSeguro();
                     setState(() {});
                   }, // refresca el BlocBuilder raíz
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: InputWidget.input(
-                        label: 'Interés (%)',
-                        hintText: '20',
-                        prefixIcon: Icons.percent_rounded,
-                        controller: cubit.interesController,
-                        keyboardType: TextInputType.number,
-                        onChanged: (_) {
-                          setState(() {});
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: InputWidget.input(
-                        label: 'Seguro (%)',
-                        hintText: '10',
-                        prefixIcon: Icons.security_outlined,
-                        controller: cubit.seguroController,
-                        keyboardType: TextInputType.number,
-                        onChanged: (_) => {setState(() {})},
-                      ),
-                    ),
-                  ],
+                InputWidget.input(
+                  label: 'Interés (%)',
+                  hintText: '20',
+                  prefixIcon: Icons.percent_rounded,
+                  controller: cubit.interesController,
+                  keyboardType: TextInputType.number,
+                  onChanged: (_) {
+                    setState(() {});
+                  },
                 ),
-                const SizedBox(height: 10),
-                _InfoMessage(
-                  icon: Icons.info_outline_rounded,
-                  text:
-                      'El seguro está configurado inicialmente en 10%, pero puede modificarse para este préstamo.',
+                const SizedBox(height: 16),
+                _InsuranceSection(
+                  state: state,
+                  cubit: cubit,
+                  onChanged: () => setState(() {}),
                 ),
                 const SizedBox(height: 24),
 
@@ -117,6 +106,12 @@ class _CrearPrestamoViewState extends State<CrearPrestamoView> {
                 ),
                 const SizedBox(height: 10),
                 _FrequencyDropdown(state: state, cubit: cubit),
+                const SizedBox(height: 16),
+                _CuotasField(
+                  state: state,
+                  cubit: cubit,
+                  onChanged: () => setState(() {}),
+                ),
                 const SizedBox(height: 28),
 
                 // ── Cobro ─────────────────────────────────────────
@@ -139,8 +134,8 @@ class _CrearPrestamoViewState extends State<CrearPrestamoView> {
                 _Summary(
                   monto: monto,
                   interesMonto: interesMonto,
-                  seguro: seguro.toInt(),
-                  seguroPct: cubit.seguroController.text,
+                  seguro: seguro,
+                  seguroLabel: seguroLabel,
                   interesPct: cubit.interesController.text,
                   total: total,
                   cuotas: cuotas,
@@ -149,13 +144,12 @@ class _CrearPrestamoViewState extends State<CrearPrestamoView> {
                 const SizedBox(height: 28),
 
                 // ── Preview ───────────────────────────────────────
-                if (state.periodoSeleccionado != null) ...[
-                  _SchedulePreview(state: state),
+                if (state.periodoSeleccionado != null && cuotas > 0) ...[
+                  _SchedulePreview(state: state, cuotas: cuotas),
                   const SizedBox(height: 30),
                 ],
                 const SizedBox(height: 14),
                 GestureDetector(
-                  
                   child: Row(
                     children: [
                       Icon(
@@ -297,7 +291,7 @@ class _Header extends StatelessWidget {
                 SizedBox(height: 4),
                 Text(
                   'Configure las condiciones del préstamo.',
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                  style: TextStyle(color: Colors.white70),
                 ),
               ],
             ),
@@ -369,6 +363,136 @@ class _InfoMessage extends StatelessWidget {
   }
 }
 
+class _InsuranceSection extends StatelessWidget {
+  const _InsuranceSection({
+    required this.state,
+    required this.cubit,
+    required this.onChanged,
+  });
+  final PrestamoState state;
+  final PrestamoCubit cubit;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final aplica = state.aplicaSeguro;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.black.withValues(alpha: .05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: () => cubit.onAplicaSeguro(!aplica),
+            borderRadius: BorderRadius.circular(10),
+            child: Row(
+              children: [
+                Checkbox(
+                  value: aplica,
+                  activeColor: AppTheme.primaryColor,
+                  onChanged: (v) => cubit.onAplicaSeguro(v ?? false),
+                ),
+                const Icon(
+                  Icons.security_outlined,
+                  size: 18,
+                  color: Color(0xFF687386),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Aplicar seguro',
+                    style: TextStyle(
+                      color: Color(0xFF202838),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (aplica) ...[
+            const SizedBox(height: 10),
+
+            InputWidget.input(
+              label: 'Valor del seguro',
+              hintText: '10',
+              prefixIcon: Icons.attach_money_rounded,
+              controller: cubit.seguroValorController,
+              keyboardType: TextInputType.number,
+              onChanged: (_) => onChanged(),
+            ),
+
+            const SizedBox(height: 10),
+            const _InfoMessage(
+              icon: Icons.info_outline_rounded,
+              text:
+                  'El valor se calcula con el % sobre el monto, pero puedes editarlo. Si cambias el monto o el %, se recalcula.',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CuotasField extends StatelessWidget {
+  const _CuotasField({
+    required this.state,
+    required this.cubit,
+    required this.onChanged,
+  });
+  final PrestamoState state;
+  final PrestamoCubit cubit;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final periodo = state.periodoSeleccionado;
+    final porDefecto = periodo?.cuotas;
+    final editado =
+        periodo != null && cubit.cuotasController.text != '${porDefecto ?? ''}';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        InputWidget.input(
+          label: 'Número de cuotas',
+          hintText: periodo == null
+              ? 'Seleccione una frecuencia'
+              : '$porDefecto',
+          prefixIcon: Icons.format_list_numbered_rounded,
+          controller: cubit.cuotasController,
+          keyboardType: TextInputType.number,
+          enabled: periodo != null,
+          errorText: cubit.cuotasError,
+          suffixIcon: editado ? Icons.restart_alt_rounded : null,
+          onSuffixPressed: () {
+            cubit.restablecerCuotas();
+            onChanged();
+          },
+          onChanged: (_) {
+            cubit.fechaFinal();
+            onChanged();
+          },
+        ),
+        if (periodo != null) ...[
+          const SizedBox(height: 10),
+          _InfoMessage(
+            icon: Icons.info_outline_rounded,
+            text:
+                'Por defecto son $porDefecto cuotas según la frecuencia ${periodo.nombre.toLowerCase()}, pero puedes modificarlas.',
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class _FrequencyDropdown extends StatefulWidget {
   const _FrequencyDropdown({required this.state, required this.cubit});
   final PrestamoState state;
@@ -425,7 +549,7 @@ class _ClientSelector extends StatelessWidget {
         final cubit = context.read<PrestamoCubit>();
         return GestureDetector(
           onTap: () async {
-            if(Shared.getIdClient.isNotEmpty)return ;
+            if (Shared.getIdClient.isNotEmpty) return;
             final clientes = Shared.getClientes ?? [];
             final seleccionado = await showSearch<DatumClEntity?>(
               context: context,
@@ -467,14 +591,14 @@ class _ClientEmpty extends StatelessWidget {
                 'Seleccionar cliente',
                 style: TextStyle(
                   color: Color(0xFF202838),
-                  fontSize: 13,
+
                   fontWeight: FontWeight.w700,
                 ),
               ),
               SizedBox(height: 3),
               Text(
                 'Busque por nombre o número de cédula',
-                style: TextStyle(color: Color(0xFF929BAB), fontSize: 11),
+                style: TextStyle(color: Color(0xFF929BAB)),
               ),
             ],
           ),
@@ -516,9 +640,10 @@ class _ClientSelected extends StatelessWidget {
             ],
           ),
         ),
-         Visibility(
+        Visibility(
           visible: Shared.getIdClient.isEmpty,
-          child: Icon(Icons.edit_outlined, size: 19, color: Color(0xFF8A93A3))),
+          child: Icon(Icons.edit_outlined, size: 19, color: Color(0xFF8A93A3)),
+        ),
       ],
     );
   }
@@ -607,7 +732,7 @@ class _CollectionConfig extends StatelessWidget {
                     SizedBox(height: 3),
                     Text(
                       'Configuración global',
-                      style: TextStyle(color: Color(0xFF929BAB), fontSize: 10),
+                      style: TextStyle(color: Color(0xFF929BAB)),
                     ),
                   ],
                 ),
@@ -691,48 +816,46 @@ class _StartDate extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.black.withValues(alpha: .05)),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F4FF),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.calendar_today_outlined,
-                color: Color(0xFF4164E8),
-                size: 20,
-              ),
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0F4FF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.calendar_today_outlined,
+                    color: Color(0xFF4164E8),
+                    size: 20,
+                  ),
+                ),
+                SizedBox(width: 10),
+                Text('Fecha de inicio'),
+              ],
             ),
             const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Fecha de inicio',
-                    style: TextStyle(color: Color(0xFF929BAB), fontSize: 10),
-                  ),
-                  SizedBox(height: 3),
-                  Text(
-                    'Seleccione la fecha de inicio del cobro',
-                    style: TextStyle(
-                      color: Color(0xFF202838),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+
+            SizedBox(height: 3),
+            Text(
+              'Seleccione la fecha de inicio del cobro',
+              style: TextStyle(
+                color: Color(0xFF202838),
+
+                fontWeight: FontWeight.w700,
               ),
             ),
+            SizedBox(height: 10),
             if (fecha != null)
               Text(
                 '${fecha.day}/${fecha.month}/${fecha.year}',
                 style: const TextStyle(
                   color: Color(0xFF4164E8),
-                  fontSize: 11,
+
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -761,7 +884,7 @@ class _Summary extends StatelessWidget {
     required this.monto,
     required this.interesMonto,
     required this.seguro,
-    required this.seguroPct,
+    required this.seguroLabel,
     required this.interesPct,
     required this.total,
     required this.cuotas,
@@ -769,7 +892,7 @@ class _Summary extends StatelessWidget {
   });
 
   final int monto, interesMonto, seguro, total, cuotas, valorCuota;
-  final String seguroPct, interesPct;
+  final String seguroLabel, interesPct;
 
   @override
   Widget build(BuildContext context) {
@@ -789,7 +912,7 @@ class _Summary extends StatelessWidget {
           const SizedBox(height: 10),
           _SummaryRow('Interés ($interesPct%)', '$interesMonto'),
           const SizedBox(height: 10),
-          _SummaryRow('Seguro ($seguroPct%)', '$seguro'),
+          _SummaryRow(seguroLabel, '$seguro'),
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Divider(color: Colors.white24),
@@ -815,16 +938,13 @@ class _SummaryRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(color: Colors.white60, fontSize: 12),
-          ),
+          child: Text(label, style: const TextStyle(color: Colors.white60)),
         ),
         Text(
           value,
           style: TextStyle(
             color: highlight ? const Color(0xFF7CFF6B) : Colors.white,
-            fontSize: 13,
+
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -834,8 +954,9 @@ class _SummaryRow extends StatelessWidget {
 }
 
 class _SchedulePreview extends StatelessWidget {
-  const _SchedulePreview({required this.state});
+  const _SchedulePreview({required this.state, required this.cuotas});
   final PrestamoState state;
+  final int cuotas;
 
   @override
   Widget build(BuildContext context) {
@@ -898,7 +1019,7 @@ class _SchedulePreview extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              'El pago total del préstamo se debe realizar en ${periodo.cuotas} ${periodo.cuotas == 1 ? 'cuota' : 'cuotas'}',
+              'El pago total del préstamo se debe realizar en $cuotas ${cuotas == 1 ? 'cuota' : 'cuotas'}',
               textAlign: TextAlign.justify,
               style: const TextStyle(
                 color: Color(0xFF687386),
@@ -939,7 +1060,7 @@ class _CalendarInfo extends StatelessWidget {
           value,
           style: const TextStyle(
             color: Color(0xFF202838),
-            fontSize: 12,
+        
             fontWeight: FontWeight.w800,
           ),
         ),

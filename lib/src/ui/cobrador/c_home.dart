@@ -313,14 +313,19 @@ class _CHomeState extends State<CHome> {
 
                     Row(
                       children: [
+                    
                         Expanded(
-                          child: _dato('Monto inicial', '\$ $montoInicial'),
-                        ),
-                        Expanded(
-                          child: _dato(
+                          child: _dato( 
                             'Cobrado hoy',
                             '\$ $cobrado',
                             color: Colors.green,
+                          ),
+                        ),
+                         Expanded(
+                          child: _dato(
+                            'Clientes asociados',
+                            '${ruta.cantidadClientes}',
+                            color: Colors.blue,
                           ),
                         ),
                       ],
@@ -347,45 +352,9 @@ class _CHomeState extends State<CHome> {
                       ],
                     ),
 
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        if (resumen != null)
-                          Expanded(
-                            child: _dato(
-                              'Pagos realizados',
-                              '${resumen.pagos?.length ?? 0}',
-                              color: Colors.blue,
-                            ),
-                          ),
-                        Expanded(
-                          child: _dato(
-                            'Clientes asociados',
-                            '${ruta.cantidadClientes}',
-                            color: Colors.blue,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
+                   
 
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _dato(
-                            'Monto esperado',
-                            '\$ $montoEsperado',
-                          ),
-                        ),
-                        Expanded(
-                          child: _dato(
-                            'Nivel de eficacia',
-                            '$eficacia%',
-                            color: Colors.blue,
-                          ),
-                        ),
-                      ],
-                    ),
+                    
                     const Divider(),
                   ],
                 ),

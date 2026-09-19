@@ -5,8 +5,10 @@ import 'package:personal/get_it.dart';
 import 'package:personal/src/common/utils/app_dialog_util.dart';
 import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/domain/dto/caja_dto.dart';
+import 'package:personal/src/domain/dto/gasto_dto.dart';
 import 'package:personal/src/domain/entities/caja_entity.dart';
 import 'package:personal/src/domain/entities/gasto_entity.dart';
+import 'package:personal/src/domain/entities/movimientos_caja_entity.dart';
 import 'package:personal/src/domain/entities/pago_ruta_entity.dart';
 import 'package:personal/src/domain/repository/caja_repo.dart';
 import 'package:personal/src/domain/repository/gastos_repo.dart';
@@ -170,6 +172,75 @@ class CajaCubit extends Cubit<CajaState> {
       },
     );
     emit(state.copyWith(loading: false));
+  }
+
+  /// Agrega dinero a la caja abierta y refresca su resumen
+  void inyectarCapital({required int valor, String? observacion}) async {
+    emit(state.copyWith(btnLoading: true));
+    final caja = state.cajas!;
+    final r = await _cajaRepo.inyectarCapital(
+      cajaId: caja.id,
+      valor: valor,
+      observacion: observacion,
+    );
+    emit(state.copyWith(btnLoading: false));
+
+    r.fold(
+      (l) {
+        AppDialogUtil.error(state.context, message: l.props[0].toString());
+      },
+      (r) {
+        AppDialogUtil.success(
+          state.context,
+          message: "Dinero agregado a la caja.",
+        );
+        listarCajar(rutaId: caja.rutaId);
+      },
+    );
+  }
+
+  /// Registra un gasto en la caja abierta y refresca su resumen
+  void crearGasto({
+    required String concepto,
+    required int valor,
+    String? observacion,
+  }) async {
+    emit(state.copyWith(btnLoading: true));
+    final caja = state.cajas!;
+    final r = await _gastoRepo.crearGasto(
+      dto: CrearGastoDto(
+        cajaId: caja.id,
+        concepto: concepto,
+        valor: valor,
+        observacion: observacion,
+      ),
+    );
+    emit(state.copyWith(btnLoading: false));
+
+    r.fold(
+      (l) {
+        AppDialogUtil.error(state.context, message: l.props[0].toString());
+      },
+      (r) {
+        AppDialogUtil.success(state.context, message: "Gasto registrado.");
+        listarCajar(rutaId: caja.rutaId);
+      },
+    );
+  }
+
+  /// Inyecciones de capital, pagos dobles y pagos menores de la caja
+  Future<void> movimientos() async {
+    emit(state.copyWith(loadingMovimientos: true));
+    final r = await _cajaRepo.movimientos(cajaId: state.cajas!.id);
+    r.fold(
+      (l) {
+        AppDialogUtil.error(state.context, message: l.props[0].toString());
+      },
+      (r) {
+        emit(state.copyWith(movimientos: r));
+      },
+    );
+    emit(state.copyWith(loadingMovimientos: false));
   }
 
   //navegacion

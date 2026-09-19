@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,7 +11,7 @@ class PrestamoCardView extends StatelessWidget {
     super.key,
     required this.client,
     required this.document,
-    required this.route,
+    required this.deuda,
     required this.amount,
     required this.installment,
     required this.paid,
@@ -24,7 +23,7 @@ class PrestamoCardView extends StatelessWidget {
 
   final String client;
   final String document;
-  final String route;
+  final String deuda;
   final String amount;
   final String installment;
   final String paid;
@@ -94,16 +93,16 @@ class PrestamoCardView extends StatelessWidget {
 
                     Text(
                       document,
-                      style: const TextStyle(color: Color(0xFF7D8797)),
+                    
                     ),
 
                     const SizedBox(height: 2),
 
                     Text(
-                      route,
+                      "Prestado: $deuda",
                       style: const TextStyle(
-                        color: Color(0xFF7D8797),
-                        fontSize: 11,
+                       
+                  
                       ),
                     ),
                   ],

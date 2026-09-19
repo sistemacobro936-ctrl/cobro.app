@@ -328,39 +328,7 @@ class DrawerCobrador extends StatelessWidget {
                 style: TextStyle(color: Color(0xFF687386), ),
               ),
 
-              if (hayResumen) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF5F7FC),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _resumenDato(
-                          'Cobrado hoy',
-                          '\$ $cobrado',
-                          Colors.green,
-                        ),
-                      ),
-                      Container(
-                        width: 1,
-                        height: 34,
-                        color: Colors.black.withValues(alpha: .06),
-                      ),
-                      Expanded(
-                        child: _resumenDato(
-                          'Gastos',
-                          '\$ $gastos',
-                          Colors.redAccent,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              
             ],
           ),
           actionsPadding: const EdgeInsets.fromLTRB(22, 12, 22, 22),

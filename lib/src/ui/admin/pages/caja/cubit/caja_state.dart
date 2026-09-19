@@ -14,6 +14,10 @@ class CajaState extends Equatable {
   final List<NoPagoRutaEntity>? noPagos;
   final bool showArqueo;
   final int diferencia;
+
+  /// null hasta que se consultan los movimientos de la caja
+  final MovimientosCajaEntity? movimientos;
+  final bool loadingMovimientos;
   const CajaState({
     required this.context,
     this.child = const SizedBox(),
@@ -26,6 +30,8 @@ class CajaState extends Equatable {
     this.noPagos,
     this.showArqueo = false,
     this.diferencia =0,
+    this.movimientos,
+    this.loadingMovimientos = false,
   });
 
   @override
@@ -40,7 +46,9 @@ class CajaState extends Equatable {
     pagos,
     noPagos,
     showArqueo,
-    diferencia
+    diferencia,
+    movimientos,
+    loadingMovimientos,
   ];
   CajaState copyWith({
     BuildContext? context,
@@ -54,6 +62,8 @@ class CajaState extends Equatable {
     List<NoPagoRutaEntity>? noPagos,
     bool? showArqueo,
     int? diferencia,
+    MovimientosCajaEntity? movimientos,
+    bool? loadingMovimientos,
   }) => CajaState(
     context: context ?? this.context,
     child: child ?? this.child,
@@ -66,5 +76,7 @@ class CajaState extends Equatable {
     noPagos: noPagos ?? this.noPagos,
     showArqueo: showArqueo ?? this.showArqueo,
     diferencia: diferencia ?? this.diferencia,
+    movimientos: movimientos ?? this.movimientos,
+    loadingMovimientos: loadingMovimientos ?? this.loadingMovimientos,
   );
 }

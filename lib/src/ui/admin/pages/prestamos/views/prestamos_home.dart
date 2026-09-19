@@ -51,8 +51,8 @@ class PrestamosHome extends StatelessWidget {
                         margin: EdgeInsets.only(top: 14),
                         child: PrestamoCardView(
                           client: e.cliente.nombres,
-                          document: 'CC ${e.cliente.cedula}',
-                          route: "",
+                          document: 'CC: ${e.cliente.cedula}',
+                          deuda: e.monto.toString(),
                           amount: '\$${e.deudaActual}',
                           installment: '\$${e.valorCuota}',
                           paid: 'Cobrar',

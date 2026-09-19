@@ -425,47 +425,6 @@ class ResumeHomeView extends StatelessWidget {
     );
   }
 
-  Widget _portfolioItem({
-    required IconData icon,
-    required String title,
-    required String value,
-    required Color color,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.10),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 17),
-        ),
-
-        const SizedBox(width: 9),
-
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                color: color,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            Text(
-              title,
-              style: const TextStyle(color: Colors.white60, fontSize: 11),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 
   // ============================================================
   // ACTIVIDAD
