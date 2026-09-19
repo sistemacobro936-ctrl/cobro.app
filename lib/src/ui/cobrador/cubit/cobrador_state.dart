@@ -9,6 +9,10 @@ class CobradorRState extends Equatable {
   final List<DatumREntity>? ruta;
   final List<DetalleRutaEntity>? clientes;
   final List<DetalleRutaEntity>? pagados;
+  final List<DetalleRutaEntity>? noPagados;
+
+  /// prestamoId → no pago registrado hoy
+  final Map<String, NoPagoRutaEntity> noPagosInfo;
   final List<DatumREntity>? resumenRuta;
 
   /// rutaId → cajaId. Vacío si la ruta no tiene caja abierta.
@@ -29,6 +33,8 @@ class CobradorRState extends Equatable {
     this.child = const SizedBox(),
     this.clientes,
     this.pagados,
+    this.noPagados,
+    this.noPagosInfo = const {},
     this.resumenRuta,
     this.cajaPorRuta = const {},
     this.gastosPorRuta = const {},
@@ -50,6 +56,8 @@ class CobradorRState extends Equatable {
     child,
     clientes ?? [],
     pagados ?? [],
+    noPagados ?? [],
+    noPagosInfo,
     resumenRuta ?? [],
     formGasto,
     cajaPorRuta,
@@ -65,6 +73,8 @@ class CobradorRState extends Equatable {
     Widget? child,
     List<DetalleRutaEntity>? clientes,
     List<DetalleRutaEntity>? pagados,
+    List<DetalleRutaEntity>? noPagados,
+    Map<String, NoPagoRutaEntity>? noPagosInfo,
     List<DatumREntity>? resumenRuta,
     Map<String, String>? cajaPorRuta,
     Map<String, List<GastoElementEntity>>? gastosPorRuta,
@@ -78,6 +88,8 @@ class CobradorRState extends Equatable {
     child: child ?? this.child,
     clientes: clientes ?? this.clientes,
     pagados: pagados ?? this.pagados,
+    noPagados: noPagados ?? this.noPagados,
+    noPagosInfo: noPagosInfo ?? this.noPagosInfo,
     resumenRuta: resumenRuta ?? this.resumenRuta,
     cajaPorRuta: cajaPorRuta ?? this.cajaPorRuta,
     gastosPorRuta: gastosPorRuta ?? this.gastosPorRuta,

@@ -7,8 +7,10 @@ import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/domain/dto/caja_dto.dart';
 import 'package:personal/src/domain/entities/caja_entity.dart';
 import 'package:personal/src/domain/entities/gasto_entity.dart';
+import 'package:personal/src/domain/entities/pago_ruta_entity.dart';
 import 'package:personal/src/domain/repository/caja_repo.dart';
 import 'package:personal/src/domain/repository/gastos_repo.dart';
+import 'package:personal/src/domain/repository/pago_repo.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/abrir_caja_view.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/detalle_caja.dart';
 
@@ -20,6 +22,7 @@ class CajaCubit extends Cubit<CajaState> {
   ///
   final _cajaRepo = sl<CajaRepo>();
   final _gastoRepo = sl<GastosRepo>();
+  final _pagoRepo = sl<PagoRepo>();
 
   ///Constructor
   CajaCubit({required BuildContext context})
@@ -52,10 +55,8 @@ class CajaCubit extends Cubit<CajaState> {
   ///
   void listarCajar({required String rutaId}) async {
     emit(state.copyWith(loading: true, showArqueo: false));
-    final r = await _cajaRepo.obtenerCajas(
-      rutaId: rutaId,
-      fecha: DateUtil.formatDate(DateTime.now()),
-    );
+    final fecha = DateUtil.formatDate(DateTime.now());
+    final r = await _cajaRepo.obtenerCajas(rutaId: rutaId, fecha: fecha);
     r.fold(
       (l) {
         emit(state.copyWith(child: AbrirCajaView(rutaId: rutaId)));
@@ -67,6 +68,7 @@ class CajaCubit extends Cubit<CajaState> {
           emit(state.copyWith(cajas: r.data!.first));
           emit(state.copyWith(child: DetalleCaja()));
           _gastosCaja();
+          _gestionCobros(rutaId: rutaId, fecha: fecha);
         }
       },
     );
@@ -109,6 +111,41 @@ class CajaCubit extends Cubit<CajaState> {
       },
     );
     emit(state.copyWith(loading: false));
+  }
+
+  /// Quiénes pagaron y quiénes no en la fecha de la caja
+  Future<void> _gestionCobros({
+    required String rutaId,
+    required String fecha,
+  }) async {
+    final resultados = await Future.wait([
+      _pagoRepo.pagosRuta(rutaId: rutaId, fecha: fecha),
+      _pagoRepo.noPagosRuta(rutaId: rutaId, fecha: fecha),
+    ]);
+
+    var huboError = false;
+
+    (resultados[0]).fold(
+      (l) {
+        huboError = true;
+        emit(state.copyWith(pagos: []));
+      },
+      (r) => emit(state.copyWith(pagos: r as List<PagoRutaEntity>)),
+    );
+    (resultados[1]).fold(
+      (l) {
+        huboError = true;
+        emit(state.copyWith(noPagos: []));
+      },
+      (r) => emit(state.copyWith(noPagos: r as List<NoPagoRutaEntity>)),
+    );
+
+    if (huboError) {
+      AppDialogUtil.error(
+        state.context,
+        message: "Se presentó un error al listar los pagos y no pagos.",
+      );
+    }
   }
 
   void cerrar() async {

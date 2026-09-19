@@ -325,7 +325,7 @@ class DrawerCobrador extends StatelessWidget {
               const Text(
                 'Vas a cerrar tu sesión. Para volver a cobrar tendrás que iniciar sesión de nuevo.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF687386), fontSize: 13),
+                style: TextStyle(color: Color(0xFF687386), ),
               ),
 
               if (hayResumen) ...[

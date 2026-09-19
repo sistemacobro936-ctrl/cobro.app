@@ -5,10 +5,13 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:personal/get_it.dart';
 import 'package:personal/src/common/utils/app_dialog_util.dart';
+import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/domain/dto/gasto_dto.dart';
+import 'package:personal/src/domain/dto/no_pago_dto.dart';
 import 'package:personal/src/domain/dto/pago_dto.dart';
 import 'package:personal/src/domain/entities/detalle_ruta_entity.dart';
 import 'package:personal/src/domain/entities/gasto_entity.dart';
+import 'package:personal/src/domain/entities/pago_ruta_entity.dart';
 import 'package:personal/src/domain/entities/ruta_entity.dart';
 import 'package:personal/src/domain/repository/gastos_repo.dart';
 import 'package:personal/src/domain/repository/pago_repo.dart';
@@ -82,9 +85,29 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     if (!tieneRutas) return;
     emit(state.copyWith(loading: true));
 
-    final idRutas = state.ruta!.map((e) => e.id).join(',');
+    final rutas = state.ruta!;
+    final idRutas = rutas.map((e) => e.id).join(',');
+    final fecha = DateUtil.formatDate(DateTime.now());
+
+    // Los no pagos de hoy se piden en paralelo, una petición por ruta
+    final noPagosFuture = Future.wait(
+      rutas.map((ruta) => _pagoRepo.noPagosRuta(rutaId: ruta.id, fecha: fecha)),
+    );
 
     final r = await _rutaRepo.detalleRuta(idRuta: idRutas, esCobro: true);
+
+    final noPagosInfo = <String, NoPagoRutaEntity>{};
+    for (final resultado in await noPagosFuture) {
+      resultado.fold(
+        // Si falla no se bloquea el cobro: solo no se separan los no pagados
+        (l) => log("no-pagos: $l"),
+        (lista) {
+          for (final n in lista) {
+            noPagosInfo[n.prestamoId] = n;
+          }
+        },
+      );
+    }
 
     r.fold(
       (l) {
@@ -93,6 +116,7 @@ class CobradorRCubit extends Cubit<CobradorRState> {
       (clientes) {
         final List<DetalleRutaEntity> pendientes = [];
         final List<DetalleRutaEntity> pagados = [];
+        final List<DetalleRutaEntity> noPagados = [];
 
         for (final item in clientes) {
           final prestamos = item.cliente.prestamos;
@@ -102,22 +126,34 @@ class CobradorRCubit extends Cubit<CobradorRState> {
             continue;
           }
 
-          final tieneAlgunoPagado = prestamos.any(
-            (prestamo) => prestamo.yaPago == true,
-          );
-          final tieneAlgunoPendiente = prestamos.any(
-            (prestamo) => prestamo.yaPago != true,
-          );
+          bool tienePagado = false;
+          bool tieneNoPagado = false;
+          bool tienePendiente = false;
 
-          if (tieneAlgunoPagado) {
-            pagados.add(item);
+          for (final prestamo in prestamos) {
+            if (prestamo.yaPago == true) {
+              tienePagado = true;
+            } else if (noPagosInfo.containsKey(prestamo.id)) {
+              // Registrado como no pago hoy: ya no es "pendiente"
+              tieneNoPagado = true;
+            } else {
+              tienePendiente = true;
+            }
           }
-          if (tieneAlgunoPendiente) {
-            pendientes.add(item);
-          }
+
+          if (tienePagado) pagados.add(item);
+          if (tieneNoPagado) noPagados.add(item);
+          if (tienePendiente) pendientes.add(item);
         }
 
-        emit(state.copyWith(clientes: pendientes, pagados: pagados));
+        emit(
+          state.copyWith(
+            clientes: pendientes,
+            pagados: pagados,
+            noPagados: noPagados,
+            noPagosInfo: noPagosInfo,
+          ),
+        );
 
         onEventChild(Clientes());
       },
@@ -187,6 +223,50 @@ class CobradorRCubit extends Cubit<CobradorRState> {
       },
     );
     emit(state.copyWith(btnLoading: false));
+  }
+
+  void noPago({
+    required String prestamoId,
+    required MotivoNoPago motivo,
+    String? observacion,
+    DateTime? fechaPromesa,
+  }) async {
+    emit(state.copyWith(btnLoading: true));
+    final r = await _pagoRepo.noPago(
+      dto: NoPagoDto(
+        prestamoId: prestamoId,
+        motivo: motivo,
+        observacion: observacion,
+        fechaPromesa: fechaPromesa,
+      ),
+    );
+    r.fold(
+      (l) {
+        AppDialogUtil.error(state.context, message: l.props[0].toString());
+      },
+      (r) {
+        clientesRuta();
+      },
+    );
+    emit(state.copyWith(btnLoading: false));
+  }
+
+  /// Revierte un pago y refresca el resumen y la lista de clientes
+  Future<bool> revertirPago({required String pagoId}) async {
+    emit(state.copyWith(btnLoading: true));
+    final r = await _pagoRepo.revertirPago(idPago: pagoId);
+    emit(state.copyWith(btnLoading: false));
+
+    final ok = r.fold((l) {
+      AppDialogUtil.error(state.context, message: l.props[0].toString());
+      return false;
+    }, (_) => true);
+
+    if (ok) {
+      await resumenRuta();
+      clientesRuta();
+    }
+    return ok;
   }
 
   void crearGasto({required String idCaja}) async {

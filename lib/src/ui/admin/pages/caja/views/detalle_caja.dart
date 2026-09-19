@@ -8,6 +8,7 @@ import 'package:personal/src/domain/entities/caja_entity.dart';
 import 'package:personal/src/ui/admin/pages/caja/cubit/caja_cubit.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/dialogo_arqueo.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/dialogo_cerrar_caja.dart';
+import 'package:personal/src/ui/admin/pages/caja/views/gestion_cobros.dart';
 
 class DetalleCaja extends StatelessWidget {
   DetalleCaja({super.key});
@@ -45,6 +46,10 @@ class DetalleCaja extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 _buildResumen(),
+
+                const SizedBox(height: 18),
+
+                const GestionCobros(),
 
                 const SizedBox(height: 18),
 
@@ -258,7 +263,7 @@ class DetalleCaja extends StatelessWidget {
                 ),
               ),
               Text(
-                '\$ ${caja.montoEsperado + caja.cobrado} ',
+                '\$ ${caja.montoEsperado} ',
                 style: TextStyle(
                   color: AppTheme.primaryColor,
                   fontSize: 20,

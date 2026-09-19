@@ -4,12 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
+import 'package:personal/src/common/utils/date_util.dart';
+import 'package:personal/src/domain/dto/no_pago_dto.dart';
 import 'package:personal/src/domain/entities/detalle_ruta_entity.dart';
+import 'package:personal/src/domain/entities/pago_entity.dart';
+import 'package:personal/src/domain/entities/pago_ruta_entity.dart';
 import 'package:personal/src/domain/entities/prestamo_entity.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/views/cobrar.dart';
+import 'package:personal/src/ui/admin/pages/prestamos/views/pagos.dart';
 import 'package:personal/src/ui/cobrador/c_home.dart';
 import 'package:personal/src/ui/cobrador/cubit/cobrador_cubit.dart';
 import 'package:personal/src/ui/widgets/btn_widget.dart';
+import 'package:personal/src/ui/widgets/input_widget.dart';
 
 class Clientes extends StatelessWidget {
   const Clientes({super.key});
@@ -22,9 +28,12 @@ class Clientes extends StatelessWidget {
 
         final clientes = state.clientes ?? [];
         final clientesPagados = state.pagados ?? [];
+        final clientesNoPagados = state.noPagados ?? [];
 
-        // Estado completamente vacío: nada pendiente y nada pagado hoy.
-        if (clientes.isEmpty && clientesPagados.isEmpty) {
+        // Estado completamente vacío: nada pendiente, pagado ni no pagado hoy.
+        if (clientes.isEmpty &&
+            clientesPagados.isEmpty &&
+            clientesNoPagados.isEmpty) {
           return Scaffold(
             backgroundColor: const Color(0xFFF7F8FC),
             appBar: _appBar(c),
@@ -43,14 +52,19 @@ class Clientes extends StatelessWidget {
         );
 
         return DefaultTabController(
-          length: 2,
-          initialIndex: clientes.isEmpty ? 1 : 0,
+          length: 3,
+          initialIndex: clientes.isNotEmpty
+              ? 0
+              : clientesPagados.isNotEmpty
+              ? 1
+              : 2,
           child: Scaffold(
             backgroundColor: const Color(0xFFF7F8FC),
             appBar: _appBar(
               c,
               pendientesCount: clientes.length,
               pagadosCount: clientesPagados.length,
+              noPagadosCount: clientesNoPagados.length,
             ),
             body: TabBarView(
               children: [
@@ -62,6 +76,10 @@ class Clientes extends StatelessWidget {
                   onCobrar: (detalle) => _onCobrar(context, c, detalle),
                 ),
                 _PagadosTab(clientesPagados: clientesPagados),
+                _NoPagadosTab(
+                  clientesNoPagados: clientesNoPagados,
+                  noPagosInfo: state.noPagosInfo,
+                ),
               ],
             ),
           ),
@@ -74,8 +92,12 @@ class Clientes extends StatelessWidget {
     CobradorRCubit c, {
     int? pendientesCount,
     int? pagadosCount,
+    int? noPagadosCount,
   }) {
-    final hasTabs = pendientesCount != null && pagadosCount != null;
+    final hasTabs =
+        pendientesCount != null &&
+        pagadosCount != null &&
+        noPagadosCount != null;
 
     return AppBar(
       leading: IconButton(
@@ -107,6 +129,7 @@ class Clientes extends StatelessWidget {
               tabs: [
                 Tab(text: 'Pendientes ($pendientesCount)'),
                 Tab(text: 'Pagados ($pagadosCount)'),
+                Tab(text: 'No pagados ($noPagadosCount)'),
               ],
             )
           : null,
@@ -325,18 +348,6 @@ class _ResumenCard extends StatelessWidget {
               icon: Icons.groups_outlined,
               label: 'Clientes por cobrar',
               value: '$totalClientes',
-            ),
-          ),
-          Container(
-            width: 1,
-            height: 36,
-            color: Colors.white.withValues(alpha: .25),
-          ),
-          Expanded(
-            child: _ResumenItem(
-              icon: Icons.account_balance_wallet_outlined,
-              label: 'Total pendiente',
-              value: '\$ $totalPendiente',
             ),
           ),
         ],
@@ -619,6 +630,7 @@ Widget _itemPrestamo(
   BuildContext context,
   String clienteNombre,
   DatumPEntity prestamo,
+  {bool showNoPago= true}
 ) {
   return InkWell(
     borderRadius: BorderRadius.circular(14),
@@ -629,6 +641,7 @@ Widget _itemPrestamo(
 
             showCobroBottomSheet(
               context,
+              showNPago: showNoPago,
               clienteNombre: clienteNombre,
               cuota: prestamo.valorCuota,
               deudaActual: prestamo.deudaActual,
@@ -636,6 +649,14 @@ Widget _itemPrestamo(
                 context.read<CobradorRCubit>().pagar(
                   prestamoId: prestamo.id,
                   valorPago: int.parse(value),
+                );
+              },
+              onNoPago: (data) {
+                context.read<CobradorRCubit>().noPago(
+                  prestamoId: prestamo.id,
+                  motivo: data.motivo,
+                  observacion: data.observacion,
+                  fechaPromesa: data.fechaPromesa,
                 );
               },
             );
@@ -722,13 +743,29 @@ Widget _itemPrestamo(
 // TAB: PAGADOS
 // ============================================================
 
-class _PagadosTab extends StatelessWidget {
+class _PagadosTab extends StatefulWidget {
   final List<DetalleRutaEntity> clientesPagados;
 
   const _PagadosTab({required this.clientesPagados});
 
   @override
+  State<_PagadosTab> createState() => _PagadosTabState();
+}
+
+class _PagadosTabState extends State<_PagadosTab> {
+  final _ccController = TextEditingController();
+  String _filtroCc = '';
+
+  @override
+  void dispose() {
+    _ccController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final clientesPagados = widget.clientesPagados;
+
     if (clientesPagados.isEmpty) {
       return Center(
         child: Padding(
@@ -770,9 +807,29 @@ class _PagadosTab extends StatelessWidget {
       );
     }
 
+    // Filtro por cédula: coincide si la CC contiene lo escrito
+    final filtrados = _filtroCc.isEmpty
+        ? clientesPagados
+        : clientesPagados
+              .where((d) => d.cliente.cedula.contains(_filtroCc))
+              .toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        InputWidget.input(
+          label: 'Buscar por CC',
+          controller: _ccController,
+          prefixIcon: Icons.search_rounded,
+          keyboardType: TextInputType.number,
+          suffixIcon: _filtroCc.isEmpty ? null : Icons.close_rounded,
+          onSuffixPressed: () {
+            _ccController.clear();
+            setState(() => _filtroCc = '');
+          },
+          onChanged: (value) => setState(() => _filtroCc = value.trim()),
+        ),
+        const SizedBox(height: 16),
         Row(
           children: [
             const Expanded(
@@ -785,11 +842,20 @@ class _PagadosTab extends StatelessWidget {
                 ),
               ),
             ),
-            _CountPill(count: clientesPagados.length, color: Colors.green),
+            _CountPill(count: filtrados.length, color: Colors.green),
           ],
         ),
         const SizedBox(height: 10),
-        ...clientesPagados.map(
+        if (filtrados.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 24),
+            child: Text(
+              'Ningún cliente pagado coincide con esa cédula.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Color(0xFF929BAB)),
+            ),
+          ),
+        ...filtrados.map(
           (detalle) => Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: _ClientePagadoCard(detalle: detalle),
@@ -808,6 +874,10 @@ class _ClientePagadoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cliente = detalle;
+    final pagos = [
+      for (final prestamo in detalle.cliente.prestamos ?? <DatumPEntity>[])
+        ...prestamo.pagos,
+    ];
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -842,7 +912,6 @@ class _ClientePagadoCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF202838),
                       ),
@@ -850,6 +919,299 @@ class _ClientePagadoCard extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       'CC: ${cliente.cliente.cedula}',
+                      style: const TextStyle(color: Color(0xFF929BAB)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Pagado',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.green,
+                ),
+              ),
+            ],
+          ),
+          if (pagos.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            const Divider(height: 1),
+            const SizedBox(height: 6),
+            ...pagos.map((pago) => _PagoRow(pago: pago)),
+          ],
+          Center(
+            child: TextButton(
+              onPressed: () {
+                _onCobrar(context, context.read<CobradorRCubit>(), cliente, showNoPago: false);
+              },
+              child: Text("Volver a cobrar", ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Un pago del cliente, con la opción de revertirlo si es de hoy
+class _PagoRow extends StatefulWidget {
+  final PagoEntity pago;
+
+  const _PagoRow({required this.pago});
+
+  @override
+  State<_PagoRow> createState() => _PagoRowState();
+}
+
+class _PagoRowState extends State<_PagoRow> {
+  bool _loading = false;
+
+  bool get _reversado => widget.pago.estado == 'REVERSADO';
+
+  /// Solo se pueden revertir los pagos aplicados del día
+  bool get _puedeRevertir {
+    final fecha = widget.pago.fechaPago;
+    if (_reversado || fecha == null) return false;
+    return DateUtil.formatDate(fecha) == DateUtil.formatDate(DateTime.now());
+  }
+
+  Future<void> _revertir() async {
+    final cubit = context.read<CobradorRCubit>();
+    final confirmo = await confirmarReversionPago(context);
+    if (!confirmo) return;
+
+    setState(() => _loading = true);
+    await cubit.revertirPago(pagoId: widget.pago.id);
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pago = widget.pago;
+    final color = _reversado ? const Color(0xFFE05252) : Colors.green;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(
+            _reversado ? Icons.undo_rounded : Icons.check_circle_rounded,
+            size: 18,
+            color: color,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              [
+                if (pago.fechaPago != null)
+                  DateUtil.formatDate(pago.fechaPago!),
+                if (_reversado) 'Reversado',
+              ].join(' · '),
+              style: const TextStyle(color: Color(0xFF929BAB)),
+            ),
+          ),
+          Text(
+            '\$${pago.valor}',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: _reversado ? color : const Color(0xFF202838),
+              decoration: _reversado ? TextDecoration.lineThrough : null,
+            ),
+          ),
+          if (_puedeRevertir) ...[
+            const SizedBox(width: 8),
+            _loading
+                ? const SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: Padding(
+                      padding: EdgeInsets.all(5),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFFE05252),
+                      ),
+                    ),
+                  )
+                : Tooltip(
+                    message: 'Revertir pago',
+                    child: InkWell(
+                      onTap: _revertir,
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF1F1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.undo_rounded,
+                          color: Color(0xFFE05252),
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+// TAB: NO PAGADOS
+// ============================================================
+
+class _NoPagadosTab extends StatelessWidget {
+  final List<DetalleRutaEntity> clientesNoPagados;
+  final Map<String, NoPagoRutaEntity> noPagosInfo;
+
+  const _NoPagadosTab({
+    required this.clientesNoPagados,
+    required this.noPagosInfo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (clientesNoPagados.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(30),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: .08),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Icon(
+                  Icons.money_off_rounded,
+                  size: 34,
+                  color: Color(0xFF929BAB),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Sin no pagos registrados',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF202838),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Los clientes que marques como "No pagó" aparecerán aquí.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Color(0xFF929BAB)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Clientes que no pagaron',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF202838),
+                ),
+              ),
+            ),
+            _CountPill(
+              count: clientesNoPagados.length,
+              color: Colors.redAccent,
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        ...clientesNoPagados.map((detalle) {
+          // El no pago del primer préstamo del cliente que lo tenga registrado
+          final info = (detalle.cliente.prestamos ?? [])
+              .map((p) => noPagosInfo[p.id])
+              .whereType<NoPagoRutaEntity>()
+              .firstOrNull;
+
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _ClienteNoPagoCard(detalle: detalle, info: info),
+          );
+        }),
+      ],
+    );
+  }
+}
+
+class _ClienteNoPagoCard extends StatelessWidget {
+  final DetalleRutaEntity detalle;
+  final NoPagoRutaEntity? info;
+
+  const _ClienteNoPagoCard({required this.detalle, required this.info});
+
+  @override
+  Widget build(BuildContext context) {
+    final cliente = detalle.cliente;
+    final detalleTexto = <String>[
+      if (info != null && info!.fechaPromesa != null)
+        'Promete pagar: ${DateUtil.formatDate(info!.fechaPromesa!)}',
+      if (info != null && info!.observacion.isNotEmpty) info!.observacion,
+    ];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: Colors.redAccent.withValues(alpha: .15)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.redAccent.withValues(alpha: .08),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(
+                  Icons.cancel_outlined,
+                  color: Colors.redAccent,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${cliente.nombres} ${cliente.apellidos}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF202838),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'CC: ${cliente.cedula} · \$ ${detalle.deudaActual}',
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFF929BAB),
@@ -859,22 +1221,37 @@ class _ClientePagadoCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text(
-                'Pagado',
-                style: TextStyle(
+              Text(
+                info == null ? 'No pagó' : MotivoNoPago.labelDe(info!.motivo),
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: Colors.green,
+                  color: Colors.redAccent,
                 ),
               ),
             ],
           ),
+          if (detalleTexto.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                detalleTexto.join(' · '),
+                style: const TextStyle(fontSize: 12, color: Color(0xFF687386)),
+              ),
+            ),
+          ],
           Center(
             child: TextButton(
               onPressed: () {
-                _onCobrar(context, context.read<CobradorRCubit>(), cliente);
+                _onCobrar(
+                  context,
+                  context.read<CobradorRCubit>(),
+                  detalle,
+                  showNoPago: false,
+                );
               },
-              child: Text("Volver a cobrar"),
+              child: const Text('Volver a cobrar'),
             ),
           ),
         ],
@@ -883,10 +1260,16 @@ class _ClientePagadoCard extends StatelessWidget {
   }
 }
 
-void _onCobrar(BuildContext context, CobradorRCubit c, DetalleRutaEntity   cliente) {
+void _onCobrar(
+  BuildContext context,
+  CobradorRCubit c,
+  DetalleRutaEntity cliente, {
+  bool showNoPago = true,
+}) {
   if (cliente.cliente.prestamos!.length == 1) {
     showCobroBottomSheet(
       context,
+      showNPago: showNoPago,
       clienteNombre: cliente.cliente.nombres,
       cuota: cliente.cliente.prestamos!.first.valorCuota,
       deudaActual: cliente.cliente.prestamos!.first.deudaActual,
@@ -894,6 +1277,14 @@ void _onCobrar(BuildContext context, CobradorRCubit c, DetalleRutaEntity   clien
         c.pagar(
           prestamoId: cliente.cliente.prestamos!.first.id,
           valorPago: int.parse(value),
+        );
+      },
+      onNoPago: (data) {
+        c.noPago(
+          prestamoId: cliente.cliente.prestamos!.first.id,
+          motivo: data.motivo,
+          observacion: data.observacion,
+          fechaPromesa: data.fechaPromesa,
         );
       },
     );
@@ -910,9 +1301,11 @@ void _showSeleccionPrestamo(
   BuildContext context,
   String clienteNombre,
   List<DatumPEntity> prestamos,
+{bool showNoPago =true}
 ) {
   showModalBottomSheet(
     context: context,
+    
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (_) {
@@ -952,7 +1345,7 @@ void _showSeleccionPrestamo(
             ),
             const SizedBox(height: 18),
             ...prestamos.map(
-              (prestamo) => _itemPrestamo(context, clienteNombre, prestamo),
+              (prestamo) => _itemPrestamo(context, clienteNombre, prestamo, showNoPago:showNoPago),
             ),
             const SizedBox(height: 48),
           ],

@@ -8,6 +8,10 @@ class CajaState extends Equatable {
   final bool btnEnabled;
   final DatumCajaEntity? cajas;
   final List<GastoElementEntity>? gastos;
+
+  /// null mientras se cargan
+  final List<PagoRutaEntity>? pagos;
+  final List<NoPagoRutaEntity>? noPagos;
   final bool showArqueo;
   final int diferencia;
   const CajaState({
@@ -18,6 +22,8 @@ class CajaState extends Equatable {
     this.btnEnabled = false,
     this.cajas,
     this.gastos,
+    this.pagos,
+    this.noPagos,
     this.showArqueo = false,
     this.diferencia =0,
   });
@@ -31,6 +37,8 @@ class CajaState extends Equatable {
     child,
     cajas,
     gastos,
+    pagos,
+    noPagos,
     showArqueo,
     diferencia
   ];
@@ -42,6 +50,8 @@ class CajaState extends Equatable {
     bool? btnEnabled,
     DatumCajaEntity? cajas,
     List<GastoElementEntity>? gastos,
+    List<PagoRutaEntity>? pagos,
+    List<NoPagoRutaEntity>? noPagos,
     bool? showArqueo,
     int? diferencia,
   }) => CajaState(
@@ -52,6 +62,8 @@ class CajaState extends Equatable {
     cajas: cajas ?? this.cajas,
     btnEnabled: btnEnabled ?? this.btnEnabled,
     gastos: gastos ?? this.gastos,
+    pagos: pagos ?? this.pagos,
+    noPagos: noPagos ?? this.noPagos,
     showArqueo: showArqueo ?? this.showArqueo,
     diferencia: diferencia ?? this.diferencia,
   );

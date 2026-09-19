@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:personal/src/common/theme/theme.dart';
+import 'package:personal/src/ui/admin/pages/prestamos/views/no_pago.dart';
 import 'package:personal/src/ui/widgets/widgets.dart';
 
 Future<void> showCobroBottomSheet(
@@ -7,8 +8,9 @@ Future<void> showCobroBottomSheet(
   required String clienteNombre,
   required int deudaActual,
   required int cuota,
+  bool showNPago = true,
   required Function(String value) onConfirmar,
-  VoidCallback? onNoPago,
+  void Function(NoPagoData data)? onNoPago,
 }) {
   final valorController = TextEditingController(text: cuota.toString());
 
@@ -97,34 +99,38 @@ Future<void> showCobroBottomSheet(
 
                       // No pagó: pequeño y arriba, lejos del botón principal
                       // para no tocarlo por accidente
-                      TextButton(
-                        onPressed: loading
-                            ? null
-                            : () {
-                                onNoPago?.call();
-                                Navigator.pop(context);
-                              },
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.red.shade400,
-                          minimumSize: Size.zero,
-                          side: BorderSide(
-                            color: Colors.red.shade400,
-                            width: 1,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w600,
+                      if (onNoPago != null)
+                        Visibility(
+                          visible: showNPago,
+                          child: TextButton(
+                            onPressed: loading
+                                ? null
+                                : () async {
+                                    final data = await showNoPagoBottomSheet(
+                                      context,
+                                      clienteNombre: clienteNombre,
+                                    );
+                                    if (data == null) return;
+                          
+                                    onNoPago(data);
+                                    if (context.mounted) Navigator.pop(context);
+                                  },
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red.shade400,
+                              minimumSize: Size.zero,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              textStyle: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            child: const Text('No pagó'),
                           ),
                         ),
-                        child: const Text('No pagó'),
-                      ),
                     ],
                   ),
 

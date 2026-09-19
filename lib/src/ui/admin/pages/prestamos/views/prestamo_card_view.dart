@@ -171,6 +171,22 @@ class PrestamoCardView extends StatelessWidget {
                               }
                             });
                       },
+                      onNoPago: (data) {
+                        context
+                            .read<HomeCubit>()
+                            .noPago(
+                              id: id,
+                              motivo: data.motivo,
+                              observacion: data.observacion,
+                              fechaPromesa: data.fechaPromesa,
+                            )
+                            .then((e) {
+                              if (e) {
+                                // ignore: use_build_context_synchronously
+                                context.read<PrestamoCubit>().listarPrestamo();
+                              }
+                            });
+                      },
                     );
                   },
                   child: _loanInfo(

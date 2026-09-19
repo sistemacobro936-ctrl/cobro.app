@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/src/common/theme/theme.dart';
+import 'package:personal/src/common/utils/money_util.dart';
+import 'package:personal/src/domain/entities/dashboard_entity.dart';
 import 'package:personal/src/ui/admin/pages/home/cubit/home_cubit.dart';
+import 'package:personal/src/ui/admin/pages/home/views/actividad_item.dart';
+import 'package:personal/src/ui/admin/pages/home/views/actividad_page.dart';
 import 'package:personal/src/ui/widgets/widgets.dart';
 
 class ResumeHomeView extends StatelessWidget {
@@ -9,54 +13,112 @@ class ResumeHomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: const Color(0xFFF7F8FC),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _header(),
+    return BlocBuilder<HomeCubit, HomeState>(
+      builder: (context, state) {
+        final d = state.dashboard;
 
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
+        return Container(
+          color: const Color(0xFFF7F8FC),
+          child: SafeArea(
+            child: RefreshIndicator(
+              onRefresh: context.read<HomeCubit>().cargarDashboard,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _sectionTitle(title: 'Resumen de hoy'),
+                    _header(context, d),
 
-                    const SizedBox(height: 14),
-
-                    _statistics(),
-
-                    const SizedBox(height: 28),
-
-                    _sectionTitle(title: 'Estado de cartera'),
-
-                    const SizedBox(height: 14),
-
-                    _portfolioCard(),
-
-                    const SizedBox(height: 28),
-
-                    _sectionTitle(
-                      title: 'Actividad reciente',
-                      action: 'Ver todo',
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 30),
+                      child: d == null
+                          ? _cargandoOError(context, state)
+                          : _contenido(context, d),
                     ),
-
-                    const SizedBox(height: 14),
-
-                    _activityCard(),
-
-                    const SizedBox(height: 20),
                   ],
                 ),
               ),
-            ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Sin datos todavía: cargando o con error
+  Widget _cargandoOError(BuildContext context, HomeState state) {
+    if (state.errorDashboard && !state.loadingDashboard) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.cloud_off_rounded,
+              size: 40,
+              color: Color(0xFFB0B6C0),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'No se pudo cargar el resumen.',
+              style: TextStyle(color: Color(0xFF7B8494)),
+            ),
+            const SizedBox(height: 6),
+            TextButton(
+              onPressed: context.read<HomeCubit>().cargarDashboard,
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 60),
+      child: Center(child: CircularProgressIndicator.adaptive()),
+    );
+  }
+
+  Widget _contenido(BuildContext context, DashboardEntity d) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle(title: 'Resumen de hoy'),
+
+        const SizedBox(height: 14),
+
+        _statistics(d),
+
+        const SizedBox(height: 28),
+
+        _sectionTitle(title: 'Estado de cartera'),
+
+        const SizedBox(height: 14),
+
+        _portfolioCard(d.cartera),
+
+        const SizedBox(height: 28),
+
+        _sectionTitle(
+          title: 'Actividad reciente',
+          action: 'Ver todo',
+          onAction: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ActividadPage()),
           ),
         ),
-      ),
+
+        const SizedBox(height: 14),
+
+        _activityCard(d.actividadReciente),
+
+        const SizedBox(height: 20),
+      ],
     );
   }
 
@@ -64,11 +126,14 @@ class ResumeHomeView extends StatelessWidget {
   // HEADER
   // ============================================================
 
-  Widget _header() {
+  Widget _header(BuildContext context, DashboardEntity? d) {
     final now = DateTime.now();
+    final nombre = d == null
+        ? ''
+        : '${d.adminNombre} ${d.adminApellido}'.trim();
 
-    return BlocBuilder<HomeCubit, HomeState>(
-      builder: (context, state) {
+    return Builder(
+      builder: (context) {
         return HeaderWidget(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -96,18 +161,20 @@ class ResumeHomeView extends StatelessWidget {
 
                   const SizedBox(width: 12),
 
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Bienvenido 👋',
                           style: TextStyle(color: Colors.white70),
                         ),
-                        SizedBox(height: 3),
+                        const SizedBox(height: 3),
                         Text(
-                          'Administrador',
-                          style: TextStyle(
+                          nombre.isEmpty ? 'Administrador' : nombre,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
@@ -146,14 +213,14 @@ class ResumeHomeView extends StatelessWidget {
   // ESTADISTICAS
   // ============================================================
 
-  Widget _statistics() {
+  Widget _statistics(DashboardEntity d) {
     return Row(
       children: [
         Expanded(
           child: _statCard(
             icon: Icons.people_alt_outlined,
             iconColor: const Color(0xFF4F7CFF),
-            value: '10',
+            value: '${d.clientesActivos}',
             title: 'Clientes activos',
           ),
         ),
@@ -164,7 +231,7 @@ class ResumeHomeView extends StatelessWidget {
           child: _statCard(
             icon: Icons.badge_outlined,
             iconColor: const Color(0xFF9B59FF),
-            value: '3',
+            value: '${d.cobradores}',
             title: 'Cobradores',
           ),
         ),
@@ -237,8 +304,8 @@ class ResumeHomeView extends StatelessWidget {
   // CARTERA
   // ============================================================
 
-  Widget _portfolioCard() {
-    const double progress = 0.65;
+  Widget _portfolioCard(CarteraEntity c) {
+    final double progress = (c.cumplimientoHoy / 100).clamp(0.0, 1.0);
 
     return Container(
       width: double.infinity,
@@ -265,8 +332,8 @@ class ResumeHomeView extends StatelessWidget {
             children: [
               const Expanded(
                 child: Text(
-                  'Cartera total',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                  'Dinero en circulación',
+                  style: TextStyle(color: Colors.white70, ),
                 ),
               ),
             ],
@@ -274,9 +341,9 @@ class ResumeHomeView extends StatelessWidget {
 
           const SizedBox(height: 7),
 
-          const Text(
-            '\$120.000',
-            style: TextStyle(
+          Text(
+            MoneyUtil.format(c.total),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 34,
               fontWeight: FontWeight.w800,
@@ -287,14 +354,16 @@ class ResumeHomeView extends StatelessWidget {
 
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Cumplimiento del día',
-                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                  'Cumplimiento del día · esperado ${MoneyUtil.format(c.cobroEsperadoHoy)}',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white60, ),
                 ),
               ),
               Text(
-                '${(progress * 100).toInt()}%',
+                '${c.cumplimientoHoy.round()}%',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 13,
@@ -324,33 +393,33 @@ class ResumeHomeView extends StatelessWidget {
 
           const SizedBox(height: 18),
 
-          Row(
-            children: [
-              Expanded(
-                child: _portfolioItem(
-                  icon: Icons.arrow_upward_rounded,
-                  title: 'Recaudado',
-                  value: '\$15.000',
-                  color: const Color(0xFF7CFF6B),
-                ),
-              ),
+          // Row(
+          //   children: [
+          //     Expanded(
+          //       child: _portfolioItem(
+          //         icon: Icons.arrow_upward_rounded,
+          //         title: 'Recaudado',
+          //         value: MoneyUtil.format(c.recaudadoHoy),
+          //         color: const Color(0xFF7CFF6B),
+          //       ),
+          //     ),
 
-              Container(
-                width: 1,
-                height: 40,
-                color: Colors.white.withValues(alpha: 0.10),
-              ),
+          //     Container(
+          //       width: 1,
+          //       height: 40,
+          //       color: Colors.white.withValues(alpha: 0.10),
+          //     ),
 
-              Expanded(
-                child: _portfolioItem(
-                  icon: Icons.warning_amber_rounded,
-                  title: 'Atrasado',
-                  value: '\$20.000',
-                  color: const Color(0xFFFF6B6B),
-                ),
-              ),
-            ],
-          ),
+          //     Expanded(
+          //       child: _portfolioItem(
+          //         icon: Icons.warning_amber_rounded,
+          //         title: 'Atrasado',
+          //         value: MoneyUtil.format(c.atrasado),
+          //         color: const Color(0xFFFF6B6B),
+          //       ),
+          //     ),
+          //   ],
+          // ),
         ],
       ),
     );
@@ -402,7 +471,7 @@ class ResumeHomeView extends StatelessWidget {
   // ACTIVIDAD
   // ============================================================
 
-  Widget _activityCard() {
+  Widget _activityCard(List<ActividadEntity> items) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -417,96 +486,24 @@ class ResumeHomeView extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          _activityItem(
-            icon: Icons.payments_outlined,
-            color: Colors.green,
-            title: 'Pago recibido',
-            subtitle: 'Juan Pérez • Ruta Norte',
-            value: '+\$50.000',
-          ),
-
-          const Divider(height: 24),
-
-          _activityItem(
-            icon: Icons.payments_outlined,
-            color: Colors.green,
-            title: 'Pago recibido',
-            subtitle: 'Carlos Gómez • Ruta Centro',
-            value: '+\$35.000',
-          ),
-
-          const Divider(height: 24),
-
-          _activityItem(
-            icon: Icons.warning_amber_rounded,
-            color: Colors.orange,
-            title: 'Pago pendiente',
-            subtitle: 'Pedro Martínez • Ruta Sur',
-            value: '\$20.000',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _activityItem({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String subtitle,
-    required String value,
-  }) {
-    return Row(
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.10),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-
-        const SizedBox(width: 12),
-
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+      child: items.isEmpty
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Center(
+                child: Text(
+                  'Aún no hay actividad hoy.',
+                  style: TextStyle(color: Color(0xFF8A93A3), fontSize: 13),
                 ),
               ),
-
-              const SizedBox(height: 3),
-
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Color(0xFF8A93A3), fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(width: 8),
-
-        Text(
-          value,
-          style: TextStyle(
-            color: color,
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ],
+            )
+          : Column(
+              children: [
+                for (var i = 0; i < items.length; i++) ...[
+                  if (i > 0) const Divider(height: 24),
+                  ActividadItem(actividad: items[i]),
+                ],
+              ],
+            ),
     );
   }
 
@@ -514,7 +511,11 @@ class ResumeHomeView extends StatelessWidget {
   // TITULOS
   // ============================================================
 
-  Widget _sectionTitle({required String title, String? action}) {
+  Widget _sectionTitle({
+    required String title,
+    String? action,
+    VoidCallback? onAction,
+  }) {
     return Row(
       children: [
         Expanded(
@@ -529,12 +530,19 @@ class ResumeHomeView extends StatelessWidget {
         ),
 
         if (action != null)
-          Text(
-            action,
-            style: TextStyle(
-              color: AppTheme.primaryColor,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+          InkWell(
+            onTap: onAction,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Text(
+                action,
+                style: TextStyle(
+                  color: AppTheme.primaryColor,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
       ],

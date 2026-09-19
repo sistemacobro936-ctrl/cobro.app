@@ -5,6 +5,7 @@ import 'package:personal/src/data/repository/auth_repo_impl.dart';
 import 'package:personal/src/data/repository/caja_repo_impl.dart';
 import 'package:personal/src/data/repository/contabilidad_repo_impl.dart';
 import 'package:personal/src/data/repository/crear_cliente_repo.dart';
+import 'package:personal/src/data/repository/dashboard_repo_impl.dart';
 import 'package:personal/src/data/repository/config_repo_impl.dart';
 import 'package:personal/src/data/repository/gastos_repo_impl.dart';
 import 'package:personal/src/data/repository/negocio_repo_impl.dart';
@@ -15,6 +16,7 @@ import 'package:personal/src/data/repository/usuario_repo_impl.dart';
 import 'package:personal/src/data/services/auth_service.dart';
 import 'package:personal/src/data/services/caja_service.dart';
 import 'package:personal/src/data/services/contabilidad_service.dart';
+import 'package:personal/src/data/services/dashboard_service.dart';
 import 'package:personal/src/data/services/cliente_service.dart';
 import 'package:personal/src/data/services/config_service.dart';
 import 'package:personal/src/data/services/gasto_service.dart';
@@ -26,6 +28,7 @@ import 'package:personal/src/data/services/usuario_service.dart';
 import 'package:personal/src/domain/repository/auth_repo.dart';
 import 'package:personal/src/domain/repository/caja_repo.dart';
 import 'package:personal/src/domain/repository/contabilidad_repo.dart';
+import 'package:personal/src/domain/repository/dashboard_repo.dart';
 import 'package:personal/src/domain/repository/cliente_repo.dart';
 import 'package:personal/src/domain/repository/config_repo.dart';
 import 'package:personal/src/domain/repository/gastos_repo.dart';
@@ -131,5 +134,14 @@ void initDep() {
 
   sl.registerLazySingleton<NegocioService>(
     () => NegocioServiceImpl(apiClient: sl()),
+  );
+
+  //Dashboard
+  sl.registerLazySingleton<DashboardRepo>(
+    () => DashboardRepoImpl(dashboardService: sl()),
+  );
+
+  sl.registerLazySingleton<DashboardService>(
+    () => DashboardServiceImpl(apiClient: sl()),
   );
 }

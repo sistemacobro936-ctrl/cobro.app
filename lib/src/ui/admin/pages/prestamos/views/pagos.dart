@@ -328,6 +328,11 @@ class _PagoCardState extends State<_PagoCard> {
 // Diálogo de motivo
 // ---------------------------------------------------------------------------
 
+/// Pide confirmación para revertir un pago. Devuelve true si el usuario confirma.
+Future<bool> confirmarReversionPago(BuildContext context) async {
+  return await _showMotivoDialog(context) != null;
+}
+
 Future<String?> _showMotivoDialog(BuildContext context) {
   final controller = TextEditingController();
 
