@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/src/common/theme/theme.dart';
-import 'package:personal/src/common/utils/secure_storage_util.dart';
-import 'package:personal/src/ui/auth/auth_page.dart';
 import 'package:personal/src/ui/cobrador/cubit/cobrador_cubit.dart';
 import 'package:personal/src/ui/cobrador/dialogo_gasto.dart';
+import 'package:personal/src/ui/cobrador/drawer_cobrador.dart';
 import 'package:personal/src/ui/widgets/btn_widget.dart' show BtnWidget;
 
 class CHome extends StatefulWidget {
@@ -21,25 +20,7 @@ class _CHomeState extends State<CHome> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: scaffoldKey,
-      drawer: Drawer(
-        child: Column(
-          children: [
-            SizedBox(height: 50),
-            ListTile(
-              title: Text("Salir"),
-              onTap: () async {
-                await SecureStorageUtil().deleteAll();
-                Navigator.pushAndRemoveUntil(
-                  // ignore: use_build_context_synchronously
-                  context,
-                  MaterialPageRoute(builder: (_) => AuthPage()),
-                  (_) => false,
-                );
-              },
-            ),
-          ],
-        ),
-      ),
+      drawer: const DrawerCobrador(),
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
@@ -60,24 +41,66 @@ class _CHomeState extends State<CHome> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
+        child: BlocBuilder<CobradorRCubit, CobradorRState>(
+          builder: (context, state) {
+            final sinRutas = state.ruta == null || state.ruta!.isEmpty;
 
-            const SizedBox(height: 14),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
 
-            _buildClientes(),
+                const SizedBox(height: 14),
 
-            const SizedBox(height: 12),
+                if (sinRutas)
+                  _buildSinRuta()
+                else ...[
+                  _buildClientes(),
 
-            _buildResumen(),
+                  const SizedBox(height: 12),
 
-            const SizedBox(height: 12),
+                  _buildResumen(),
 
-            _buildGastos(),
-          ],
+                  const SizedBox(height: 12),
+
+                  _buildGastos(),
+                ],
+              ],
+            );
+          },
         ),
+      ),
+    );
+  }
+
+  // ============================================================
+  Widget _buildSinRuta() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withValues(alpha: .05)),
+      ),
+      child: const Column(
+        children: [
+          Icon(Icons.route_outlined, size: 40, color: Color(0xFF929BAB)),
+          SizedBox(height: 10),
+          Text(
+            'No tienes una ruta asignada',
+            style: TextStyle(
+              color: Color(0xFF202838),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Cuando el administrador te asigne una ruta podrás ver tus clientes, el resumen y registrar gastos.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Color(0xFF929BAB)),
+          ),
+        ],
       ),
     );
   }
@@ -86,6 +109,8 @@ class _CHomeState extends State<CHome> {
   Widget _buildHeader() {
     return BlocBuilder<CobradorRCubit, CobradorRState>(
       builder: (context, state) {
+        final nombre = state.ruta?.firstOrNull?.cobrador?.nombre;
+
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
@@ -117,7 +142,7 @@ class _CHomeState extends State<CHome> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hola, ${state.ruta!.first.cobrador!.nombre} 👋',
+                      nombre != null ? 'Hola, $nombre 👋' : 'Hola 👋',
                       style: TextStyle(
                         color: Color(0xFF202838),
                         fontSize: 16,

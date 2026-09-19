@@ -64,8 +64,12 @@ class PrestamoCubit extends Cubit<PrestamoState> {
     emit(state.copyWith(periodoSeleccionado: p));
   }
 
+  /// Una fecha inicial anterior a hoy marca el préstamo como existente
   void onGetFechaInicial(DateTime f) {
-    emit(state.copyWith(fechaInicial: f));
+    final hoy = DateUtils.dateOnly(DateTime.now());
+    final esAnterior = DateUtils.dateOnly(f).isBefore(hoy);
+
+    emit(state.copyWith(fechaInicial: f, isPrevious: esAnterior));
   }
 
   void onEventPrevious() {
@@ -83,7 +87,9 @@ class PrestamoCubit extends Cubit<PrestamoState> {
     emit(state.copyWith(loading: true));
     if (Shared.getClientes == null || Shared.getClientes!.isEmpty) {
       final r = await _clientRep.listar();
-      r.fold((l) {}, (r) {});
+      r.fold((l) {}, (r) {
+        Shared.setClientes=r.data;
+      });
     }
     emit(state.copyWith(loading: false));
   }
@@ -484,9 +490,8 @@ class PrestamoCubit extends Cubit<PrestamoState> {
       return CuotaEsperada(
         numero: index + 1,
         fechaCobro: fechaSinHora,
-        esPasada:
-            fechaSinHora.isBefore(hoySinHora) ||
-            fechaSinHora.isAtSameMomentAs(hoySinHora),
+        // La cuota de hoy no cuenta: el día aún no termina
+        esPasada: fechaSinHora.isBefore(hoySinHora),
         monto: monto.toDouble(),
       );
     }).toList();

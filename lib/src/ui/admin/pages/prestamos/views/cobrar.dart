@@ -8,6 +8,7 @@ Future<void> showCobroBottomSheet(
   required int deudaActual,
   required int cuota,
   required Function(String value) onConfirmar,
+  VoidCallback? onNoPago,
 }) {
   final valorController = TextEditingController(text: cuota.toString());
 
@@ -92,6 +93,37 @@ Future<void> showCobroBottomSheet(
                             ),
                           ],
                         ),
+                      ),
+
+                      // No pagó: pequeño y arriba, lejos del botón principal
+                      // para no tocarlo por accidente
+                      TextButton(
+                        onPressed: loading
+                            ? null
+                            : () {
+                                onNoPago?.call();
+                                Navigator.pop(context);
+                              },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red.shade400,
+                          minimumSize: Size.zero,
+                          side: BorderSide(
+                            color: Colors.red.shade400,
+                            width: 1,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        child: const Text('No pagó'),
                       ),
                     ],
                   ),

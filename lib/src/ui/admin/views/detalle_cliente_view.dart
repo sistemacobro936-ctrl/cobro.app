@@ -51,7 +51,7 @@ class DetalleClienteView extends StatelessWidget {
             const SizedBox(height: 22),
 
             Row(
-              mainAxisAlignment: .spaceBetween,
+              mainAxisAlignment:MainAxisAlignment.spaceBetween,
               children: [
                 _sectionTitle(
                   icon: Icons.person_outline_rounded,
@@ -157,7 +157,7 @@ class DetalleClienteView extends StatelessWidget {
           const SizedBox(height: 12),
 
           Row(
-            mainAxisAlignment: .center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
                 icon: Icon(Icons.call, color: Colors.white),

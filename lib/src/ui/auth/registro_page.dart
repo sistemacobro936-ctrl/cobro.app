@@ -180,6 +180,7 @@ class RegistroPage extends StatelessWidget {
                     prefixIcon: Icons.lock_outline_rounded,
                     enabled: !state.loading,
                     obscureText: !state.showPassword,
+                    errorText: cubit.passwordError,
                     textInputAction: TextInputAction.done,
                     onChanged: (_) => cubit.enabledBtn(),
                     suffixIcon: state.showPassword

@@ -37,7 +37,7 @@ class PrestamosHome extends StatelessWidget {
                                 : '${state.prestamos!.length} préstamos registrados',
                             style: TextStyle(
                               color: Color(0xFF929BAB),
-                              fontSize: 12,
+                           
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -52,7 +52,7 @@ class PrestamosHome extends StatelessWidget {
                         child: PrestamoCardView(
                           client: e.cliente.nombres,
                           document: 'CC ${e.cliente.cedula}',
-                          route: 'Ruta Norte',
+                          route: "",
                           amount: '\$${e.deudaActual}',
                           installment: '\$${e.valorCuota}',
                           paid: 'Cobrar',

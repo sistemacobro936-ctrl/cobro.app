@@ -47,7 +47,7 @@ class AuthPage extends StatelessWidget {
                           const Text(
                             'Ingresa tus credenciales para continuar.',
                             style: TextStyle(
-                              fontSize: 16,
+                             
                               color: Color(0xFF7B8494),
                               height: 1.4,
                             ),
@@ -91,7 +91,7 @@ class AuthPage extends StatelessWidget {
                                     },
                               child: const Text(
                                 '¿No tienes una cuenta? Regístrate',
-                                style: TextStyle(fontSize: 13),
+                                
                               ),
                             ),
                           ),
@@ -111,7 +111,7 @@ class AuthPage extends StatelessWidget {
                                 Text(
                                   'Gestión segura de tus cobros',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                   
                                     color: Colors.grey.shade500,
                                   ),
                                 ),

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +27,8 @@ class RegistroCubit extends Cubit<RegistroState> {
   ///Variables
   ///
   ///
+  static const minPasswordLength = 8;
+
   final negNombreTxt = TextEditingController();
   final negDocumentoTxt = TextEditingController();
   final negTelefonoTxt = TextEditingController();
@@ -61,8 +65,16 @@ class RegistroCubit extends Cubit<RegistroState> {
       admUserTxt,
       admPassTxt,
     ].every((c) => c.text.trim().isNotEmpty);
+log("$passwordValida");
+    emit(state.copyWith(btnEnabled: e && passwordValida));
+  }
 
-    emit(state.copyWith(btnEnabled: e));
+  bool get passwordValida => admPassTxt.text.trim().length >= minPasswordLength;
+
+  String? get passwordError {
+    final pass = admPassTxt.text.trim();
+    if (pass.isEmpty || pass.length >= minPasswordLength) return null;
+    return 'La contraseña debe tener mínimo $minPasswordLength caracteres';
   }
 
   ///Peticiones

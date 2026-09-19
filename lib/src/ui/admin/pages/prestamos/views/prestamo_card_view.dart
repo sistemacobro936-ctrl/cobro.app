@@ -36,7 +36,7 @@ class PrestamoCardView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -82,29 +82,8 @@ class PrestamoCardView extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               color: Color(0xFF202838),
-                              fontSize: 14,
+
                               fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 7),
-
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusBackground,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            status,
-                            style: TextStyle(
-                              color: statusColor,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -115,10 +94,7 @@ class PrestamoCardView extends StatelessWidget {
 
                     Text(
                       document,
-                      style: const TextStyle(
-                        color: Color(0xFF7D8797),
-                        fontSize: 11,
-                      ),
+                      style: const TextStyle(color: Color(0xFF7D8797)),
                     ),
 
                     const SizedBox(height: 2),
@@ -225,16 +201,13 @@ class PrestamoCardView extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: const TextStyle(color: Color(0xFF9AA2AF), fontSize: 9),
-            ),
+            Text(label, style: const TextStyle(color: Color(0xFF9AA2AF))),
             const SizedBox(height: 2),
             Text(
               value,
               style: const TextStyle(
                 color: Color(0xFF202838),
-                fontSize: 12,
+
                 fontWeight: FontWeight.w800,
               ),
             ),

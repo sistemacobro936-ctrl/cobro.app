@@ -32,10 +32,16 @@ class InputWidget {
       maxLines: obscureText ? 1 : maxLines,
       maxLength: maxLength,
       onChanged: onChanged,
+    
       validator: validator,
       decoration: InputDecoration(
+        errorMaxLines: 2,
         labelText: label,
         hintText: hintText,
+        errorStyle: TextStyle(
+          fontSize: 16
+        ),
+        
         errorText: errorText,
         prefixText: prefixText,
         prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,

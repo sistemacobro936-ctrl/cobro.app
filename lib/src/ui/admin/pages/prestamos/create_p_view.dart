@@ -155,9 +155,7 @@ class _CrearPrestamoViewState extends State<CrearPrestamoView> {
                 ],
                 const SizedBox(height: 14),
                 GestureDetector(
-                  onTap: () {
-                    context.read<PrestamoCubit>().onEventPrevious();
-                  },
+                  
                   child: Row(
                     children: [
                       Icon(
@@ -167,7 +165,7 @@ class _CrearPrestamoViewState extends State<CrearPrestamoView> {
                         color: AppTheme.primaryColor,
                       ),
                       SizedBox(width: 10),
-                      Text("Prestamo existente"),
+                      Text("Préstamo existente"),
                     ],
                   ),
                 ),

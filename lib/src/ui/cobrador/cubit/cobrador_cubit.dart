@@ -69,13 +69,17 @@ class CobradorRCubit extends Cubit<CobradorRState> {
         emit(state.copyWith(ruta: r.data));
       },
     );
-    await resumenRuta();
-    await listarGastos();
+    // Sin rutas asignadas no hay resumen ni gastos que consultar
+    if (tieneRutas) {
+      await resumenRuta();
+      await listarGastos();
+    }
 
     emit(state.copyWith(loading: false));
   }
 
   void clientesRuta() async {
+    if (!tieneRutas) return;
     emit(state.copyWith(loading: true));
 
     final idRutas = state.ruta!.map((e) => e.id).join(',');
@@ -123,6 +127,7 @@ class CobradorRCubit extends Cubit<CobradorRState> {
   }
 
   Future<void> resumenRuta() async {
+    if (!tieneRutas) return;
     emit(state.copyWith(loading: true));
     final idRutas = state.ruta!.map((e) => e.id).join(',');
 
@@ -214,8 +219,12 @@ class CobradorRCubit extends Cubit<CobradorRState> {
   ///
   ///
 
-  int get totalClientes =>
-      state.ruta!.fold(0, (total, ruta) => total + ruta.cantidadClientes);
+  bool get tieneRutas => state.ruta != null && state.ruta!.isNotEmpty;
+
+  int get totalClientes => (state.ruta ?? []).fold(
+    0,
+    (total, ruta) => total + ruta.cantidadClientes,
+  );
 
   void clear() {
     valor.clear();
