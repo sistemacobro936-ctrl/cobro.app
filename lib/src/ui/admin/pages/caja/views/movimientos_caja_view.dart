@@ -17,6 +17,19 @@ void abrirMovimientosCaja(BuildContext context, CajaCubit c) {
   );
 }
 
+/// Abre los movimientos de una caja del histórico. Usa su propio cubit, que se
+/// cierra al salir de la pantalla.
+void abrirMovimientosCajaHistorica(BuildContext context, String cajaId) {
+  final c = CajaCubit(context: context)..movimientos(cajaId: cajaId);
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) =>
+          BlocProvider(create: (_) => c, child: const MovimientosCajaView()),
+    ),
+  );
+}
+
 class MovimientosCajaView extends StatelessWidget {
   const MovimientosCajaView({super.key});
 
@@ -204,7 +217,7 @@ class MovimientosCajaView extends StatelessWidget {
                     (e) => _item(
                       icon: Icons.error_outline_rounded,
                       color: Colors.redAccent,
-                      titulo: _cliente(e.clienteNombre),
+                      titulo: _cliente(e.clienteNombre+"\nCC: ${e.clienteCedula}"),
                       subtitulo: [
                         'Cuota \$${e.valorCuota}',
                         ' \nPagó\$${e.valorPagado}',
@@ -234,10 +247,10 @@ class MovimientosCajaView extends StatelessWidget {
         .join('');
   }
 
-  /// yyyy-MM-dd HH:mm en hora local
+  /// Lun dd-MM-yyyy HH:mm en hora local
   String? _fechaHora(DateTime? f) {
     if (f == null) return null;
-    return '${DateUtil.formatDate(f)} '
+    return '${DateUtil.formatLectura(f)} '
         '${f.hour.toString().padLeft(2, '0')}:'
         '${f.minute.toString().padLeft(2, '0')}';
   }

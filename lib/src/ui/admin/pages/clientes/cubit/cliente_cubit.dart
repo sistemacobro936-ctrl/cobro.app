@@ -8,6 +8,7 @@ import 'package:personal/src/common/utils/app_dialog_util.dart';
 import 'package:personal/src/common/utils/update_util.dart';
 import 'package:personal/src/domain/dto/crear_cliente_dto.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
+import 'package:personal/src/domain/entities/pagination_entity.dart';
 import 'package:personal/src/domain/entities/ruta_entity.dart';
 import 'package:personal/src/domain/repository/cliente_repo.dart';
 import 'package:personal/src/domain/repository/ruta_repo.dart';
@@ -31,12 +32,20 @@ class ClienteCubit extends Cubit<ClienteState> {
 
   ClienteCubit(BuildContext context) : super(ClienteState(context: context)) {
     setChild(ClientHome());
-    listarRuta();
+    iniciar();
   }
 
   ///Variables
   ///
   ///
+  static const _limit = 20;
+
+  /// Texto del buscador; vive aquí para poder limpiarlo desde cualquier vista
+  final busquedaController = TextEditingController();
+
+  /// Cada consulta de la lista o búsqueda invalida a las anteriores, para que
+  /// una respuesta lenta no pise a una más reciente
+  int _solicitud = 0;
 
   ///Eventos
   ///
@@ -56,20 +65,118 @@ class ClienteCubit extends Cubit<ClienteState> {
   ///Peticiones
   ///
   ///
-  void listClientes() async {
-    emit(state.copyWith(loading: true));
-    final r = await _clienteRepo.listar();
+  /// Carga las rutas y muestra los clientes de la primera
+  Future<void> iniciar() async {
+    var rutas = Shared.getRutas;
+    if (rutas == null) {
+      final r = await _rutaRepo.listar();
+      r.fold((l) {}, (r) {
+        Shared.setRutas = r.data;
+        rutas = r.data;
+      });
+    }
+    if (isClosed) return;
+
+    final lista = rutas ?? [];
+    emit(
+      state.copyWith(
+        rutas: lista,
+        // Sin rutas se listan todos los clientes ('')
+        filtroRutaId: lista.isEmpty ? '' : lista.first.id,
+      ),
+    );
+    await cargarClientes();
+  }
+
+  /// Recarga la selección actual y el caché global de clientes
+  void listClientes() {
+    cargarClientes();
+    _actualizarCache();
+  }
+
+  /// Clientes de la ruta seleccionada (o todos si no hay ruta seleccionada)
+  Future<void> cargarClientes() async {
+    final id = ++_solicitud;
+    final ruta = state.filtroRutaId ?? '';
+
+    emit(
+      state.copyWith(
+        loadingLista: true,
+        loadingMore: false,
+        search: false,
+        clientes: [],
+        limpiarPaginacion: true,
+      ),
+    );
+
+    final r = ruta.isEmpty
+        ? await _clienteRepo.listar()
+        : await _clienteRepo.clientesPorRuta(
+            idRuta: ruta,
+            page: 1,
+            limit: _limit,
+          );
+    if (isClosed || id != _solicitud) return;
 
     r.fold(
       (l) {
         AppDialogUtil.error(state.context, message: l.props[0].toString());
       },
       (r) {
-        emit(state.copyWith(clientes: r.data));
-        Shared.setClientes = r.data;
+        emit(state.copyWith(clientes: r.data, paginationClientes: r.pagination));
+        if (ruta.isEmpty) Shared.setClientes = r.data;
       },
     );
-    emit(state.copyWith(loading: false));
+    emit(state.copyWith(loadingLista: false,));
+  }
+
+  Future<void> cargarMas() async {
+    final ruta = state.filtroRutaId ?? '';
+    final pagination = state.paginationClientes;
+    if (ruta.isEmpty ||
+        state.busqueda.isNotEmpty ||
+        state.loadingLista ||
+        state.loadingMore ||
+        pagination == null ||
+        !pagination.hasNextPage) {
+      return;
+    }
+
+    final id = _solicitud;
+    emit(state.copyWith(loadingMore: true));
+
+    final r = await _clienteRepo.clientesPorRuta(
+      idRuta: ruta,
+      page: pagination.page + 1,
+      limit: _limit,
+    );
+    if (isClosed || id != _solicitud) return;
+
+    r.fold(
+      (l) {},
+      (r) => emit(
+        state.copyWith(
+          clientes: [...state.clientes ?? [], ...r.data],
+          paginationClientes: r.pagination,
+        ),
+      ),
+    );
+    emit(state.copyWith(loadingMore: false));
+  }
+
+  /// Cambia la ruta que se lista; descarta la búsqueda activa
+  void seleccionarRuta(String rutaId) {
+    if (rutaId == state.filtroRutaId && state.busqueda.isEmpty) return;
+    busquedaController.clear();
+    emit(state.copyWith(filtroRutaId: rutaId, busqueda: ''));
+    cargarClientes();
+  }
+
+  Future<void> _actualizarCache() async {
+    // Con "todos" seleccionado, cargarClientes ya actualiza el caché
+    if ((state.filtroRutaId ?? '').isEmpty) return;
+    final r = await _clienteRepo.listar();
+    r.fold((l) {}, (r) => Shared.setClientes = r.data);
   }
 
   void crearCliente(CrearClienteDto dto) async {
@@ -93,14 +200,6 @@ class ClienteCubit extends Cubit<ClienteState> {
     );
 
     emit(state.copyWith(loadingBtn: false));
-  }
-
-  void listarRuta() async {
-    if (Shared.getRutas != null) return;
-    final r = await _rutaRepo.listar();
-    r.fold((l) {}, (r) {
-      Shared.setRutas = r.data;
-    });
   }
 
   void editarCliente(CrearClienteDto c) async {
@@ -171,13 +270,42 @@ class ClienteCubit extends Cubit<ClienteState> {
     emit(state.copyWith(loading: false));
   }
 
+  /// Búsqueda global. Si los resultados no son de la ruta seleccionada, la
+  /// ruta pasa a ser la del primer resultado.
   void buscar(String q) async {
-    emit(state.copyWith(search: true));
-    final r = await _clienteRepo.buscar(q: q);
+    final query = q.trim();
+    if (query.isEmpty) {
+      limpiarBusqueda();
+      return;
+    }
+    // La búsqueda pudo limpiarse mientras esperaba el retardo del teclado
+    if (busquedaController.text.trim() != query) return;
+
+    final id = ++_solicitud;
+    emit(
+      state.copyWith(busqueda: query, search: true, loadingLista: false),
+    );
+
+    final r = await _clienteRepo.buscar(q: query);
+    if (isClosed || id != _solicitud) return;
+
     r.fold((l) {}, (r) {
-      emit(state.copyWith(clientes: r.data));
+      emit(
+        state.copyWith(
+          clientes: r.data,
+          limpiarPaginacion: true,
+          filtroRutaId: _rutaParaResultados(r.data),
+        ),
+      );
     });
     emit(state.copyWith(search: false));
+  }
+
+  /// Quita la búsqueda y vuelve a listar los clientes de la ruta seleccionada
+  void limpiarBusqueda() {
+    busquedaController.clear();
+    emit(state.copyWith(busqueda: ''));
+    cargarClientes();
   }
 
   ///Navegacion
@@ -190,5 +318,20 @@ class ClienteCubit extends Cubit<ClienteState> {
   ///
   void clear() {
     emit(state.copyWith(btnEnabled: false, limpiarRuta: true));
+  }
+
+  /// Ruta que debe quedar seleccionada para mostrar [resultados]
+  String _rutaParaResultados(List<DatumClEntity> resultados) {
+    final actual = state.filtroRutaId ?? '';
+    if (resultados.isEmpty || actual.isEmpty) return actual;
+    if (resultados.any((c) => c.rutaId == actual)) return actual;
+    // '' (sin ruta) equivale a "todos"
+    return resultados.first.rutaId;
+  }
+
+  @override
+  Future<void> close() {
+    busquedaController.dispose();
+    return super.close();
   }
 }

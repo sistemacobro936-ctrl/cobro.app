@@ -106,7 +106,7 @@ class ActividadItem extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(
-                    'Promete pagar: ${DateUtil.formatDate(a.fechaPromesa!)}',
+                    'Promete pagar: ${DateUtil.formatLectura(a.fechaPromesa!)}',
                     style: const TextStyle(
                       color: Color(0xFF8A93A3),
                       fontSize: 11,

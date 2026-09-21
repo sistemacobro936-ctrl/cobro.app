@@ -78,6 +78,7 @@ class PagoMovimientoEntity {
 class PagoDobleEntity {
   final String prestamoId;
   final String clienteNombre;
+  final String clienteCedula;
   final num valorCuota;
   final num valorPagado;
   final int cantidadPagos;
@@ -87,6 +88,7 @@ class PagoDobleEntity {
   PagoDobleEntity({
     required this.prestamoId,
     required this.clienteNombre,
+    required this.clienteCedula,
     required this.valorCuota,
     required this.valorPagado,
     required this.cantidadPagos,
@@ -99,6 +101,7 @@ class PagoDobleEntity {
 class PagoMenorEntity {
   final String prestamoId;
   final String clienteNombre;
+  final String clienteCedula;
   final num valorCuota;
   final num valorPagado;
   final int cantidadPagos;
@@ -109,6 +112,7 @@ class PagoMenorEntity {
   PagoMenorEntity({
     required this.prestamoId,
     required this.clienteNombre,
+    required this.clienteCedula,
     required this.valorCuota,
     required this.valorPagado,
     required this.cantidadPagos,

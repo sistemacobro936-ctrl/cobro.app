@@ -16,6 +16,7 @@ import 'package:personal/src/domain/repository/cliente_repo.dart';
 import 'package:personal/src/domain/repository/config_repo.dart';
 import 'package:personal/src/domain/repository/pago_repo.dart';
 import 'package:personal/src/domain/repository/presamo_repo.dart';
+import 'package:personal/src/domain/repository/ruta_repo.dart';
 import 'package:personal/src/ui/admin/pages/home/cubit/home_cubit.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/resumen_previo.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/views/prestamos_home.dart';
@@ -29,6 +30,7 @@ class PrestamoCubit extends Cubit<PrestamoState> {
   final _configRepo = sl<ConfiguracionRepository>();
   final _prestamosRepo = sl<PresamoRepo>();
   final _pagoRepo = sl<PagoRepo>();
+  final _rutaRepo = sl<RutaRepo>();
 
   ///Constructor
   ///
@@ -61,6 +63,30 @@ class PrestamoCubit extends Cubit<PrestamoState> {
 
   void onGetClient(DatumClEntity c) {
     emit(state.copyWith(cliente: c));
+    cargarInfoCliente(c);
+  }
+
+  /// El listado general no trae los préstamos del cliente: se piden aparte
+  /// (junto con las rutas, para poder mostrar el nombre) y se completa el
+  /// cliente seleccionado.
+  Future<void> cargarInfoCliente(DatumClEntity c) async {
+    emit(state.copyWith(loadingInfoCliente: true));
+
+    if (Shared.getRutas == null) {
+      final r = await _rutaRepo.listar();
+      r.fold((l) {}, (r) => Shared.setRutas = r.data);
+    }
+
+    final r = await _clientRep.obtenerCliente(id: c.id);
+    if (isClosed) return;
+
+    // Si mientras tanto eligió a otro cliente, se descarta esta respuesta
+    if (state.cliente?.id != c.id) return;
+
+    r.fold((l) {}, (detalle) {
+      emit(state.copyWith(cliente: detalle));
+    });
+    emit(state.copyWith(loadingInfoCliente: false));
   }
 
   /// Al elegir la frecuencia, las cuotas toman el valor por defecto de esa

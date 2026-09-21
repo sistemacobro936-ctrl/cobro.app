@@ -69,7 +69,11 @@ class HeaderClienteView extends StatelessWidget {
 
               Row(
                 children: [
-                  _metric(value: '${clientes.length}', label: 'Total'),
+                  _metric(
+                    value:
+                        '${state.busqueda.isEmpty ? state.paginationClientes?.total ?? clientes.length : clientes.length}',
+                    label: 'Total',
+                  ),
 
                   const SizedBox(width: 28),
 

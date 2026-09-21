@@ -240,13 +240,13 @@ class PrestamoDetalleView extends StatelessWidget {
               Expanded(
                 child: _infoItem(
                   'Fecha de inicio',
-                  DateUtil.formatDate(pEntity.fechaInicio),
+                  DateUtil.formatLectura(pEntity.fechaInicio),
                 ),
               ),
               Expanded(
                 child: _infoItem(
                   'Fecha final',
-                  DateUtil.formatDate(pEntity.fechaFin),
+                  DateUtil.formatLectura(pEntity.fechaFin),
                 ),
               ),
             ],

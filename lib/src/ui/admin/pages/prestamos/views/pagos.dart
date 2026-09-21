@@ -422,10 +422,7 @@ Widget _emptyPayments() {
 String _formatMoney(num value) => '\$${value.toStringAsFixed(0)}';
 
 String _formatDate(DateTime date) {
-  final d = date.day.toString().padLeft(2, '0');
-  final m = date.month.toString().padLeft(2, '0');
-  final y = date.year;
   final hour = date.hour.toString().padLeft(2, '0');
   final minute = date.minute.toString().padLeft(2, '0');
-  return '$d/$m/$y • $hour:$minute';
+  return '${DateUtil.formatLectura(date)} • $hour:$minute';
 }

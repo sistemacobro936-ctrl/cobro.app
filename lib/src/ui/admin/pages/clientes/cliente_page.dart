@@ -17,7 +17,6 @@ late ClienteCubit _clienteCubit;
   void initState() {
     super.initState();
     _clienteCubit = ClienteCubit(context);
-    _clienteCubit.listClientes();
   }
 
   @override

@@ -5,9 +5,17 @@ import 'package:flutter/material.dart';
 class SearchClienteView extends StatefulWidget {
   final void Function(String query) onSearch;
 
+  /// Controla el texto desde fuera (por ejemplo para limpiarlo)
+  final TextEditingController? controller;
+
+  /// Se llama al tocar la X del campo
+  final VoidCallback? onClear;
+
   const SearchClienteView({
     super.key,
     required this.onSearch,
+    this.controller,
+    this.onClear,
   });
 
   @override
@@ -16,10 +24,20 @@ class SearchClienteView extends StatefulWidget {
 
 class _SearchClienteViewState extends State<SearchClienteView> {
   Timer? _debounce;
+  late final TextEditingController _controller;
+  late final bool _ownsController;
+
+  @override
+  void initState() {
+    super.initState();
+    _ownsController = widget.controller == null;
+    _controller = widget.controller ?? TextEditingController();
+  }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    if (_ownsController) _controller.dispose();
     super.dispose();
   }
 
@@ -32,6 +50,12 @@ class _SearchClienteViewState extends State<SearchClienteView> {
         widget.onSearch(value);
       },
     );
+  }
+
+  void _clear() {
+    _debounce?.cancel();
+    _controller.clear();
+    widget.onClear?.call();
   }
 
   @override
@@ -52,23 +76,39 @@ class _SearchClienteViewState extends State<SearchClienteView> {
           ),
         ],
       ),
-      child: TextField(
-        onChanged: _onChanged,
-        decoration: const InputDecoration(
-          hintText: 'Buscar por nombre, documento...',
-          hintStyle: TextStyle(
-            color: Color(0xFF9AA2AF),
-            fontSize: 13,
-          ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            color: Color(0xFF6F7888),
-          ),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(
-            vertical: 15,
-          ),
-        ),
+      child: ValueListenableBuilder<TextEditingValue>(
+        valueListenable: _controller,
+        builder: (context, value, _) {
+          return TextField(
+            controller: _controller,
+            onChanged: _onChanged,
+            decoration: InputDecoration(
+              hintText: 'Buscar por nombre, documento...',
+              hintStyle: const TextStyle(
+                color: Color(0xFF9AA2AF),
+                fontSize: 13,
+              ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: Color(0xFF6F7888),
+              ),
+              // La X solo aparece cuando hay texto
+              suffixIcon: value.text.isEmpty
+                  ? null
+                  : IconButton(
+                      onPressed: _clear,
+                      tooltip: 'Limpiar búsqueda',
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        size: 20,
+                        color: Color(0xFF6F7888),
+                      ),
+                    ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(vertical: 15),
+            ),
+          );
+        },
       ),
     );
   }

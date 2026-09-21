@@ -58,6 +58,7 @@ class MovimientosCajaModel extends MovimientosCajaEntity {
             (e) => PagoDobleEntity(
               prestamoId: e['prestamoId'] ?? '',
               clienteNombre: e['clienteNombre'] ?? '',
+              clienteCedula: e['clienteCedula'] ?? '',
               valorCuota: e['valorCuota'] ?? 0,
               valorPagado: e['valorPagado'] ?? 0,
               cantidadPagos: e['cantidadPagos'] ?? 0,
@@ -71,6 +72,7 @@ class MovimientosCajaModel extends MovimientosCajaEntity {
             (e) => PagoMenorEntity(
               prestamoId: e['prestamoId'] ?? '',
               clienteNombre: e['clienteNombre'] ?? '',
+              clienteCedula: e['clienteCedula'] ?? '',
               valorCuota: e['valorCuota'] ?? 0,
               valorPagado: e['valorPagado'] ?? 0,
               cantidadPagos: e['cantidadPagos'] ?? 0,

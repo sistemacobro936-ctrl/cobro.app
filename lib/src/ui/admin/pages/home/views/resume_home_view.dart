@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/money_util.dart';
 import 'package:personal/src/domain/entities/dashboard_entity.dart';
@@ -528,6 +529,6 @@ class ResumeHomeView extends StatelessWidget {
       'diciembre',
     ];
 
-    return '${date.day} de ${months[date.month - 1]} de ${date.year}';
+    return '${DateUtil.nombreDia(date)} ${date.day} de ${months[date.month - 1]} de ${date.year}';
   }
 }

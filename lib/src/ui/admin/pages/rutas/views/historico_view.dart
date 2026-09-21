@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/domain/entities/caja_entity.dart';
 import 'package:personal/src/domain/entities/gasto_entity.dart';
+import 'package:personal/src/ui/admin/pages/caja/views/movimientos_caja_view.dart';
 import 'package:personal/src/ui/admin/pages/rutas/cubit/ruta_cubit.dart';
 import 'package:personal/src/ui/admin/pages/rutas/views/ruta_home.dart';
 
@@ -45,7 +45,7 @@ class HistoricoView extends StatelessWidget {
                   itemCount: cajas.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (_, index) {
-                    return _buildCaja(cajas[index]);
+                    return _buildCaja(context, cajas[index]);
                   },
                 ),
         );
@@ -53,7 +53,7 @@ class HistoricoView extends StatelessWidget {
     );
   }
 
-  Widget _buildCaja(DatumCajaEntity caja) {
+  Widget _buildCaja(BuildContext context, DatumCajaEntity caja) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -81,7 +81,7 @@ class HistoricoView extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  _fecha(DateUtil.formatDate(caja.fechaOperacion)),
+                  DateUtil.formatLectura(caja.fechaOperacion),
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -103,6 +103,25 @@ class HistoricoView extends StatelessWidget {
               const SizedBox(height: 14),
               _buildGastos(caja),
             ],
+
+            const SizedBox(height: 14),
+
+            SizedBox(
+              width: double.infinity,
+              height: 42,
+              child: OutlinedButton.icon(
+                onPressed: () => abrirMovimientosCajaHistorica(context, caja.id),
+                icon: const Icon(Icons.swap_vert_rounded, size: 18),
+                label: const Text('Ver movimientos'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.primaryColor,
+                  side: BorderSide(color: AppTheme.primaryColor),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -415,16 +434,5 @@ class HistoricoView extends StatelessWidget {
 
   String _moneda(num? valor) {
     return "\$ $valor";
-  }
-
-  String _fecha(String fecha) {
-    try {
-      return DateFormat(
-        'dd \'de\' MMMM \'de\' yyyy',
-        'es_CO',
-      ).format(DateTime.parse(fecha));
-    } catch (_) {
-      return fecha;
-    }
   }
 }

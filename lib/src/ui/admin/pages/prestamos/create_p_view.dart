@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:personal/src/common/utils/date_util.dart';
+import 'package:personal/src/common/utils/money_util.dart';
 import 'package:personal/src/common/shared/shared.dart';
 import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
 import 'package:personal/src/domain/entities/config_entity.dart';
+import 'package:personal/src/domain/entities/prestamo_entity.dart';
+import 'package:personal/src/domain/entities/ruta_entity.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/cliente_search_delegate.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/cubit/prestamo_cubit.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/views/prestamos_home.dart';
@@ -544,7 +548,9 @@ class _ClientSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<PrestamoCubit, PrestamoState>(
-      buildWhen: (prev, curr) => prev.cliente != curr.cliente,
+      buildWhen: (prev, curr) =>
+          prev.cliente != curr.cliente ||
+          prev.loadingInfoCliente != curr.loadingInfoCliente,
       builder: (context, state) {
         final cubit = context.read<PrestamoCubit>();
         return GestureDetector(
@@ -566,7 +572,10 @@ class _ClientSelector extends StatelessWidget {
             ),
             child: state.cliente == null
                 ? const _ClientEmpty()
-                : _ClientSelected(state.cliente!),
+                : _ClientSelected(
+                    state.cliente!,
+                    cargando: state.loadingInfoCliente,
+                  ),
           ),
         );
       },
@@ -610,41 +619,187 @@ class _ClientEmpty extends StatelessWidget {
 }
 
 class _ClientSelected extends StatelessWidget {
-  const _ClientSelected(this.cliente);
+  const _ClientSelected(this.cliente, {this.cargando = false});
   final DatumClEntity cliente;
+  final bool cargando;
+
+  String get _ruta {
+    if (cliente.rutaId.isEmpty) return 'Sin ruta asignada';
+    for (final r in Shared.getRutas ?? <DatumREntity>[]) {
+      if (r.id == cliente.rutaId) return r.nombre;
+    }
+    return cargando ? 'Cargando ruta...' : 'Ruta desconocida';
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final activos = (cliente.prestamos ?? <DatumPEntity>[])
+        .where((p) => p.estado == 'ACTIVO')
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _Avatar(icon: Icons.person_rounded),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        Row(
+          children: [
+            const _Avatar(icon: Icons.person_rounded),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${cliente.nombres} ${cliente.apellidos}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF202838),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  _IconText(icon: Icons.badge_outlined, text: cliente.cedula),
+                  const SizedBox(height: 3),
+                  _IconText(
+                    icon: Icons.phone_outlined,
+                    text: cliente.telefono,
+                  ),
+                  const SizedBox(height: 3),
+                  _IconText(icon: Icons.route_outlined, text: _ruta),
+                ],
+              ),
+            ),
+            Visibility(
+              visible: Shared.getIdClient.isEmpty,
+              child: const Icon(
+                Icons.edit_outlined,
+                size: 19,
+                color: Color(0xFF8A93A3),
+              ),
+            ),
+          ],
+        ),
+
+        if (cargando && activos.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 12),
+            child: LinearProgressIndicator(minHeight: 2),
+          ),
+
+        if (activos.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7E8),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFF5C26B)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline_rounded,
+                      size: 16,
+                      color: Color(0xFFB7791F),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        activos.length == 1
+                            ? 'Este cliente ya tiene 1 préstamo activo'
+                            : 'Este cliente ya tiene ${activos.length} préstamos activos',
+                        style: const TextStyle(
+                          color: Color(0xFF8A5A0B),
+                        
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                ...activos.map(
+                  (p) => Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: _PrestamoActivo(p, ruta: _ruta),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Resumen de un préstamo que el cliente ya tiene
+class _PrestamoActivo extends StatelessWidget {
+  const _PrestamoActivo(this.p, {required this.ruta});
+  final DatumPEntity p;
+  final String ruta;
+
+  String _dato(String label, String value) => '$label $value';
+
+  @override
+  Widget build(BuildContext context) {
+    final frecuencia = p.frecuencia.isEmpty
+        ? ''
+        : p.frecuencia[0] + p.frecuencia.substring(1).toLowerCase();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
+              Expanded(
+                child: Text(
+                  'Prestado ${MoneyUtil.format(p.monto)}',
+                  style: const TextStyle(
+                    color: Color(0xFF202838),
+                    
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
               Text(
-                '${cliente.nombres} ${cliente.apellidos}',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                'Debe ${MoneyUtil.format(p.deudaActual)}',
                 style: const TextStyle(
-                  color: Color(0xFF202838),
-                  fontSize: 14,
+                  color: Color(0xFFD64545),
+                
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 4),
-              _IconText(icon: Icons.badge_outlined, text: cliente.cedula),
-              const SizedBox(height: 3),
-              _IconText(icon: Icons.phone_outlined, text: cliente.telefono),
             ],
           ),
-        ),
-        Visibility(
-          visible: Shared.getIdClient.isEmpty,
-          child: Icon(Icons.edit_outlined, size: 19, color: Color(0xFF8A93A3)),
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            [
+              _dato('Cuota', MoneyUtil.format(p.valorCuota)),
+              if (frecuencia.isNotEmpty) " - $frecuencia",
+              _dato('\nInicio', DateUtil.formatLectura(p.fechaInicio)),
+              _dato('\nFin', DateUtil.formatLectura(p.fechaFin)),
+            ].join(' '),
+            
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Ruta: $ruta',
+            
+          ),
+        ],
+      ),
     );
   }
 }
@@ -676,11 +831,11 @@ class _IconText extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: const Color(0xFF929BAB)),
+        Icon(icon, color: const Color(0xFF929BAB)),
         const SizedBox(width: 4),
         Text(
           text,
-          style: const TextStyle(color: Color(0xFF929BAB), fontSize: 11),
+          style: const TextStyle(color: Color(0xFF929BAB), ),
         ),
       ],
     );
@@ -1043,7 +1198,7 @@ class _SchedulePreview extends StatelessWidget {
   }
 
   String _formatDate(DateTime? date) =>
-      date == null ? '' : '${date.day}/${date.month}/${date.year}';
+      date == null ? '' : DateUtil.formatLectura(date);
 }
 
 class _CalendarInfo extends StatelessWidget {
@@ -1181,7 +1336,7 @@ class _TimelineItem extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '${fecha.day.toString().padLeft(2, '0')}/${fecha.month.toString().padLeft(2, '0')}/${fecha.year}',
+                    DateUtil.formatLectura(fecha),
                     style: const TextStyle(
                       color: Color(0xFF4164E8),
                       fontSize: 12,

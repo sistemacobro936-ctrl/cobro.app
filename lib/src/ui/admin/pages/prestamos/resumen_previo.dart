@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/domain/dto/cuota_esperada_dto.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/create_p_view.dart';
@@ -236,10 +237,7 @@ class _CuotaItemState extends State<_CuotaItem> {
   @override
   Widget build(BuildContext context) {
     final cuota = widget.cuota;
-    final fecha =
-        '${cuota.fechaCobro.day.toString().padLeft(2, '0')}/'
-        '${cuota.fechaCobro.month.toString().padLeft(2, '0')}/'
-        '${cuota.fechaCobro.year}';
+    final fecha = DateUtil.formatLectura(cuota.fechaCobro);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),

@@ -131,7 +131,7 @@ class _GestionCobrosState extends State<GestionCobros> {
       children: noPagos.map((n) {
         final detalle = <String>[
           if (n.fechaPromesa != null)
-            'Promete pagar: ${DateUtil.formatDate(n.fechaPromesa!)}',
+            'Promete pagar: ${DateUtil.formatLectura(n.fechaPromesa!)}',
           if (n.observacion.isNotEmpty) n.observacion,
         ];
 

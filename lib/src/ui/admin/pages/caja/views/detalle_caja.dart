@@ -189,7 +189,7 @@ class DetalleCaja extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  DateUtil.formatDate(caja.fechaApertura),
+                  DateUtil.formatLectura(caja.fechaApertura),
                   style: TextStyle(color: Color(0xFF929BAB), fontSize: 12),
                 ),
               ],

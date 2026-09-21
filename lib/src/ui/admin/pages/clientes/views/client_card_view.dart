@@ -91,7 +91,7 @@ class ClientCardView extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           color: Color(0xFF202838),
-                          fontSize: 14,
+                       
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -109,7 +109,7 @@ class ClientCardView extends StatelessWidget {
                   document,
                   style: const TextStyle(
                     color: Color(0xFF7D8797),
-                    fontSize: 11,
+               
                   ),
                 ),
 
@@ -119,7 +119,7 @@ class ClientCardView extends StatelessWidget {
                   route,
                   style: const TextStyle(
                     color: Color(0xFF7D8797),
-                    fontSize: 11,
+                
                   ),
                 ),
 
@@ -131,30 +131,13 @@ class ClientCardView extends StatelessWidget {
                       phone,
                       style: const TextStyle(
                         color: Color(0xFF6F7888),
-                        fontSize: 11,
+                       
                       ),
                     ),
 
                     const SizedBox(width: 12),
 
-                    if (hasDebt)
-                      Text(
-                        balance,
-                        style: const TextStyle(
-                          color: Color(0xFFE53935),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      )
-                    else
-                      const Text(
-                        'Al día',
-                        style: TextStyle(
-                          color: Color(0xFF00A86B),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                    
                   ],
                 ),
               ],

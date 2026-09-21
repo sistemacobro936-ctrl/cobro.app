@@ -12,6 +12,7 @@ class PrestamoState extends Equatable {
   final bool isPrevious;
   final bool aplicaSeguro;
   final bool loadingBtn;
+  final bool loadingInfoCliente;
   final List<DateTime>? fechasPago;
   final List<DatumPEntity>? prestamos;
   final List<CuotaEsperada>? cuotaEsperada;
@@ -29,6 +30,7 @@ class PrestamoState extends Equatable {
     this.isPrevious = false,
     this.aplicaSeguro = true,
     this.loadingBtn = false,
+    this.loadingInfoCliente = false,
     this.prestamos,
     this.prestamo,
     this.cuotaEsperada,
@@ -48,6 +50,7 @@ class PrestamoState extends Equatable {
     isPrevious,
     aplicaSeguro,
     loadingBtn,
+    loadingInfoCliente,
     prestamos,
     prestamo,
     cuotaEsperada
@@ -65,6 +68,7 @@ class PrestamoState extends Equatable {
     bool? isPrevious,
     bool? aplicaSeguro,
     bool? loadingBtn,
+    bool? loadingInfoCliente,
     List<DatumPEntity>? prestamos,
     DatumPEntity? prestamo,
     bool limpiarCliente = false,
@@ -85,6 +89,7 @@ class PrestamoState extends Equatable {
     isPrevious: isPrevious ?? this.isPrevious,
     aplicaSeguro: aplicaSeguro ?? this.aplicaSeguro,
     loadingBtn: loadingBtn ?? this.loadingBtn,
+    loadingInfoCliente: loadingInfoCliente ?? this.loadingInfoCliente,
     prestamos: prestamos ?? this.prestamos,
     prestamo: prestamo ?? this.prestamo,
     cuotaEsperada: cuotaEsperada ?? this.cuotaEsperada

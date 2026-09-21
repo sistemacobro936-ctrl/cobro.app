@@ -228,10 +228,18 @@ class CajaCubit extends Cubit<CajaState> {
     );
   }
 
-  /// Inyecciones de capital, pagos dobles y pagos menores de la caja
-  Future<void> movimientos() async {
+  /// Caja consultada desde el histórico; null = la caja abierta del día
+  String? _movimientosCajaId;
+
+  /// Inyecciones de capital, pagos dobles y pagos menores de la caja.
+  /// Si se pasa [cajaId] se consulta esa caja (histórico) y se recuerda para
+  /// poder refrescar; si no, la caja del día.
+  Future<void> movimientos({String? cajaId}) async {
+    if (cajaId != null) _movimientosCajaId = cajaId;
     emit(state.copyWith(loadingMovimientos: true));
-    final r = await _cajaRepo.movimientos(cajaId: state.cajas!.id);
+    final r = await _cajaRepo.movimientos(
+      cajaId: _movimientosCajaId ?? state.cajas!.id,
+    );
     r.fold(
       (l) {
         AppDialogUtil.error(state.context, message: l.props[0].toString());

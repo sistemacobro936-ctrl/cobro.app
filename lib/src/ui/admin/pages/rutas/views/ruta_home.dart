@@ -5,6 +5,7 @@ import 'package:personal/src/domain/entities/ruta_entity.dart';
 import 'package:personal/src/ui/admin/pages/caja/caja_page.dart';
 import 'package:personal/src/ui/admin/pages/rutas/cubit/ruta_cubit.dart';
 import 'package:personal/src/ui/admin/pages/rutas/views/crear_ruta_view.dart';
+import 'package:personal/src/ui/admin/pages/rutas/views/gastos_ruta_page.dart';
 import 'package:personal/src/ui/admin/pages/rutas/views/ruta_detalle_view.dart';
 
 class RutaHome extends StatefulWidget {
@@ -305,6 +306,24 @@ class _RutaHomeState extends State<RutaHome> {
                             Icon(Icons.edit_outlined, size: 18),
                             SizedBox(width: 10),
                             Text('Editar'),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'gastos',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => GastosRutaPage(ruta: ruta),
+                            ),
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Icon(Icons.receipt_long_outlined, size: 18),
+                            SizedBox(width: 10),
+                            Text('Gastos de ruta'),
                           ],
                         ),
                       ),

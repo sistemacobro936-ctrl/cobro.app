@@ -1029,7 +1029,7 @@ class _PagoRowState extends State<_PagoRow> {
             child: Text(
               [
                 if (pago.fechaPago != null)
-                  DateUtil.formatDate(pago.fechaPago!),
+                  DateUtil.formatLectura(pago.fechaPago!),
                 if (_reversado) 'Reversado',
               ].join(' · '),
               style: const TextStyle(color: Color(0xFF929BAB)),
@@ -1155,7 +1155,7 @@ class _ClienteNoPagoCard extends StatelessWidget {
     final cliente = detalle.cliente;
     final detalleTexto = <String>[
       if (info != null && info!.fechaPromesa != null)
-        'Promete pagar: ${DateUtil.formatDate(info!.fechaPromesa!)}',
+        'Promete pagar: ${DateUtil.formatLectura(info!.fechaPromesa!)}',
       if (info != null && info!.observacion.isNotEmpty) info!.observacion,
     ];
 

@@ -140,7 +140,7 @@ class CollectCardCView extends StatelessWidget {
                       collected,
                       style: const TextStyle(
                         color: Color(0xFF00A86B),
-                        fontSize: 14,
+                 
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -149,7 +149,7 @@ class CollectCardCView extends StatelessWidget {
 
                     const Text(
                       'Recaudado hoy',
-                      style: TextStyle(color: Color(0xFF7B8494), fontSize: 10),
+                      style: TextStyle(color: Color(0xFF7B8494), ),
                     ),
                   ],
                 ),
@@ -208,7 +208,7 @@ class CollectCardCView extends StatelessWidget {
 
           const Text(
             'Sin ruta asignada',
-            style: TextStyle(color: Color(0xFF929BAB), fontSize: 11),
+            style: TextStyle(color: Color(0xFF929BAB), ),
           ),
         ],
       );
@@ -259,7 +259,7 @@ class CollectCardCView extends StatelessWidget {
                           ruta.nombre,
                           style: const TextStyle(
                             color: Color(0xFF5E6878),
-                            fontSize: 11,
+                         
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -286,7 +286,7 @@ class CollectCardCView extends StatelessWidget {
                   '$clients ${clients == 1 ? 'cliente' : 'clientes'}',
                   style: const TextStyle(
                     color: Color(0xFF7B8494),
-                    fontSize: 11,
+                   
                   ),
                 ),
               ],
