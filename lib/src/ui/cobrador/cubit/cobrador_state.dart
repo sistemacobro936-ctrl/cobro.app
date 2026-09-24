@@ -6,6 +6,8 @@ class CobradorRState extends Equatable {
   final bool btnLoading;
   final bool enabledBtn;
   final bool formGasto;
+
+  final bool buscando;
   final List<DatumREntity>? ruta;
   final List<DetalleRutaEntity>? clientes;
   final List<DetalleRutaEntity>? pagados;
@@ -23,12 +25,36 @@ class CobradorRState extends Equatable {
 
   final Widget child;
 
+  final bool buscoAlgunaVez;
+  final bool loadingBtn;
+
+  final DatumClEntity? cliente;
+
+  final bool loadingConfig;
+  final List<SCobroEntity> periodos;
+  final SCobroEntity? periodoSeleccionado;
+
+  final bool aplicaSeguro;
+  final DateTime? fechaInicial;
+  final DateTime? fechaFinal;
+  final List<DateTime>? fechasPago;
+
   const CobradorRState({
     required this.context,
     this.btnLoading = false,
+    this.aplicaSeguro = false,
+    this.buscoAlgunaVez = false,
+    this.loadingBtn = false,
+    this.periodos = const [],
+    this.periodoSeleccionado,
+    this.fechaFinal,
+    this.fechaInicial,
+    this.loadingConfig = false,
     this.loading = false,
     this.enabledBtn = false,
     this.formGasto = false,
+    this.buscando = false,
+
     this.ruta,
     this.child = const SizedBox(),
     this.clientes,
@@ -38,6 +64,8 @@ class CobradorRState extends Equatable {
     this.resumenRuta,
     this.cajaPorRuta = const {},
     this.gastosPorRuta = const {},
+    this.cliente,
+    this.fechasPago,
   });
 
   /// Devuelve el cajaId para una ruta dada, o null si no tiene caja.
@@ -47,7 +75,7 @@ class CobradorRState extends Equatable {
   List<GastoElementEntity>? gastos(String rutaId) => gastosPorRuta[rutaId];
 
   @override
-  List<Object> get props => [
+  List<Object?> get props => [
     context,
     loading,
     btnLoading,
@@ -62,6 +90,18 @@ class CobradorRState extends Equatable {
     formGasto,
     cajaPorRuta,
     gastosPorRuta,
+    buscando,
+    buscoAlgunaVez,
+    cliente,
+    loadingConfig,
+    periodos,
+    periodoSeleccionado,
+
+    aplicaSeguro,
+    fechaInicial,
+    fechaFinal,
+    fechasPago,
+    loadingBtn
   ];
 
   CobradorRState copyWith({
@@ -69,6 +109,7 @@ class CobradorRState extends Equatable {
     bool? loading,
     bool? btnLoading,
     bool? enabledBtn,
+    bool? loadingBtn,
     List<DatumREntity>? ruta,
     Widget? child,
     List<DetalleRutaEntity>? clientes,
@@ -78,7 +119,18 @@ class CobradorRState extends Equatable {
     List<DatumREntity>? resumenRuta,
     Map<String, String>? cajaPorRuta,
     Map<String, List<GastoElementEntity>>? gastosPorRuta,
+    bool? buscando,
     bool? formGasto,
+    bool? buscoAlgunaVez,
+    DatumClEntity? cliente,
+    bool? loadingConfig,
+    List<SCobroEntity>? periodos,
+    SCobroEntity? periodoSeleccionado,
+    bool? aplicaSeguro,
+    bool limpiarCliente = false,
+    DateTime? fechaInicial,
+    DateTime? fechaFinal,
+    List<DateTime>? fechasPago,
   }) => CobradorRState(
     context: context ?? this.context,
     btnLoading: btnLoading ?? this.btnLoading,
@@ -94,5 +146,16 @@ class CobradorRState extends Equatable {
     cajaPorRuta: cajaPorRuta ?? this.cajaPorRuta,
     gastosPorRuta: gastosPorRuta ?? this.gastosPorRuta,
     formGasto: formGasto ?? this.formGasto,
+    buscando: buscando ?? this.buscando,
+    buscoAlgunaVez: buscoAlgunaVez ?? this.buscoAlgunaVez,
+    cliente: limpiarCliente ? null : cliente ?? this.cliente,
+    loadingConfig: loadingConfig ?? this.loadingConfig,
+    periodos: periodos ?? this.periodos,
+    periodoSeleccionado: periodoSeleccionado ?? this.periodoSeleccionado,
+    aplicaSeguro: aplicaSeguro ?? this.aplicaSeguro,
+    fechaInicial: fechaInicial ?? this.fechaInicial,
+    fechaFinal: fechaFinal ?? this.fechaFinal,
+    fechasPago: fechasPago ?? this.fechasPago,
+    loadingBtn: loadingBtn ?? this.loadingBtn,
   );
 }

@@ -11,6 +11,7 @@ import 'package:personal/src/ui/admin/pages/prestamos/views/cobrar.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/views/pagos.dart';
 import 'package:personal/src/ui/cobrador/c_home.dart';
 import 'package:personal/src/ui/cobrador/cubit/cobrador_cubit.dart';
+import 'package:personal/src/ui/cobrador/views/crear_prestamo_cobrador_view.dart';
 import 'package:personal/src/ui/widgets/btn_widget.dart';
 import 'package:personal/src/ui/widgets/input_widget.dart';
 
@@ -386,16 +387,10 @@ class _ResumenCard extends StatelessWidget {
         ),
         borderRadius: BorderRadius.circular(18),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _ResumenItem(
-              icon: Icons.groups_outlined,
-              label: 'Clientes por cobrar',
-              value: '$totalClientes',
-            ),
-          ),
-        ],
+      child: _ResumenItem(
+        icon: Icons.groups_outlined,
+        label: 'Clientes por cobrar',
+        value: '$totalClientes',
       ),
     );
   }
@@ -421,7 +416,7 @@ class _ResumenItem extends StatelessWidget {
         Text(
           value,
           style: const TextStyle(
-            fontSize: 16,
+            fontSize: 20,
             fontWeight: FontWeight.w800,
             color: Colors.white,
           ),
@@ -430,9 +425,55 @@ class _ResumenItem extends StatelessWidget {
         Text(
           label,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.white.withValues(alpha: .85),
+          style: TextStyle(color: Colors.white.withValues(alpha: .85)),
+        ),
+        SizedBox(height: 10),
+        Center(
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+              context.read<CobradorRCubit>().onEventChild(CrearPrestamoCobradorView());
+              context.read<CobradorRCubit>().fechaFinal();
+              },
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.35),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.10),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add_card_rounded, size: 20, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text(
+                      'Crear préstamo',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ],

@@ -177,11 +177,14 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
       builder: (context, state) {
         final movimiento = state.movimiento;
 
-        return Visibility(
-          visible: movimiento!=null,
-          child: Container(
+        // Mientras carga (o si falló la consulta) no hay datos para armar el
+        // encabezado: antes esto igual construía el Column de abajo (que usa
+        // movimiento!.x) y reventaba con un null check, porque Visibility
+        // solo oculta el widget ya construido, no evita construirlo.
+        if (movimiento == null) {
+          return Container(
             margin: const EdgeInsets.fromLTRB(10, 18, 10, 0),
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(vertical: 40),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -193,7 +196,33 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
               ),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Column(
+            child: Center(
+              child: state.loading
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Text(
+                      'No se pudo cargar la información de la ruta.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white.withValues(alpha: .85)),
+                    ),
+            ),
+          );
+        }
+
+        return Container(
+          margin: const EdgeInsets.fromLTRB(10, 18, 10, 0),
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.primaryColor,
+                AppTheme.primaryColor.withValues(alpha: .80),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
               children: [
                 // ─────────────────────────────────────────────
                 // ENCABEZADO DE LA RUTA
@@ -259,7 +288,7 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
                     Expanded(
                       child: _headerInfo(
                         title: 'Capital',
-                        value: '\$${movimiento!.capital}',
+                        value: '\$${movimiento.capital}',
                       ),
                     ),
           
@@ -371,8 +400,7 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
                 ),
               ],
             ),
-          ),
-        );
+          );
       },
     );
   }

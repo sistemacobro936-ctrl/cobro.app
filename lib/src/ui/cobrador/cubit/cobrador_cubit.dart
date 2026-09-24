@@ -4,17 +4,26 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:personal/get_it.dart';
+import 'package:personal/src/common/shared/shared.dart';
 import 'package:personal/src/common/utils/app_dialog_util.dart';
 import 'package:personal/src/common/utils/date_util.dart';
+import 'package:personal/src/domain/dto/crear_prestamo_dto.dart';
 import 'package:personal/src/domain/dto/gasto_dto.dart';
 import 'package:personal/src/domain/dto/no_pago_dto.dart';
 import 'package:personal/src/domain/dto/pago_dto.dart';
+import 'package:personal/src/domain/dto/prestamo_fecha_dto.dart';
+import 'package:personal/src/domain/entities/cliente_entity.dart';
+import 'package:personal/src/domain/entities/config_entity.dart'
+    show SCobroEntity;
 import 'package:personal/src/domain/entities/detalle_ruta_entity.dart';
 import 'package:personal/src/domain/entities/gasto_entity.dart';
 import 'package:personal/src/domain/entities/pago_ruta_entity.dart';
 import 'package:personal/src/domain/entities/ruta_entity.dart';
+import 'package:personal/src/domain/repository/cliente_repo.dart';
+import 'package:personal/src/domain/repository/config_repo.dart';
 import 'package:personal/src/domain/repository/gastos_repo.dart';
 import 'package:personal/src/domain/repository/pago_repo.dart';
+import 'package:personal/src/domain/repository/presamo_repo.dart';
 import 'package:personal/src/domain/repository/ruta_repo.dart';
 import 'package:personal/src/ui/cobrador/c_home.dart';
 import 'package:personal/src/ui/cobrador/clientes.dart';
@@ -25,10 +34,17 @@ class CobradorRCubit extends Cubit<CobradorRState> {
   final _rutaRepo = sl<RutaRepo>();
   final _pagoRepo = sl<PagoRepo>();
   final _gastoRepo = sl<GastosRepo>();
+  final _clienteRepo = sl<ClienteRepository>();
+  final _configRepo = sl<ConfiguracionRepository>();
+  final _prestamosRepo = sl<PresamoRepo>();
+
+  static const maxCuotas = 365;
 
   CobradorRCubit({required BuildContext context})
     : super(CobradorRState(context: context)) {
     onEventChild(CHome());
+    calculaterFecha();
+    _cargarConfig();
   }
 
   ///variables
@@ -37,12 +53,49 @@ class CobradorRCubit extends Cubit<CobradorRState> {
   final concepto = TextEditingController();
   final valor = TextEditingController();
   final observacion = TextEditingController();
+  final cedulaController = TextEditingController();
+  final montoController = TextEditingController();
+  final interesController = TextEditingController();
+  final seguroController = TextEditingController();
+  final seguroValorController = TextEditingController();
+  final cuotasController = TextEditingController();
 
   ///Eventos
   ///
   ///
   void onEventChild(Widget c) {
     emit(state.copyWith(child: c));
+  }
+
+  void calculaterFecha() {
+    onGetFechaInicial(DateTime.now());
+  }
+
+  void onGetFechaInicial(DateTime f) {
+    emit(state.copyWith(fechaInicial: f));
+    fechaFinal();
+  }
+
+  void fechaFinal() {
+    final fechas = generarFechasPago();
+
+    if (fechas.isEmpty) {
+      emit(state.copyWith(fechasPago: []));
+      return;
+    }
+
+    emit(state.copyWith(fechaFinal: fechas.last, fechasPago: fechas));
+  }
+
+  void onAplicaSeguro(bool aplica) {
+    emit(state.copyWith(aplicaSeguro: aplica));
+    if (aplica) recalcularSeguro();
+  }
+
+  void onGetPeriodo(SCobroEntity p) {
+    cuotasController.text = p.cuotas?.toString() ?? '';
+    emit(state.copyWith(periodoSeleccionado: p));
+    fechaFinal();
   }
 
   ///Validaciones
@@ -162,6 +215,39 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     emit(state.copyWith(loading: false));
   }
 
+  Future<void> buscarCliente() async {
+    final cedula = cedulaController.text.trim();
+    if (cedula.isEmpty) return;
+
+    emit(
+      state.copyWith(
+        buscando: true,
+        buscoAlgunaVez: true,
+        limpiarCliente: true,
+      ),
+    );
+
+    final r = await _clienteRepo.buscar(q: cedula);
+    final match = r.fold<DatumClEntity?>((l) => null, (res) {
+      for (final c in res.data) {
+        if (c.cedula.trim() == cedula) return c;
+      }
+      return null;
+    });
+
+    if (match == null) {
+      if (!isClosed) emit(state.copyWith(buscando: false));
+      return;
+    }
+
+    // Se trae el detalle completo para tener sus préstamos
+    final detalle = await _clienteRepo.obtenerCliente(id: match.id);
+    final cliente = detalle.fold((l) => match, (d) => d);
+
+    if (isClosed) return;
+    emit(state.copyWith(cliente: cliente, buscando: false));
+  }
+
   Future<void> resumenRuta() async {
     if (!tieneRutas) return;
     emit(state.copyWith(loading: true));
@@ -176,14 +262,14 @@ class CobradorRCubit extends Cubit<CobradorRState> {
         // Construye rutaId → cajaId de forma plana para acceso O(1)
         final cajaPorRuta = <String, String>{
           for (final datum in r.data)
-            for (final caja in datum.gestionRuta ?? [])
-              caja.rutaId: caja.id,
+            for (final caja in datum.gestionRuta ?? []) caja.rutaId: caja.id,
         };
         emit(state.copyWith(resumenRuta: r.data, cajaPorRuta: cajaPorRuta));
       },
     );
     emit(state.copyWith(loading: false));
   }
+
   Future<void> listarGastos() async {
     emit(state.copyWith(loading: true));
 
@@ -269,6 +355,25 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     return ok;
   }
 
+  Future<void> _cargarConfig() async {
+    emit(state.copyWith(loadingConfig: true));
+
+    if (Shared.getConfig == null) {
+      final r = await _configRepo.obtenerConfiguracion();
+      r.fold((l) {}, (r) => Shared.setConfig = r.data);
+    }
+
+    final config = Shared.getConfig;
+    if (config != null) {
+      interesController.text = config.configuracion.interesDefault.toString();
+      seguroController.text = config.configuracion.seguroDefault.toString();
+      recalcularSeguro();
+      emit(state.copyWith(periodos: config.periodosCobro));
+    }
+
+    emit(state.copyWith(loadingConfig: false));
+  }
+
   void crearGasto({required String idCaja}) async {
     emit(state.copyWith(loading: true));
     final r = await _gastoRepo.crearGasto(
@@ -292,6 +397,7 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     await listarGastos();
     emit(state.copyWith(loading: false));
   }
+
   ///
   ///
 
@@ -301,14 +407,183 @@ class CobradorRCubit extends Cubit<CobradorRState> {
 
   bool get tieneRutas => state.ruta != null && state.ruta!.isNotEmpty;
 
+  /// Nombre de la ruta de un cliente encontrado. Solo se conocen los nombres
+  /// de las rutas del propio cobrador (Shared.getRutas no aplica aquí: el
+  /// cobrador no consulta /ruta, solo su rutaCobrador()); si el préstamo es
+  /// de otra ruta, se avisa igual pero sin poder mostrar su nombre.
+  String nombreRuta(String rutaId) {
+    if (rutaId.isEmpty) return 'Sin ruta asignada';
+    for (final r in state.ruta ?? <DatumREntity>[]) {
+      if (r.id == rutaId) return r.nombre;
+    }
+    return 'Otra ruta (no asignada a ti)';
+  }
+
   int get totalClientes => (state.ruta ?? []).fold(
     0,
     (total, ruta) => total + ruta.cantidadClientes,
   );
+  int get valorSeguro =>
+      state.aplicaSeguro ? (int.tryParse(seguroValorController.text) ?? 0) : 0;
+
+  /// Cuotas del préstamo: las de la frecuencia por defecto o las que editó el
+  /// usuario. 0 si no hay frecuencia o el valor no es válido.
+  int get numeroCuotas {
+    if (state.periodoSeleccionado == null) return 0;
+    final n = int.tryParse(cuotasController.text.trim()) ?? 0;
+    return n > 0 && n <= maxCuotas ? n : 0;
+  }
 
   void clear() {
     valor.clear();
     observacion.clear();
     concepto.clear();
+  }
+
+  void limpiarBusqueda() {
+    cedulaController.clear();
+    emit(state.copyWith(limpiarCliente: true, buscoAlgunaVez: false));
+  }
+
+  List<DateTime> generarFechasPago() {
+    final config = Shared.getConfig;
+    final fechaInicial = state.fechaInicial;
+    final periodo = state.periodoSeleccionado;
+
+    if (config == null || fechaInicial == null || periodo == null) return [];
+
+    final cuotas = numeroCuotas;
+    if (cuotas <= 0) return [];
+
+    final diasPago = config.diasCobro
+        .where((e) => e.habilitado && e.diaSemana != null)
+        .map((e) => e.diaSemana!)
+        .toSet();
+
+    if (diasPago.isEmpty) return [];
+
+    final fechas = <DateTime>[];
+    var fecha = fechaInicial;
+
+    for (var i = 0; i < cuotas; i++) {
+      fecha = _calcularSiguienteFechaPago(
+        fechaActual: fecha,
+        periodo: periodo,
+        diasPago: diasPago,
+      );
+      fechas.add(fecha);
+    }
+
+    return fechas;
+  }
+
+  DateTime _calcularSiguienteFechaPago({
+    required DateTime fechaActual,
+    required SCobroEntity periodo,
+    required Set<int> diasPago,
+  }) {
+    final codigo = periodo.codigo?.toUpperCase();
+
+    DateTime fecha;
+    switch (codigo) {
+      case 'DIARIO':
+        fecha = fechaActual.add(const Duration(days: 1));
+        break;
+      case 'SEMANAL':
+        fecha = fechaActual.add(const Duration(days: 7));
+        break;
+      case 'QUINCENAL':
+        fecha = fechaActual.add(const Duration(days: 15));
+        break;
+      case 'MENSUAL':
+        fecha = fechaActual.add(const Duration(days: 30));
+        break;
+      default:
+        fecha = fechaActual.add(Duration(days: periodo.cantidadDias ?? 1));
+    }
+
+    while (!diasPago.contains(fecha.weekday)) {
+      fecha = fecha.add(const Duration(days: 1));
+    }
+
+    return fecha;
+  }
+
+  void recalcularSeguro() {
+    final monto = int.tryParse(montoController.text) ?? 0;
+    final pct = num.tryParse(seguroController.text) ?? 0;
+    final valor = (monto * pct / 100).round();
+
+    seguroValorController.text = monto > 0 && pct > 0 ? '$valor' : '';
+  }
+
+  /// Crea el préstamo para el cliente encontrado en el buscador de "Nuevo
+  /// préstamo" del cobrador. Propia del cobrador: no usa PrestamoCubit/admin.
+  Future<void> crearPrestamo() async {
+    final cliente = state.cliente;
+    final periodo = state.periodoSeleccionado;
+    final monto = int.tryParse(montoController.text) ?? 0;
+    final interesPct = int.tryParse(interesController.text) ?? 0;
+    final cuotas = numeroCuotas;
+
+    if (cliente == null ||
+        periodo == null ||
+        monto <= 0 ||
+        cuotas <= 0 ||
+        state.fechaInicial == null ||
+        state.fechaFinal == null) {
+      return;
+    }
+
+    emit(state.copyWith(loadingBtn: true));
+
+    final interes = (monto * (interesPct / 100)).toInt();
+    final cuota = ((monto + interes) / cuotas).toInt();
+
+    final r = await _prestamosRepo.crear(
+      dto: CrearPrestamoDto(
+        clienteId: cliente.id,
+        valorSeguro: valorSeguro,
+        monto: monto,
+        interes: interesPct,
+        numeroCuotas: cuotas,
+        montoInteres: interes,
+        valorCuota: cuota,
+        frecuencia: periodo.codigo!,
+        fechaInicio: DateUtil.formatDate(state.fechaInicial!),
+        fechaFin: DateUtil.formatDate(state.fechaFinal!),
+        fechas: periodo.codigo == 'SEMANAL' || periodo.codigo == 'QUINCENAL'
+            ? state.fechasPago!
+                  .asMap()
+                  .entries
+                  .map(
+                    (entry) => PrestamoFechaDto(
+                      fechaPago: DateUtil.formatDate(entry.value),
+                      numero: entry.key + 1,
+                      valor: cuota,
+                    ),
+                  )
+                  .toList()
+            : [],
+      ),
+    );
+
+    r.fold(
+      (l) => AppDialogUtil.error(state.context, message: l.props[0].toString()),
+      (_) => AppDialogUtil.success(
+        state.context,
+        message: 'Préstamo creado con éxito.',
+        onPressed: () {
+          montoController.clear();
+          cedulaController.clear();
+          emit(state.copyWith(limpiarCliente: true, buscoAlgunaVez: false));
+          if (Navigator.of(state.context).canPop()) {
+            Navigator.of(state.context).pop();
+          }
+        },
+      ),
+    );
+
+    emit(state.copyWith(loadingBtn: false));
   }
 }

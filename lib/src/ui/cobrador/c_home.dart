@@ -4,6 +4,7 @@ import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/ui/cobrador/cubit/cobrador_cubit.dart';
 import 'package:personal/src/ui/cobrador/dialogo_gasto.dart';
 import 'package:personal/src/ui/cobrador/drawer_cobrador.dart';
+import 'package:personal/src/ui/cobrador/views/crear_prestamo_cobrador_view.dart';
 import 'package:personal/src/ui/widgets/btn_widget.dart' show BtnWidget;
 
 class CHome extends StatefulWidget {
@@ -273,19 +274,11 @@ class _CHomeState extends State<CHome> {
           icon: Icons.dashboard_outlined,
           children: [
             ...rutasOrdenadas.map((ruta) {
-              // Busca el resumen de esta ruta
               final resumen = gestionMap[ruta.id];
 
-              final montoInicial = resumen?.montoInicial ?? 0;
               final cobrado = resumen?.cobrado ?? 0;
               final montoPrestado = resumen?.montoPrestado ?? 0;
               final gastos = resumen?.gastos ?? 0;
-              final montoEsperado = resumen?.montoEsperado ?? 0;
-              final cobroEsperado = resumen?.cobroEsperado ?? 0;
-
-              final eficacia = cobroEsperado > 0
-                  ? ((cobrado / cobroEsperado) * 100).round()
-                  : 0;
 
               return Padding(
                 padding: const EdgeInsets.all(8),
@@ -313,15 +306,14 @@ class _CHomeState extends State<CHome> {
 
                     Row(
                       children: [
-                    
                         Expanded(
-                          child: _dato( 
+                          child: _dato(
                             'Cobrado hoy',
                             '\$ $cobrado',
                             color: Colors.green,
                           ),
                         ),
-                         Expanded(
+                        Expanded(
                           child: _dato(
                             'Clientes asociados',
                             '${ruta.cantidadClientes}',
@@ -352,10 +344,8 @@ class _CHomeState extends State<CHome> {
                       ],
                     ),
 
-                   
-
-                    
                     const Divider(),
+                 
                   ],
                 ),
               );
