@@ -108,7 +108,7 @@ class CobradorSearchDelegate extends SearchDelegate<DatumCEntity?> {
                         '${cobrador.nombre} ${cobrador.apellido}',
                         style: const TextStyle(
                           color: Color(0xFF202838),
-                          fontSize: 14,
+                         
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -119,7 +119,7 @@ class CobradorSearchDelegate extends SearchDelegate<DatumCEntity?> {
                         'CC ${cobrador.documento}',
                         style: const TextStyle(
                           color: Color(0xFF929BAB),
-                          fontSize: 11,
+                         
                         ),
                       ),
 

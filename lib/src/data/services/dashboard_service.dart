@@ -49,7 +49,7 @@ class DashboardServiceImpl implements DashboardService {
         "/dashboard/actividad",
         queryParameters: {
           "fechaOperacion": fecha,
-          "tipo": ?tipo,
+          "tipo": tipo,
           "page": page,
           "limit": limit,
         },

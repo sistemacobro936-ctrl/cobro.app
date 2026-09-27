@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 class RutaDto {
   final String? nombre;
   final String? descripcion;
@@ -21,14 +23,16 @@ class RutaDto {
     if (descripcion != null) {
       data['descripcion'] = descripcion;
     }
+    if (cobradorId!= null && cobradorId!.isNotEmpty) {
       data['cobradorId'] = cobradorId;
-    
+    }
     if (habilitada != null) {
       data['habilitada'] = habilitada;
     }
     if (capital != null) {
       data['capital'] = capital;
     }
+   
     return data;
   }
 }

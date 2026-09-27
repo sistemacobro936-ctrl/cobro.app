@@ -340,6 +340,19 @@ class _RutaHomeState extends State<RutaHome> {
                           ],
                         ),
                       ),
+                      PopupMenuItem(
+                        onTap: () {
+                          c.movimientosRuta(rutaId: ruta.id);
+                        },
+                        value: 'movimiento_ruta',
+                        child: Row(
+                          children: [
+                            Icon(Icons.receipt_long_rounded, size: 18),
+                            SizedBox(width: 10),
+                            Text('Movimiento de ruta'),
+                          ],
+                        ),
+                      ),
                     ],
                   );
                 },

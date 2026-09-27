@@ -24,6 +24,7 @@ class DatumClEntity {
   final String barrio;
   final String observacion;
   final String estado;
+  final int orden;
   final int totalPrestado;
   final List<DatumPEntity>? prestamos;
 
@@ -41,6 +42,7 @@ class DatumClEntity {
     required this.observacion,
     required this.estado,
     required this.totalPrestado,
+    required this.orden,
     this.prestamos,
   });
 }

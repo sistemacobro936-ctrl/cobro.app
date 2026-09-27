@@ -7,6 +7,7 @@ import 'package:personal/get_it.dart';
 import 'package:personal/src/common/shared/shared.dart';
 import 'package:personal/src/common/utils/app_dialog_util.dart';
 import 'package:personal/src/common/utils/date_util.dart';
+import 'package:personal/src/domain/dto/crear_cliente_dto.dart';
 import 'package:personal/src/domain/dto/crear_prestamo_dto.dart';
 import 'package:personal/src/domain/dto/gasto_dto.dart';
 import 'package:personal/src/domain/dto/no_pago_dto.dart';
@@ -60,6 +61,16 @@ class CobradorRCubit extends Cubit<CobradorRState> {
   final seguroValorController = TextEditingController();
   final cuotasController = TextEditingController();
 
+  // Formulario de cliente nuevo (cuando la búsqueda por cédula no encuentra a nadie)
+  final nombresClienteController = TextEditingController();
+  final apellidosClienteController = TextEditingController();
+  final telefonoClienteController = TextEditingController();
+  final whatsappClienteController = TextEditingController();
+  final direccionClienteController = TextEditingController();
+  final descripcionDireccionClienteController = TextEditingController();
+  final barrioClienteController = TextEditingController();
+  final observacionClienteController = TextEditingController();
+
   ///Eventos
   ///
   ///
@@ -96,6 +107,30 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     cuotasController.text = p.cuotas?.toString() ?? '';
     emit(state.copyWith(periodoSeleccionado: p));
     fechaFinal();
+  }
+
+  /// Ruta a asignar al cliente nuevo. Solo hace falta elegirla cuando el
+  /// cobrador tiene más de una ruta; con una sola, se usa esa directamente.
+  void onRutaClienteSeleccionada(DatumREntity r) {
+    emit(state.copyWith(rutaClienteSeleccionada: r));
+  }
+
+  /// Antes de entrar a "Crear préstamo" desde una ruta puntual: dejo la
+  /// ruta lista para el cliente nuevo (sin que el cobrador tenga que
+  /// elegirla otra vez) y, si en ese momento había un cliente como cobro
+  /// actual DE ESA RUTA, el nuevo se sugiere justo después de él.
+  void prepararNuevoPrestamo({
+    required DatumREntity ruta,
+    DetalleRutaEntity? clienteActual,
+  }) {
+    final ordenActual = clienteActual?.cliente.orden;
+    emit(
+      state.copyWith(
+        rutaClienteSeleccionada: ruta,
+        ordenClienteNuevo: ordenActual == null ? null : ordenActual + 1,
+        limpiarOrdenClienteNuevo: ordenActual == null,
+      ),
+    );
   }
 
   ///Validaciones
@@ -442,7 +477,80 @@ class CobradorRCubit extends Cubit<CobradorRState> {
 
   void limpiarBusqueda() {
     cedulaController.clear();
-    emit(state.copyWith(limpiarCliente: true, buscoAlgunaVez: false));
+    nombresClienteController.clear();
+    apellidosClienteController.clear();
+    telefonoClienteController.clear();
+    whatsappClienteController.clear();
+    direccionClienteController.clear();
+    descripcionDireccionClienteController.clear();
+    barrioClienteController.clear();
+    observacionClienteController.clear();
+    emit(
+      state.copyWith(
+        limpiarCliente: true,
+        buscoAlgunaVez: false,
+        limpiarRutaCliente: true,
+      ),
+    );
+  }
+
+  /// Crea el cliente cuando la búsqueda por cédula no encontró a nadie, con
+  /// la cédula ya buscada. Al terminar, deja a ese cliente como el
+  /// seleccionado para poder seguir directo a crearle el préstamo.
+  Future<void> crearCliente() async {
+    final rutas = state.ruta ?? <DatumREntity>[];
+    final ruta = rutas.length == 1 ? rutas.first : state.rutaClienteSeleccionada;
+
+    if (ruta == null ||
+        nombresClienteController.text.trim().isEmpty ||
+        apellidosClienteController.text.trim().isEmpty ||
+        telefonoClienteController.text.trim().isEmpty ||
+        direccionClienteController.text.trim().isEmpty ||
+        barrioClienteController.text.trim().isEmpty) {
+      AppDialogUtil.error(
+        state.context,
+        message: 'Completa los campos obligatorios y selecciona una ruta.',
+      );
+      return;
+    }
+
+    emit(state.copyWith(loadingBtn: true));
+
+    final dto = CrearClienteDto(
+      orden: state.ordenClienteNuevo,
+      nombres: nombresClienteController.text.trim(),
+      apellidos: apellidosClienteController.text.trim(),
+      cedula: cedulaController.text.trim(),
+      telefono: telefonoClienteController.text.trim(),
+      whatsapp: whatsappClienteController.text.trim().isEmpty
+          ? telefonoClienteController.text.trim()
+          : whatsappClienteController.text.trim(),
+      direccion: direccionClienteController.text.trim(),
+      descripcionDireccion: descripcionDireccionClienteController.text.trim(),
+      barrio: barrioClienteController.text.trim(),
+      observacion: observacionClienteController.text.trim(),
+      rutaId: ruta.id,
+    );
+
+    final r = await _clienteRepo.crear(dto: dto);
+    final id = r.fold<String?>((l) {
+      AppDialogUtil.error(state.context, message: l.props[0].toString());
+      return null;
+    }, (creado) => creado);
+
+    if (id != null) {
+      final detalle = await _clienteRepo.obtenerCliente(id: id);
+      detalle.fold(
+        (l) {},
+        (cliente) => emit(state.copyWith(cliente: cliente)),
+      );
+      AppDialogUtil.success(
+        state.context,
+        message: 'Cliente creado con éxito. Ahora puedes asignarle el préstamo.',
+      );
+    }
+
+    emit(state.copyWith(loadingBtn: false));
   }
 
   List<DateTime> generarFechasPago() {
@@ -577,9 +685,7 @@ class CobradorRCubit extends Cubit<CobradorRState> {
           montoController.clear();
           cedulaController.clear();
           emit(state.copyWith(limpiarCliente: true, buscoAlgunaVez: false));
-          if (Navigator.of(state.context).canPop()) {
-            Navigator.of(state.context).pop();
-          }
+          clientesRuta();
         },
       ),
     );

@@ -120,42 +120,12 @@ class CollectCardCView extends StatelessWidget {
           // PARTE INFERIOR
           // =====================================================
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // -------------------------------------------------
               // RECAUDADO
               // -------------------------------------------------
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 11,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEAFBF3),
-                  borderRadius: BorderRadius.circular(11),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      collected,
-                      style: const TextStyle(
-                        color: Color(0xFF00A86B),
-                 
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-
-                    const SizedBox(height: 2),
-
-                    const Text(
-                      'Recaudado hoy',
-                      style: TextStyle(color: Color(0xFF7B8494), ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const Spacer(),
+           
 
               // -------------------------------------------------
               // LLAMAR
@@ -168,7 +138,7 @@ class CollectCardCView extends StatelessWidget {
                 color: const Color(0xFF4F7CFF),
               ),
 
-              const SizedBox(width: 8),
+              const SizedBox(width: 20),
 
               // -------------------------------------------------
               // VER DETALLE

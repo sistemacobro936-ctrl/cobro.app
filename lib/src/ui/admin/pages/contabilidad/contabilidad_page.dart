@@ -330,7 +330,7 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
 
   Widget _buildRuta(BuildContext context, ContabilidadState state) =>
       DropdownButtonFormField<DatumREntity?>(
-        initialValue: state.rutaSeleccionada,
+        value: state.rutaSeleccionada,
         isExpanded: true,
         decoration: InputDecoration(
           hintText: 'Seleccione una ruta',

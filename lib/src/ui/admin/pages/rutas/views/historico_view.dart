@@ -224,7 +224,7 @@ class HistoricoView extends StatelessWidget {
             Expanded(
               child: _dato(
                 'Esperado',
-                caja.montoEsperado,
+                caja.montoEsperado + caja.saldoSeguros,
                 Icons.account_balance_wallet_outlined,
               ),
             ),

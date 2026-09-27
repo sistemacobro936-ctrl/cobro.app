@@ -491,7 +491,7 @@ class _ConfigPageState extends State<ConfigPage> {
 
           Switch.adaptive(
             value: periodo.habilitado,
-            activeThumbColor: AppTheme.primaryColor,
+            activeColor: AppTheme.primaryColor,
             onChanged: (value) {
               // periodo.habilitado = value;
               _configCubit.enabledDisabledPeriod(periodo);

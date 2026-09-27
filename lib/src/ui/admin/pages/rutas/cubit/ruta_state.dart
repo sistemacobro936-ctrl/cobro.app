@@ -14,6 +14,13 @@ class RutaState extends Equatable {
   final int pageClientes;
   final List<DatumCajaEntity>? historico;
 
+  /// Bitácora de eventos ("movimientos") de la ruta que se está viendo
+  final String? rutaMovimientos;
+  final List<DatumMovimientoLogEntity>? movimientosRuta;
+  final PaginationEntity? paginationMovimientos;
+  final bool loadingMovimientos;
+  final bool loadingMasMovimientos;
+
   const RutaState({
     required this.context,
     this.child = const SizedBox(),
@@ -26,7 +33,12 @@ class RutaState extends Equatable {
     this.movimiento,
     this.paginationClientes,
     this.pageClientes=1,
-    this.historico
+    this.historico,
+    this.rutaMovimientos,
+    this.movimientosRuta,
+    this.paginationMovimientos,
+    this.loadingMovimientos = false,
+    this.loadingMasMovimientos = false,
 
   });
 
@@ -43,9 +55,12 @@ class RutaState extends Equatable {
     movimiento,
     paginationClientes,
     pageClientes,
-    historico
-
-    
+    historico,
+    rutaMovimientos,
+    movimientosRuta ?? [],
+    paginationMovimientos,
+    loadingMovimientos,
+    loadingMasMovimientos,
   ];
 
   RutaState copyWith({
@@ -62,8 +77,14 @@ class RutaState extends Equatable {
     DataMovimientoE? movimiento,
     PaginationEntity? paginationClientes,
     List<DatumCajaEntity>? historico,
+    String? rutaMovimientos,
+    List<DatumMovimientoLogEntity>? movimientosRuta,
+    PaginationEntity? paginationMovimientos,
+    bool? loadingMovimientos,
+    bool? loadingMasMovimientos,
+    bool limpiarMovimientos = false,
 
-    
+
     int? pageClientes,
   }) => RutaState(
     context: context ?? this.context,
@@ -77,7 +98,15 @@ class RutaState extends Equatable {
     movimiento: movimiento ?? this.movimiento,
     paginationClientes:  paginationClientes ?? this.paginationClientes,
         pageClientes: pageClientes?? this.pageClientes,
-    historico: historico??  this.historico
-
+    historico: historico??  this.historico,
+    rutaMovimientos: rutaMovimientos ?? this.rutaMovimientos,
+    movimientosRuta: limpiarMovimientos
+        ? null
+        : movimientosRuta ?? this.movimientosRuta,
+    paginationMovimientos: limpiarMovimientos
+        ? null
+        : paginationMovimientos ?? this.paginationMovimientos,
+    loadingMovimientos: loadingMovimientos ?? this.loadingMovimientos,
+    loadingMasMovimientos: loadingMasMovimientos ?? this.loadingMasMovimientos,
   );
 }

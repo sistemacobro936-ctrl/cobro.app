@@ -9,6 +9,7 @@ class CrearClienteDto {
   final String? descripcionDireccion;
   final String? barrio;
   final String? observacion;
+  final int? orden;
 
   CrearClienteDto({
     this.nombres,
@@ -21,6 +22,7 @@ class CrearClienteDto {
     this.rutaId,
     this.barrio,
     this.observacion,
+    this.orden,
   });
 
   Map<String, dynamic> toJson() {
@@ -35,6 +37,7 @@ class CrearClienteDto {
       "rutaId": rutaId,
       "barrio": barrio,
       "observacion": observacion,
+      "orden":orden
     };
 
     data.removeWhere(

@@ -32,7 +32,7 @@ class HeaderClienteView extends StatelessWidget {
                       children: [
                         Text(
                           'Gestión',
-                          style: TextStyle(color: Colors.white60, fontSize: 12),
+                          style: TextStyle(color: Colors.white60),
                         ),
                         SizedBox(height: 2),
                         Text(
@@ -67,27 +67,27 @@ class HeaderClienteView extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              Row(
-                children: [
-                  _metric(
-                    value:
-                        '${state.busqueda.isEmpty ? state.paginationClientes?.total ?? clientes.length : clientes.length}',
-                    label: 'Total',
-                  ),
+              // Row(
+              //   children: [
+              //     _metric(
+              //       value:
+              //           '${state.busqueda.isEmpty ? state.paginationClientes?.total ?? clientes.length : clientes.length}',
+              //       label: 'Total',
+              //     ),
 
-                  const SizedBox(width: 28),
+              //     const SizedBox(width: 28),
 
-                  _metric(
-                    value:
-                        '${clientes.where((e) => e.estado == "ACTIVO").length}',
-                    label: 'Activos',
-                  ),
+              //     _metric(
+              //       value:
+              //           '${clientes.where((e) => e.estado == "ACTIVO").length}',
+              //       label: 'Activos',
+              //     ),
 
-                  const SizedBox(width: 28),
+              //     const SizedBox(width: 28),
 
-                  _metric(value: '\$18.2M', label: 'Cartera'),
-                ],
-              ),
+              //     _metric(value: '\$18.2M', label: 'Cartera'),
+              //   ],
+              // ),
             ],
           ),
         );

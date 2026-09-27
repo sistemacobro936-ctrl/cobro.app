@@ -29,7 +29,7 @@ class HeaderCCiew extends StatelessWidget {
                       children: [
                         Text(
                           'Gestión',
-                          style: TextStyle(color: Colors.white60, fontSize: 12),
+                          style: TextStyle(color: Colors.white60, ),
                         ),
                         SizedBox(height: 2),
                         Text(
@@ -67,26 +67,26 @@ class HeaderCCiew extends StatelessWidget {
               // ----------------------------------------------------
               // RESUMEN
               // ----------------------------------------------------
-              Row(
-                children: [
-                  _headerMetric(
-                    value: '${cobradores.length}',
-                    label: 'Total',
-                  ),
+              // Row(
+              //   children: [
+              //     _headerMetric(
+              //       value: '${cobradores.length}',
+              //       label: 'Total',
+              //     ),
 
-                  const SizedBox(width: 28),
+              //     const SizedBox(width: 28),
 
-                  _headerMetric(
-                    value:
-                        '${cobradores.where((e) => e.estado == "ACTIVO").length}',
-                    label: 'Activos',
-                  ),
+              //     _headerMetric(
+              //       value:
+              //           '${cobradores.where((e) => e.estado == "ACTIVO").length}',
+              //       label: 'Activos',
+              //     ),
 
-                  const SizedBox(width: 28),
+              //     const SizedBox(width: 28),
 
-                  _headerMetric(value: '\$15.5M', label: 'Recaudado'),
-                ],
-              ),
+              //     _headerMetric(value: '\$15.5M', label: 'Recaudado'),
+              //   ],
+              // ),
             ],
           ),
         );

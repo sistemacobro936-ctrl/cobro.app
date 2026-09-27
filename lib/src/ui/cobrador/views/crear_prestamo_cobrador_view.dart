@@ -5,6 +5,7 @@ import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/common/utils/money_util.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
 import 'package:personal/src/domain/entities/prestamo_entity.dart';
+import 'package:personal/src/domain/entities/ruta_entity.dart';
 import 'package:personal/src/ui/cobrador/cubit/cobrador_cubit.dart';
 import 'package:personal/src/ui/widgets/btn_widget.dart';
 import 'package:personal/src/ui/widgets/input_widget.dart';
@@ -25,7 +26,7 @@ class CrearPrestamoCobradorView extends StatelessWidget {
             elevation: 0,
             leading: IconButton(
               onPressed: () {
-                Navigator.pop(context);
+                c.clientesRuta();
               },
               icon: Icon(Icons.arrow_back, color: Colors.white),
             ),
@@ -49,8 +50,11 @@ class CrearPrestamoCobradorView extends StatelessWidget {
 
                 if (state.buscoAlgunaVez &&
                     !state.buscando &&
-                    state.cliente == null)
+                    state.cliente == null) ...[
                   _clienteNoEncontrado(),
+                  const SizedBox(height: 16),
+                  _formularioClienteNuevo(c, state),
+                ],
 
                 if (state.cliente != null) ...[
                   _clienteEncontrado(c, state.cliente!),
@@ -114,16 +118,17 @@ class CrearPrestamoCobradorView extends StatelessWidget {
                       ),
                       padding: const EdgeInsets.symmetric(horizontal: 18),
                     ),
-                    child: state.buscando
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.search_rounded),
+                    child:
+                        state.buscando
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                            : const Icon(Icons.search_rounded),
                   ),
                 ),
               ],
@@ -167,8 +172,164 @@ class CrearPrestamoCobradorView extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(color: Color(0xFF929BAB)),
           ),
+          SizedBox(height: 4),
+          Text(
+            'Regístralo abajo para poder asignarle el préstamo.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Color(0xFF929BAB), fontSize: 12),
+          ),
         ],
       ),
+    );
+  }
+
+  // ============================================================
+  // Cliente no encontrado: formulario para registrarlo (propio del
+  // cobrador). Si tiene más de una ruta asignada, debe elegir en cuál.
+  // ============================================================
+  Widget _formularioClienteNuevo(CobradorRCubit c, CobradorRState state) {
+    final rutas = state.ruta ?? <DatumREntity>[];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withValues(alpha: .05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Registrar cliente',
+            style: TextStyle(
+              color: Color(0xFF202838),
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          InputWidget.input(
+            label: 'Nombres',
+            prefixIcon: Icons.person_outline_rounded,
+            controller: c.nombresClienteController,
+          ),
+          const SizedBox(height: 12),
+          InputWidget.input(
+            label: 'Apellidos',
+            prefixIcon: Icons.person_outline_rounded,
+            controller: c.apellidosClienteController,
+          ),
+          const SizedBox(height: 12),
+          InputWidget.input(
+            label: 'Teléfono',
+            prefixIcon: Icons.phone_outlined,
+            controller: c.telefonoClienteController,
+            keyboardType: TextInputType.phone,
+          ),
+          const SizedBox(height: 12),
+          InputWidget.input(
+            label: 'WhatsApp',
+            prefixIcon: Icons.chat_outlined,
+            controller: c.whatsappClienteController,
+            keyboardType: TextInputType.phone,
+          ),
+          const SizedBox(height: 12),
+          InputWidget.input(
+            label: 'Dirección',
+            prefixIcon: Icons.home_outlined,
+            controller: c.direccionClienteController,
+          ),
+          const SizedBox(height: 12),
+          InputWidget.input(
+            label: 'Descripción de la dirección (opcional)',
+            prefixIcon: Icons.description_outlined,
+            controller: c.descripcionDireccionClienteController,
+            maxLines: 2,
+          ),
+          const SizedBox(height: 12),
+          InputWidget.input(
+            label: 'Barrio / Sector',
+            prefixIcon: Icons.map_outlined,
+            controller: c.barrioClienteController,
+          ),
+          const SizedBox(height: 12),
+          InputWidget.input(
+            label: 'Observación (opcional)',
+            prefixIcon: Icons.notes_rounded,
+            controller: c.observacionClienteController,
+            maxLines: 3,
+          ),
+          const SizedBox(height: 16),
+
+          const Text(
+            'Ruta',
+            style: TextStyle(
+              color: Color(0xFF687386),
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          if (rutas.isEmpty)
+            const Text(
+              'No tienes una ruta asignada; no puedes registrar clientes.',
+              style: TextStyle(color: Colors.redAccent),
+            )
+          else if (rutas.length == 1)
+            _chipRuta(rutas.first, selected: true, onTap: null)
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children:
+                  rutas
+                      .map(
+                        (r) => _chipRuta(
+                          r,
+                          selected: state.rutaClienteSeleccionada?.id == r.id,
+                          onTap: (){},
+                        ),
+                      )
+                      .toList(),
+            ),
+
+          const SizedBox(height: 20),
+
+          BtnWidget.btn(
+            text: 'Registrar cliente',
+            icon: Icons.person_add_alt_1_rounded,
+            loading: state.loadingBtn,
+            onPressed: rutas.isEmpty ? null : c.crearCliente,
+            backgroundColor: AppTheme.primaryColor,
+            foregroundColor: Colors.white,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chipRuta(
+    DatumREntity ruta, {
+    required bool selected,
+    required VoidCallback? onTap,
+  }) {
+    return ChoiceChip(
+      label: Text(ruta.nombre),
+      selected: selected,
+      showCheckmark: false,
+      selectedColor: AppTheme.primaryColor,
+      backgroundColor: Colors.white,
+      side: BorderSide(color: Colors.black.withValues(alpha: .05)),
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : const Color(0xFF394354),
+        fontWeight: FontWeight.w600,
+        fontSize: 12,
+      ),
+      onSelected: onTap == null ? null : (_) => onTap(),
     );
   }
 
@@ -221,10 +382,7 @@ class CrearPrestamoCobradorView extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       'CC ${cliente.cedula} ',
-                      style: const TextStyle(
-                        color: Color(0xFF929BAB),
-                     
-                      ),
+                      style: const TextStyle(color: Color(0xFF929BAB)),
                     ),
                   ],
                 ),
@@ -236,7 +394,7 @@ class CrearPrestamoCobradorView extends StatelessWidget {
             const SizedBox(height: 12),
             const Text(
               'No tiene préstamos activos.',
-              style: TextStyle(color: Color(0xFF929BAB), fontSize: 12),
+              style: TextStyle(color: Color(0xFF929BAB)),
             ),
           ] else ...[
             const SizedBox(height: 12),
@@ -266,7 +424,7 @@ class CrearPrestamoCobradorView extends StatelessWidget {
                               : 'Ya tiene ${activos.length} préstamos activos',
                           style: const TextStyle(
                             color: Color(0xFF8A5A0B),
-                          
+
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -280,10 +438,7 @@ class CrearPrestamoCobradorView extends StatelessWidget {
                         'Ruta: ${c.nombreRuta(cliente.rutaId)} \n'
                         'Debe ${MoneyUtil.format(p.deudaActual)} \n'
                         'Cuota ${MoneyUtil.format(p.valorCuota)}',
-                        style: const TextStyle(
-                          color: Color(0xFF6B4A16),
-                         
-                        ),
+                        style: const TextStyle(color: Color(0xFF6B4A16)),
                       ),
                     ),
                   ),
@@ -351,6 +506,7 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
               keyboardType: TextInputType.number,
               onChanged: (_) {
                 setState(() {});
+                c.onAplicaSeguro(state.aplicaSeguro);
               },
             ),
             const SizedBox(height: 16),
@@ -370,10 +526,7 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
 
             const Text(
               'Frecuencia de cobro',
-              style: TextStyle(
-                
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             _frecuencia(),
@@ -438,7 +591,7 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
                 children: [
                   Switch(
                     value: state.aplicaSeguro,
-                    activeThumbColor: AppTheme.primaryColor,
+                    activeColor: AppTheme.primaryColor,
                     onChanged: (v) {
                       c.onAplicaSeguro(v);
                       setState(() {});
@@ -460,23 +613,11 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
                 const SizedBox(height: 8),
                 Column(
                   children: [
-                     InputWidget.input(
-                        label: 'Seguro (%)',
-                        controller: c.seguroController,
-                        keyboardType: TextInputType.number,
-                        onChanged: (_) {
-                          c.recalcularSeguro();
-                          setState(() {});
-                        },
-                      ),
-                    
-                    const SizedBox(height: 10),
                     InputWidget.input(
-                        label: 'Valor del seguro',
-                        controller: c.seguroValorController,
-                        keyboardType: TextInputType.number,
-                        onChanged: (_) => setState(() {}),
-                      
+                      label: 'Valor del seguro',
+                      controller: c.seguroValorController,
+                      keyboardType: TextInputType.number,
+                      onChanged: (_) => setState(() {}),
                     ),
                   ],
                 ),
@@ -502,29 +643,33 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
           height: 38,
           child: ListView(
             scrollDirection: Axis.horizontal,
-            children: state.periodos.map((p) {
-              final selected = state.periodoSeleccionado?.id == p.id;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: ChoiceChip(
-                  label: Text(p.nombre),
-                  selected: selected,
-                  showCheckmark: false,
-                  selectedColor: AppTheme.primaryColor,
-                  backgroundColor: Colors.white,
-                  side: BorderSide(color: Colors.black.withValues(alpha: .05)),
-                  labelStyle: TextStyle(
-                    color: selected ? Colors.white : const Color(0xFF394354),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                  onSelected: (_) {
-                    c.onGetPeriodo(p);
-                    setState(() {});
-                  },
-                ),
-              );
-            }).toList(),
+            children:
+                state.periodos.map((p) {
+                  final selected = state.periodoSeleccionado?.id == p.id;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(p.nombre),
+                      selected: selected,
+                      showCheckmark: false,
+                      selectedColor: AppTheme.primaryColor,
+                      backgroundColor: Colors.white,
+                      side: BorderSide(
+                        color: Colors.black.withValues(alpha: .05),
+                      ),
+                      labelStyle: TextStyle(
+                        color:
+                            selected ? Colors.white : const Color(0xFF394354),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                      onSelected: (_) {
+                        c.onGetPeriodo(p);
+                        setState(() {});
+                      },
+                    ),
+                  );
+                }).toList(),
           ),
         );
       },
@@ -534,7 +679,19 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
   Widget _fechaInicio(BuildContext context) {
     return BlocBuilder<CobradorRCubit, CobradorRState>(
       builder: (context, state) {
+        final c = context.read<CobradorRCubit>();
+        final fecha = state.fechaInicial ?? DateTime.now();
+
         return GestureDetector(
+          onTap: () async {
+            final elegida = await showDatePicker(
+              context: context,
+              initialDate: fecha,
+              firstDate: DateTime.now().subtract(const Duration(days: 7)),
+              lastDate: DateTime.now().add(const Duration(days: 60)),
+            );
+            if (elegida != null) c.onGetFechaInicial(elegida);
+          },
           child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
@@ -553,13 +710,7 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Fecha inicial',
-                        style: TextStyle(
-                        
-                          
-                        ),
-                      ),
+                      const Text('Fecha inicial', style: TextStyle()),
                       const SizedBox(height: 3),
                       Text(
                         DateUtil.formatLectura(state.fechaInicial!),
@@ -571,7 +722,6 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
                     ],
                   ),
                 ),
-               
               ],
             ),
           ),
@@ -603,11 +753,7 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
           _fila('Interés', MoneyUtil.format(interesMonto)),
           _fila('Seguro', MoneyUtil.format(seguro)),
           const Divider(),
-          _fila(
-            'Total a pagar',
-            MoneyUtil.format(total),
-            destacado: true,
-          ),
+          _fila('Total a pagar', MoneyUtil.format(total), destacado: true),
           _fila('Cuotas', '$cuotas'),
           _fila('Valor cuota', MoneyUtil.format(valorCuota)),
           _fila(
@@ -628,9 +774,8 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
           Text(
             label,
             style: TextStyle(
-              color: destacado
-                  ? const Color(0xFF202838)
-                  : const Color(0xFF929BAB),
+              color:
+                  destacado ? const Color(0xFF202838) : const Color(0xFF929BAB),
               fontWeight: destacado ? FontWeight.w700 : FontWeight.w500,
             ),
           ),
@@ -639,7 +784,6 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
             style: TextStyle(
               color: const Color(0xFF202838),
               fontWeight: destacado ? FontWeight.w800 : FontWeight.w600,
-              
             ),
           ),
         ],

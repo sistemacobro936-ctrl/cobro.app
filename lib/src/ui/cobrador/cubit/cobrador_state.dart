@@ -39,6 +39,13 @@ class CobradorRState extends Equatable {
   final DateTime? fechaFinal;
   final List<DateTime>? fechasPago;
 
+  /// Ruta elegida para el cliente nuevo, cuando el cobrador tiene más de una
+  final DatumREntity? rutaClienteSeleccionada;
+
+  /// Orden sugerido para un cliente nuevo creado desde "Crear préstamo":
+  /// el siguiente al del cliente que se estaba cobrando en ese momento.
+  final int? ordenClienteNuevo;
+
   const CobradorRState({
     required this.context,
     this.btnLoading = false,
@@ -66,6 +73,8 @@ class CobradorRState extends Equatable {
     this.gastosPorRuta = const {},
     this.cliente,
     this.fechasPago,
+    this.rutaClienteSeleccionada,
+    this.ordenClienteNuevo,
   });
 
   /// Devuelve el cajaId para una ruta dada, o null si no tiene caja.
@@ -101,7 +110,9 @@ class CobradorRState extends Equatable {
     fechaInicial,
     fechaFinal,
     fechasPago,
-    loadingBtn
+    loadingBtn,
+    rutaClienteSeleccionada,
+    ordenClienteNuevo,
   ];
 
   CobradorRState copyWith({
@@ -131,6 +142,10 @@ class CobradorRState extends Equatable {
     DateTime? fechaInicial,
     DateTime? fechaFinal,
     List<DateTime>? fechasPago,
+    DatumREntity? rutaClienteSeleccionada,
+    bool limpiarRutaCliente = false,
+    int? ordenClienteNuevo,
+    bool limpiarOrdenClienteNuevo = false,
   }) => CobradorRState(
     context: context ?? this.context,
     btnLoading: btnLoading ?? this.btnLoading,
@@ -157,5 +172,11 @@ class CobradorRState extends Equatable {
     fechaFinal: fechaFinal ?? this.fechaFinal,
     fechasPago: fechasPago ?? this.fechasPago,
     loadingBtn: loadingBtn ?? this.loadingBtn,
+    rutaClienteSeleccionada: limpiarRutaCliente
+        ? null
+        : rutaClienteSeleccionada ?? this.rutaClienteSeleccionada,
+    ordenClienteNuevo: limpiarOrdenClienteNuevo
+        ? null
+        : ordenClienteNuevo ?? this.ordenClienteNuevo,
   );
 }

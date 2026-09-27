@@ -41,7 +41,7 @@ class _CrearPrestamoViewState extends State<CrearPrestamoView> {
             : seguro == (monto * (num.tryParse(seguroPct) ?? 0) / 100).round()
             ? 'Seguro ($seguroPct%)'
             : 'Seguro (editado)';
-        final canCreate = monto > 0 && valorCuota > 0;
+        final canCreate = monto > 0 && valorCuota > 0&& state.cliente!=null && state.periodoSeleccionado!=null;
 
         return Scaffold(
           backgroundColor: const Color(0xFFF5F7FC),

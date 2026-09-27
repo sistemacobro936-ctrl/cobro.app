@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 enum ContactAction { call, whatsapp }
@@ -12,29 +13,39 @@ class ContactUtil {
 
     if (numero.isEmpty) return;
 
-    late Uri uri;
+    late final Uri uri;
 
     switch (action) {
       case ContactAction.call:
-        uri = Uri(scheme: 'tel', path: numero);
+        uri = Uri(
+          scheme: 'tel',
+          path: numero,
+        );
         break;
 
       case ContactAction.whatsapp:
-        final numeroCompleto = numero.startsWith('57') ? numero : '57$numero';
+        final numeroCompleto =
+            numero.startsWith('57') ? numero : '57$numero';
 
-        uri = Uri(
-          scheme: 'whatsapp',
-          host: 'send',
-          queryParameters: {
-            'phone': numeroCompleto,
-            if (mensaje != null && mensaje.isNotEmpty) 'text': mensaje,
-          },
+        uri = Uri.https(
+          'wa.me',
+          '/$numeroCompleto',
+          mensaje != null && mensaje.isNotEmpty
+              ? {'text': mensaje}
+              : null,
         );
         break;
     }
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    try {
+      final result = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      debugPrint('Abriendo $uri -> $result');
+    } catch (e) {
+      debugPrint('Error abriendo $uri: $e');
     }
   }
 }

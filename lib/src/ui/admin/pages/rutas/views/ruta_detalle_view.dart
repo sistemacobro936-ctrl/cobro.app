@@ -51,6 +51,8 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
                         ),
                       ),
                       body: FormClientView(
+                        onSelect: false,
+                        rutaid: widget.ruta.id,
                         action: (e) {
                           c.crearCliente(e);
                         },

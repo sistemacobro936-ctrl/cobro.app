@@ -8,6 +8,7 @@ import 'package:personal/src/data/repository/crear_cliente_repo.dart';
 import 'package:personal/src/data/repository/dashboard_repo_impl.dart';
 import 'package:personal/src/data/repository/config_repo_impl.dart';
 import 'package:personal/src/data/repository/gastos_repo_impl.dart';
+import 'package:personal/src/data/repository/movimiento_repo_impl.dart';
 import 'package:personal/src/data/repository/negocio_repo_impl.dart';
 import 'package:personal/src/data/repository/pago_repo_impl.dart';
 import 'package:personal/src/data/repository/prestamo_repo_impl.dart';
@@ -17,6 +18,7 @@ import 'package:personal/src/data/services/auth_service.dart';
 import 'package:personal/src/data/services/caja_service.dart';
 import 'package:personal/src/data/services/contabilidad_service.dart';
 import 'package:personal/src/data/services/dashboard_service.dart';
+import 'package:personal/src/data/services/movimiento_service.dart';
 import 'package:personal/src/data/services/cliente_service.dart';
 import 'package:personal/src/data/services/config_service.dart';
 import 'package:personal/src/data/services/gasto_service.dart';
@@ -32,6 +34,7 @@ import 'package:personal/src/domain/repository/dashboard_repo.dart';
 import 'package:personal/src/domain/repository/cliente_repo.dart';
 import 'package:personal/src/domain/repository/config_repo.dart';
 import 'package:personal/src/domain/repository/gastos_repo.dart';
+import 'package:personal/src/domain/repository/movimiento_repo.dart';
 import 'package:personal/src/domain/repository/negocio_repo.dart';
 import 'package:personal/src/domain/repository/pago_repo.dart';
 import 'package:personal/src/domain/repository/presamo_repo.dart';
@@ -98,6 +101,14 @@ void initDep() {
   sl.registerLazySingleton<RutaRepo>(() => RutaRepoImpl(rutaService: sl()));
 
   sl.registerLazySingleton<RutaService>(() => RutaServiceImpl(apiClient: sl()));
+
+  sl.registerLazySingleton<MovimientoRepo>(
+    () => MovimientoRepoImpl(movimientoService: sl()),
+  );
+
+  sl.registerLazySingleton<MovimientoService>(
+    () => MovimientoServiceImpl(apiClient: sl()),
+  );
 
   //Pagos
   sl.registerLazySingleton<PagoRepo>(() => PagoRepoImpl(pagoService: sl()));

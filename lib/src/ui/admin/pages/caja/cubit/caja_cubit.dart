@@ -169,6 +169,7 @@ class CajaCubit extends Cubit<CajaState> {
           state.context,
           message: "Cierre de caja exitoso.",
         );
+        listarCajar(rutaId: state.cajas!.rutaId);
       },
     );
     emit(state.copyWith(loading: false));

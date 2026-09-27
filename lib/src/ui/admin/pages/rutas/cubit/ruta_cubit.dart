@@ -9,14 +9,17 @@ import 'package:personal/src/domain/dto/ruta_dto.dart';
 import 'package:personal/src/domain/entities/caja_entity.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
 import 'package:personal/src/domain/entities/cobrador_entity.dart';
+import 'package:personal/src/domain/entities/movimiento_log_entity.dart';
 import 'package:personal/src/domain/entities/movimiento_ruta_entity.dart';
 import 'package:personal/src/domain/entities/pagination_entity.dart';
 import 'package:personal/src/domain/entities/ruta_entity.dart';
 import 'package:personal/src/domain/repository/caja_repo.dart';
 import 'package:personal/src/domain/repository/cliente_repo.dart';
+import 'package:personal/src/domain/repository/movimiento_repo.dart';
 import 'package:personal/src/domain/repository/ruta_repo.dart';
 import 'package:personal/src/domain/repository/usuario_repo.dart';
 import 'package:personal/src/ui/admin/pages/rutas/views/historico_view.dart';
+import 'package:personal/src/ui/admin/pages/rutas/views/movimiento_ruta_view.dart';
 import 'package:personal/src/ui/admin/pages/rutas/views/ruta_home.dart';
 
 part 'ruta_state.dart';
@@ -29,6 +32,8 @@ class RutaCubit extends Cubit<RutaState> {
   final _rutaRepo = sl<RutaRepo>();
   final _clienteRepo = sl<ClienteRepository>();
   final _cajaRepo = sl<CajaRepo>();
+  final _movimientoRepo = sl<MovimientoRepo>();
+  static const _limitMovimientos = 20;
 
   ///Constructor
   ///
@@ -205,6 +210,70 @@ class RutaCubit extends Cubit<RutaState> {
       },
     );
     emit(state.copyWith(loading: false));
+  }
+
+  /// Bitácora de eventos de la ruta (edición, inyección de capital, etc.)
+  Future<void> movimientosRuta({required String rutaId}) async {
+    emit(
+      state.copyWith(
+        loadingMovimientos: true,
+        rutaMovimientos: rutaId,
+        limpiarMovimientos: true,
+        child: MovimientoRutaView(),
+      ),
+    );
+
+    final r = await _movimientoRepo.listarPorRuta(
+      rutaId: rutaId,
+      page: 1,
+      limit: _limitMovimientos,
+    );
+    r.fold(
+      (l) {
+        AppDialogUtil.error(state.context, message: l.props[0].toString());
+      },
+      (r) {
+        emit(
+          state.copyWith(
+            movimientosRuta: r.data,
+            paginationMovimientos: r.pagination,
+          ),
+        );
+      },
+    );
+    emit(state.copyWith(loadingMovimientos: false));
+  }
+
+  /// Siguiente página de la bitácora de la ruta actual
+  Future<void> cargarMasMovimientos() async {
+    final rutaId = state.rutaMovimientos;
+    final pagination = state.paginationMovimientos;
+    if (rutaId == null ||
+        pagination == null ||
+        !pagination.hasNextPage ||
+        state.loadingMovimientos ||
+        state.loadingMasMovimientos) {
+      return;
+    }
+
+    emit(state.copyWith(loadingMasMovimientos: true));
+
+    final r = await _movimientoRepo.listarPorRuta(
+      rutaId: rutaId,
+      page: pagination.page + 1,
+      limit: _limitMovimientos,
+    );
+    r.fold(
+      (l) {},
+      (r) => emit(
+        state.copyWith(
+          movimientosRuta: [...state.movimientosRuta ?? [], ...r.data],
+          paginationMovimientos: r.pagination,
+        ),
+      ),
+    );
+
+    emit(state.copyWith(loadingMasMovimientos: false));
   }
 
   ///Otros

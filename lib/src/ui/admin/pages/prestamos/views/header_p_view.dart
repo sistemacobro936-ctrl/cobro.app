@@ -25,7 +25,7 @@ class HeaderPView extends StatelessWidget {
                       children: [
                         Text(
                           'Gestión',
-                          style: TextStyle(color: Colors.white60, fontSize: 12),
+                          style: TextStyle(color: Colors.white60, ),
                         ),
                         SizedBox(height: 2),
                         Text(
@@ -80,15 +80,15 @@ class HeaderPView extends StatelessWidget {
 
               const SizedBox(height: 22),
 
-              Row(
-                children: [
-                  _metric(value: '24', label: 'Préstamos'),
-                  const SizedBox(width: 28),
-                  _metric(value: '\$18.2M', label: 'Cartera'),
-                  const SizedBox(width: 28),
-                  _metric(value: '\$12.4M', label: 'Pendiente'),
-                ],
-              ),
+              // Row(
+              //   children: [
+              //     _metric(value: '24', label: 'Préstamos'),
+              //     const SizedBox(width: 28),
+              //     _metric(value: '\$18.2M', label: 'Cartera'),
+              //     const SizedBox(width: 28),
+              //     _metric(value: '\$12.4M', label: 'Pendiente'),
+              //   ],
+              // ),
             ],
           ),
         );

@@ -64,9 +64,8 @@ class ActividadPage extends StatelessWidget {
                         showCheckmark: false,
                         selectedColor: AppTheme.primaryColor,
                         labelStyle: TextStyle(
-                          color: selected
-                              ? Colors.white
-                              : const Color(0xFF394354),
+                          color:
+                              selected ? Colors.white : const Color(0xFF394354),
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -93,7 +92,10 @@ class ActividadPage extends StatelessWidget {
       return _mensaje(
         icon: Icons.cloud_off_rounded,
         texto: 'No se pudo cargar la actividad.',
-        accion: TextButton(onPressed: c.cargar, child: const Text('Reintentar')),
+        accion: TextButton(
+          onPressed: c.cargar,
+          child: const Text('Reintentar'),
+        ),
       );
     }
 
@@ -157,7 +159,7 @@ class ActividadPage extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(color: Color(0xFF929BAB), fontSize: 14),
             ),
-            ?accion,
+            accion ?? SizedBox(),
           ],
         ),
       ),

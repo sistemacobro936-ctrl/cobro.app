@@ -3,12 +3,17 @@ import 'package:personal/src/data/model/prestamo_model.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
 
 class ClienteModel extends ClienteEntity {
-  ClienteModel({required super.exito, required super.msg, required super.data, super.pagination});
+  ClienteModel({
+    required super.exito,
+    required super.msg,
+    required super.data,
+    super.pagination,
+  });
 
   factory ClienteModel.fromJson(Map<String, dynamic> json) => ClienteModel(
     exito: json["exito"],
     msg: json["msg"],
-        pagination: json["pagination"] == null
+    pagination: json["pagination"] == null
         ? PaginationModel.fromJson({})
         : PaginationModel.fromJson(json["pagination"]),
     data: List<DatumClModel>.from(
@@ -32,6 +37,7 @@ class DatumClModel extends DatumClEntity {
     required super.observacion,
     required super.estado,
     required super.totalPrestado,
+    required super.orden,
     super.prestamos,
   });
 
@@ -49,7 +55,7 @@ class DatumClModel extends DatumClEntity {
     descripcionDireccion: json["descripcionDireccion"] ?? "",
     estado: json["estado"] ?? "",
     totalPrestado: json["totalPrestado"] ?? 0,
-
+    orden: json["orden"] ?? 0,
     prestamos: json["prestamos"] == null
         ? <DatumPModel>[]
         : (json["prestamos"] as List)

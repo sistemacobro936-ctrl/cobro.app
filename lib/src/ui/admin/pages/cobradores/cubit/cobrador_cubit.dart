@@ -61,7 +61,7 @@ class CobradorCubit extends Cubit<CobradorState> {
       contacTxt,
     ].every((text) => text.text.trim().isNotEmpty);
 
-    final credentialsValid = userTxt.text.isNotEmpty && passTxt.text.isNotEmpty;
+    final credentialsValid = userTxt.text.isNotEmpty && passTxt.text.isNotEmpty&& passTxt.text.length>=8;
 
     emit(
       state.copyWith(btnEnabled: fieldsValid && (isEdit || credentialsValid)),

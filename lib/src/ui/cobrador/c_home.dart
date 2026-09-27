@@ -259,16 +259,28 @@ class _CHomeState extends State<CHome> {
         final gestionMap = {
           for (final item in gestion.gestionRuta ?? []) item.rutaId: item,
         };
-        final rutasOrdenadas = [...state.ruta!]
-          ..sort((a, b) {
-            final aTieneResumen = gestionMap.containsKey(a.id);
-            final bTieneResumen = gestionMap.containsKey(b.id);
 
-            if (aTieneResumen && !bTieneResumen) return -1;
-            if (!aTieneResumen && bTieneResumen) return 1;
+        // Solo las rutas con caja abierta hoy (están en gestionRuta)
+        final rutasOrdenadas = state.ruta!
+            .where((ruta) => gestionMap.containsKey(ruta.id))
+            .toList();
 
-            return 0;
-          });
+        if (rutasOrdenadas.isEmpty) {
+          return _expansionSection(
+            title: 'Resumen del día',
+            icon: Icons.dashboard_outlined,
+            children: const [
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'No tienes cajas abiertas hoy.',
+                  style: TextStyle(color: Color(0xFF929BAB), fontSize: 13),
+                ),
+              ),
+            ],
+          );
+        }
+
         return _expansionSection(
           title: 'Resumen del día',
           icon: Icons.dashboard_outlined,
@@ -360,14 +372,32 @@ class _CHomeState extends State<CHome> {
   Widget _buildGastos() {
     return BlocBuilder<CobradorRCubit, CobradorRState>(
       builder: (context, state) {
-        final rutas = state.ruta ?? [];
+        // Solo las rutas con caja abierta hoy (están en gestionRuta)
+        final rutas = (state.ruta ?? [])
+            .where((ruta) => state.cajaId(ruta.id) != null)
+            .toList();
         final c = context.read<CobradorRCubit>();
+
+        if (rutas.isEmpty) {
+          return _expansionSection(
+            title: 'Gastos',
+            icon: Icons.receipt_long_outlined,
+            children: const [
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'No tienes cajas abiertas hoy.',
+                  style: TextStyle(color: Color(0xFF929BAB), fontSize: 13),
+                ),
+              ),
+            ],
+          );
+        }
 
         // Construye las filas de gastos por ruta
         final gastosWidgets = <Widget>[];
 
         for (final ruta in rutas) {
-          final cajaId = state.cajaId(ruta.id);
           final gastos = state.gastos(ruta.id);
 
           // Encabezado de ruta (solo si hay más de una)
@@ -395,20 +425,6 @@ class _CHomeState extends State<CHome> {
                 ),
               ),
             );
-          }
-
-          // Sin caja abierta
-          if (cajaId == null) {
-            gastosWidgets.add(
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 6),
-                child: Text(
-                  'No hay caja abierta para esta ruta.',
-                  style: TextStyle(color: Color(0xFF929BAB), fontSize: 13),
-                ),
-              ),
-            );
-            continue;
           }
 
           // Caja abierta pero sin gastos aún
@@ -476,7 +492,7 @@ class _CHomeState extends State<CHome> {
               height: 42,
               child: BtnWidget.btn(
                 onPressed: () {
-                  dialogoGasto(context, state.ruta ?? [], c);
+                  dialogoGasto(context, rutas, c);
                 },
                 icon: Icons.add,
                 text: 'Registrar gasto',

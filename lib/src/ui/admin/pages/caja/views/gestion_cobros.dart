@@ -113,7 +113,7 @@ class _GestionCobrosState extends State<GestionCobros> {
           subtitulo: [
             'Cuota \$${p.valorCuota}',
             'Deuda \$${p.deudaActual}',
-            ?hora,
+          hora,
           ].join(' · '),
           trailing: '\$${p.valor}',
           trailingColor: p.aplicado ? Colors.green : Colors.grey,

@@ -309,7 +309,7 @@ class _GastosRutaView extends StatelessWidget {
                 style: const TextStyle(color: Color(0xFF929BAB)),
               ),
             ],
-            ?accion,
+            accion?? SizedBox(),
           ],
         ),
       ),

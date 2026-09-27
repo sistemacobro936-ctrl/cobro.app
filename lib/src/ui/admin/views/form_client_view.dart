@@ -13,6 +13,8 @@ class FormClientView extends StatefulWidget {
   final bool isEdit;
   final bool loadingBtn;
   final DatumClEntity? cliente;
+  final String? rutaid;
+  final bool onSelect;
   const FormClientView({
     super.key,
     required this.action,
@@ -20,6 +22,8 @@ class FormClientView extends StatefulWidget {
     this.isEdit = false,
     this.loadingBtn = false,
     this.cliente,
+    this.rutaid,
+    this.onSelect = true,
   });
 
   @override
@@ -67,6 +71,9 @@ class _FormClientViewState extends State<FormClientView> {
       barrioTxt.text = c.barrio;
       observationTxt.text = c.observacion;
       ruta = Shared.getRutas!.firstWhere((e) => e.id == c.rutaId);
+    }
+    if (widget.rutaid != null) {
+      ruta = Shared.getRutas!.firstWhere((e) => e.id == widget.rutaid!);
     }
   }
 
@@ -206,7 +213,7 @@ class _FormClientViewState extends State<FormClientView> {
           const SizedBox(height: 16),
 
           DropdownButtonFormField<DatumREntity>(
-            initialValue: ruta,
+            value: ruta,
             isExpanded: true,
             decoration: InputDecoration(
               labelText: 'Ruta',
@@ -232,20 +239,24 @@ class _FormClientViewState extends State<FormClientView> {
                 ),
               ),
             ),
-            items: Shared.getRutas!.map((ruta) {
-              return DropdownMenuItem<DatumREntity>(
-                value: ruta,
-                child: Text(ruta.nombre, overflow: TextOverflow.ellipsis),
-              );
-            }).toList(),
-            onChanged: widget.loadingBtn
-                ? null
-                : (value) {
-                    if (value != null) {
-                      ruta = value;
-                      enabledBtn();
-                    }
-                  },
+            items:
+                Shared.getRutas!.map((ruta) {
+                  return DropdownMenuItem<DatumREntity>(
+                    value: ruta,
+                    child: Text(ruta.nombre, overflow: TextOverflow.ellipsis),
+                  );
+                }).toList(),
+            onChanged:
+                widget.onSelect
+                    ? widget.loadingBtn
+                        ? null
+                        : (value) {
+                          if (value != null) {
+                            ruta = value;
+                            enabledBtn();
+                          }
+                        }
+                    : null,
           ),
           const SizedBox(height: 28),
 
@@ -275,9 +286,9 @@ class _FormClientViewState extends State<FormClientView> {
               text: widget.isEdit ? "Editar cliente" : 'Crear cliente',
               loading: widget.loadingBtn,
               icon: Icons.person_add_alt_1_rounded,
-              onPressed: btnEnabled
-                  ? () {
-                    
+              onPressed:
+                  btnEnabled
+                      ? () {
                         widget.action(
                           CrearClienteDto(
                             nombres: nameTxt.text,
@@ -292,8 +303,8 @@ class _FormClientViewState extends State<FormClientView> {
                             rutaId: ruta!.id,
                           ),
                         );
-                    }
-                  : null,
+                      }
+                      : null,
               enabled: btnEnabled,
               backgroundColor: AppTheme.primaryColor,
               foregroundColor: Colors.white,

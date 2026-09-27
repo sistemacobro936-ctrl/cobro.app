@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/contact_util.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
@@ -151,7 +152,7 @@ class DetalleClienteView extends StatelessWidget {
 
           Text(
             'CC ${cliente.cedula}',
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+            style: const TextStyle(color: Colors.white70, ),
           ),
 
           const SizedBox(height: 12),
@@ -169,7 +170,10 @@ class DetalleClienteView extends StatelessWidget {
                 },
               ),
               IconButton(
-                icon: Icon(Icons.call, color: Colors.white),
+                icon: const FaIcon(
+                  FontAwesomeIcons.whatsapp,
+                  color: Colors.white,
+                ),
                 onPressed: () {
                   ContactUtil.open(
                     telefono: cliente.whatsapp,

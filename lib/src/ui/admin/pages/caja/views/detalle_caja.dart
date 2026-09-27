@@ -103,7 +103,7 @@ class DetalleCaja extends StatelessWidget {
                         mostrarModalArqueo(
                           context,
                           context.read<CajaCubit>(),
-                          caja.montoEsperado,
+                          caja.montoEsperado+caja.saldoSeguros,
                         );
                       },
                       icon: const Icon(Icons.calculate_outlined, size: 18),
@@ -303,7 +303,7 @@ class DetalleCaja extends StatelessWidget {
                 ),
               ),
               Text(
-                '\$ ${caja.montoEsperado} ',
+                '\$ ${caja.montoEsperado + caja.saldoSeguros} ',
                 style: TextStyle(
                   color: AppTheme.primaryColor,
                   fontSize: 20,
@@ -461,7 +461,7 @@ class DetalleCaja extends StatelessWidget {
 
     return BlocBuilder<CajaCubit, CajaState>(
       builder: (context, state) {
-        int saldoEsperado = caja.montoEsperado;
+        int saldoEsperado = caja.montoEsperado + caja.saldoSeguros;
         int dineroContado = int.parse(
           context.read<CajaCubit>().dineroRecibido.text,
         );
@@ -556,13 +556,13 @@ class DetalleCaja extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _datoCaja(
-                      'Saldo esperado',
-                      '\$ ${caja.montoEsperado + caja.cobrado}',
+                      'Saldo esperado\n(incluye los seguros)',
+                      '\$ ${caja.montoEsperado + caja.saldoSeguros}',
                     ),
                   ),
                   Expanded(
                     child: _datoCaja(
-                      'Dinero recibido',
+                      'Dinero recibido\n\n',
                       '\$ ${context.read<CajaCubit>().dineroRecibido.text}',
                     ),
                   ),
