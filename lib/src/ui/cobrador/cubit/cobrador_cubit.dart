@@ -13,6 +13,7 @@ import 'package:personal/src/domain/dto/gasto_dto.dart';
 import 'package:personal/src/domain/dto/no_pago_dto.dart';
 import 'package:personal/src/domain/dto/pago_dto.dart';
 import 'package:personal/src/domain/dto/prestamo_fecha_dto.dart';
+import 'package:personal/src/domain/dto/reembolso_dto.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
 import 'package:personal/src/domain/entities/config_entity.dart'
     show SCobroEntity;
@@ -394,6 +395,7 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     emit(state.copyWith(loadingConfig: true));
 
     if (Shared.getConfig == null) {
+      log("message");
       final r = await _configRepo.obtenerConfiguracion();
       r.fold((l) {}, (r) => Shared.setConfig = r.data);
     }
@@ -691,5 +693,35 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     );
 
     emit(state.copyWith(loadingBtn: false));
+  }
+
+  /// Renueva el crédito de un préstamo activo mientras el cobrador está
+  /// cobrando: la deuda actual y el seguro se descuentan del nuevo monto y
+  /// al cliente solo se le entrega la diferencia. Si la caja de la ruta no
+  /// alcanza para esa diferencia, el backend rechaza la operación con un
+  /// mensaje propio, que se muestra tal cual (no como error genérico).
+  Future<void> reembolso({
+    required String prestamoId,
+    required ReembolsoDto dto,
+  }) async {
+    emit(state.copyWith(btnLoading: true));
+    final r = await _prestamosRepo.reembolso(prestamoId: prestamoId, dto: dto);
+
+    r.fold(
+      (l) => AppDialogUtil.error(
+        state.context,
+        title: 'No se pudo aplicar el reembolso',
+        message: l.props[0].toString(),
+      ),
+      (_) {
+        AppDialogUtil.success(
+          state.context,
+          message: 'Reembolso aplicado con éxito.',
+        );
+        clientesRuta();
+      },
+    );
+
+    emit(state.copyWith(btnLoading: false));
   }
 }

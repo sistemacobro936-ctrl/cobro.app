@@ -9,6 +9,7 @@ import 'package:personal/src/domain/entities/pago_ruta_entity.dart';
 import 'package:personal/src/domain/entities/prestamo_entity.dart';
 import 'package:personal/src/domain/entities/ruta_entity.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/views/cobrar.dart';
+import 'package:personal/src/ui/admin/pages/prestamos/views/dialogo_reembolso.dart';
 import 'package:personal/src/ui/cobrador/c_home.dart';
 import 'package:personal/src/ui/cobrador/cubit/cobrador_cubit.dart';
 import 'package:personal/src/ui/cobrador/views/crear_prestamo_cobrador_view.dart';
@@ -1072,6 +1073,13 @@ Widget _itemPrestamo(
                     fechaPromesa: data.fechaPromesa,
                   );
                 },
+                onReembolso: () => mostrarDialogoReembolso(
+                  context,
+                  prestamo: prestamo,
+                  onConfirmar: (prestamoId, dto) => context
+                      .read<CobradorRCubit>()
+                      .reembolso(prestamoId: prestamoId, dto: dto),
+                ),
               );
             },
     child: Container(
@@ -1659,6 +1667,12 @@ void _onCobrar(
           fechaPromesa: data.fechaPromesa,
         );
       },
+      onReembolso: () => mostrarDialogoReembolso(
+        context,
+        prestamo: prestamo,
+        onConfirmar: (prestamoId, dto) =>
+            c.reembolso(prestamoId: prestamoId, dto: dto),
+      ),
     );
     return;
   }

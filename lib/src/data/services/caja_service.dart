@@ -18,6 +18,11 @@ abstract class CajaService {
     required int valor,
     String? observacion,
   });
+  Future<dynamic> retiroCapital({
+    required String cajaId,
+    required int valor,
+    String? observacion,
+  });
   Future<MovimientosCajaModel> movimientos({required String cajaId});
 }
 
@@ -89,6 +94,29 @@ class CajaServiceImpl implements CajaService {
     try {
       await apiClient.dio.post(
         "/caja/$cajaId/inyeccion-capital",
+        data: {
+          "valor": valor,
+          if (observacion != null && observacion.isNotEmpty)
+            "observacion": observacion,
+        },
+      );
+      return true;
+    } on DioException catch (e) {
+      throw ServerExceptions(message: e.response!.data["message"]);
+    } catch (e) {
+      throw Exception("Error inesperado");
+    }
+  }
+
+  @override
+  Future<dynamic> retiroCapital({
+    required String cajaId,
+    required int valor,
+    String? observacion,
+  }) async {
+    try {
+      await apiClient.dio.post(
+        "/caja/$cajaId/retiro-capital",
         data: {
           "valor": valor,
           if (observacion != null && observacion.isNotEmpty)

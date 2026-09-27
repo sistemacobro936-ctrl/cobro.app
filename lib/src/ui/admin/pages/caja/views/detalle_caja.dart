@@ -10,6 +10,7 @@ import 'package:personal/src/ui/admin/pages/caja/views/dialogo_arqueo.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/dialogo_cerrar_caja.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/dialogo_gasto_caja.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/dialogo_inyeccion_capital.dart';
+import 'package:personal/src/ui/admin/pages/caja/views/dialogo_retiro_capital.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/gestion_cobros.dart';
 import 'package:personal/src/ui/admin/pages/caja/views/movimientos_caja_view.dart';
 
@@ -84,6 +85,35 @@ class DetalleCaja extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppTheme.primaryColor,
                           side: BorderSide(color: AppTheme.primaryColor),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(11),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                Visibility(
+                  visible: caja.estado == "ABIERTA",
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: OutlinedButton.icon(
+                        onPressed: () => mostrarDialogoRetiroCapital(
+                          context,
+                          context.read<CajaCubit>(),
+                        ),
+                        icon: const Icon(
+                          Icons.remove_circle_outline_rounded,
+                          size: 18,
+                        ),
+                        label: const Text('Retirar dinero de la caja'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.redAccent,
+                          side: const BorderSide(color: Colors.redAccent),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(11),
                           ),

@@ -11,6 +11,7 @@ Future<void> showCobroBottomSheet(
   bool showNPago = true,
   required Function(String value) onConfirmar,
   void Function(NoPagoData data)? onNoPago,
+  VoidCallback? onReembolso,
 }) {
   final valorController = TextEditingController(text: cuota.toString());
 
@@ -97,40 +98,50 @@ Future<void> showCobroBottomSheet(
                         ),
                       ),
 
-                      // No pagó: pequeño y arriba, lejos del botón principal
-                      // para no tocarlo por accidente
-                      if (onNoPago != null)
-                        Visibility(
-                          visible: showNPago,
-                          child: TextButton(
-                            onPressed: loading
-                                ? null
-                                : () async {
-                                    final data = await showNoPagoBottomSheet(
-                                      context,
-                                      clienteNombre: clienteNombre,
-                                    );
-                                    if (data == null) return;
-                          
-                                    onNoPago(data);
-                                    if (context.mounted) Navigator.pop(context);
-                                  },
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red.shade400,
-                              minimumSize: Size.zero,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              textStyle: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                      // No pagó / Reembolso: pequeños y arriba, lejos del
+                      // botón principal para no tocarlos por accidente
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (onNoPago != null)
+                            Visibility(
+                              visible: showNPago,
+                              child: TextButton(
+                                onPressed: loading
+                                    ? null
+                                    : () async {
+                                        final data =
+                                            await showNoPagoBottomSheet(
+                                              context,
+                                              clienteNombre: clienteNombre,
+                                            );
+                                        if (data == null) return;
+
+                                        onNoPago(data);
+                                        if (context.mounted) {
+                                          Navigator.pop(context);
+                                        }
+                                      },
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.red.shade400,
+                                  minimumSize: Size.zero,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  textStyle: const TextStyle(
+                                    
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                child: const Text('No pagó'),
                               ),
                             ),
-                            child: const Text('No pagó'),
-                          ),
-                        ),
+                        ],
+                      ),
                     ],
                   ),
 
@@ -244,42 +255,33 @@ Future<void> showCobroBottomSheet(
                         }
                       },
                     ),
-                    //  ElevatedButton(
-                    //   onPressed: puedePagar
-                    //       ? () async {
-                    //           setState(() {
-                    //             loading = true;
-                    //           });
-
-                    // onConfirmar();
-
-                    // if (context.mounted) {
-                    //   Navigator.pop(context);
-                    // }
-                    //         }
-                    //       : null,
-                    //   style: ElevatedButton.styleFrom(
-                    //     elevation: 0,
-                    //     shape: RoundedRectangleBorder(
-                    //       borderRadius: BorderRadius.circular(15),
-                    //     ),
-                    //   ),
-                    //   child: loading
-                    //       ? const SizedBox(
-                    //           width: 22,
-                    //           height: 22,
-                    //           child: CircularProgressIndicator(strokeWidth: 2),
-                    //         )
-                    //       : const Text(
-                    //           'Registrar cobro',
-                    //           style: TextStyle(
-                    //             fontSize: 16,
-                    //             fontWeight: FontWeight.w700,
-                    //           ),
-                    //         ),
-                    // ),
                   ),
-
+                  if (onReembolso != null)
+                    Container(
+                      alignment: Alignment.center,
+                      margin: EdgeInsets.only(top: 30),
+                      child: TextButton(
+                        onPressed: loading
+                            ? null
+                            : () {
+                                Navigator.pop(context);
+                                onReembolso();
+                              },
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppTheme.primaryColor,
+                          minimumSize: Size.zero,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        child: const Text('Reembolso'),
+                      ),
+                    ),
                   SizedBox(height: MediaQuery.sizeOf(context).height * .08),
                 ],
               ),

@@ -3,6 +3,7 @@ import 'package:personal/src/common/error/exceptions.dart';
 import 'package:personal/src/common/error/failures.dart';
 import 'package:personal/src/data/services/prestamo_service.dart';
 import 'package:personal/src/domain/dto/crear_prestamo_dto.dart';
+import 'package:personal/src/domain/dto/reembolso_dto.dart';
 import 'package:personal/src/domain/entities/prestamo_entity.dart';
 import 'package:personal/src/domain/repository/presamo_repo.dart';
 
@@ -64,6 +65,27 @@ class PrestamoRepoImpl implements PresamoRepo {
   }) async {
     try {
       final response = await prestamoService.detallePrestamo(id: id);
+
+      return Right(response);
+    } on ServerExceptions catch (e) {
+      final failure = ServerFailure(message: e.message);
+      return Left(failure);
+    } catch (e) {
+      final failure = ServerFailure(message: "Error inesperado: $e");
+      return Left(failure);
+    }
+  }
+
+  @override
+  Future<Either<Failure, dynamic>> reembolso({
+    required String prestamoId,
+    required ReembolsoDto dto,
+  }) async {
+    try {
+      final response = await prestamoService.reembolso(
+        prestamoId: prestamoId,
+        dto: dto,
+      );
 
       return Right(response);
     } on ServerExceptions catch (e) {

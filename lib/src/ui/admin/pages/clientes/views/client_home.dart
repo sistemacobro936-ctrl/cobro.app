@@ -4,7 +4,6 @@ import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/domain/entities/ruta_entity.dart';
 import 'package:personal/src/ui/admin/pages/clientes/cubit/cliente_cubit.dart';
 import 'package:personal/src/ui/admin/pages/clientes/views/client_card_view.dart';
-import 'package:personal/src/ui/admin/pages/clientes/views/filter_client_view.dart';
 import 'package:personal/src/ui/admin/pages/clientes/views/header_cliente_view.dart';
 import 'package:personal/src/ui/admin/pages/clientes/views/search_cliente_view.dart';
 
@@ -95,6 +94,7 @@ class ClientHome extends StatelessWidget {
                           margin: const EdgeInsets.only(top: 14),
                           child: ClientCardView(
                             id: cl.id,
+                            orden: cl.orden,
                             initials:
                                 '${cl.nombres.substring(0, 1).toUpperCase()}${cl.apellidos.substring(0, 1).toUpperCase()}',
                             name: cl.nombres,

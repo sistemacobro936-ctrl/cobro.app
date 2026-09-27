@@ -177,14 +177,14 @@ class CajaCubit extends Cubit<CajaState> {
 
   /// Agrega dinero a la caja abierta y refresca su resumen
   void inyectarCapital({required int valor, String? observacion}) async {
-    emit(state.copyWith(btnLoading: true));
+    emit(state.copyWith(btnLoading: true, loading: true));
     final caja = state.cajas!;
     final r = await _cajaRepo.inyectarCapital(
       cajaId: caja.id,
       valor: valor,
       observacion: observacion,
     );
-    emit(state.copyWith(btnLoading: false));
+    emit(state.copyWith(btnLoading: false, loading: false));
 
     r.fold(
       (l) {
@@ -194,6 +194,31 @@ class CajaCubit extends Cubit<CajaState> {
         AppDialogUtil.success(
           state.context,
           message: "Dinero agregado a la caja.",
+        );
+        listarCajar(rutaId: caja.rutaId);
+      },
+    );
+  }
+
+  /// Retira dinero de la caja abierta y refresca su resumen
+  void retirarCapital({required int valor, String? observacion}) async {
+    emit(state.copyWith(btnLoading: true, loading: true));
+    final caja = state.cajas!;
+    final r = await _cajaRepo.retiroCapital(
+      cajaId: caja.id,
+      valor: valor,
+      observacion: observacion,
+    );
+    emit(state.copyWith(btnLoading: false, loading: false));
+
+    r.fold(
+      (l) {
+        AppDialogUtil.error(state.context, message: l.props[0].toString());
+      },
+      (r) {
+        AppDialogUtil.success(
+          state.context,
+          message: "Dinero retirado de la caja.",
         );
         listarCajar(rutaId: caja.rutaId);
       },

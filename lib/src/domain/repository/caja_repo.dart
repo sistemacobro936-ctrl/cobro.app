@@ -22,6 +22,12 @@ Future<Either<Failure, CajaEntity>> historico({required String rutaID});
     String? observacion,
   });
 
+  Future<Either<Failure, dynamic>> retiroCapital({
+    required String cajaId,
+    required int valor,
+    String? observacion,
+  });
+
   Future<Either<Failure, MovimientosCajaEntity>> movimientos({
     required String cajaId,
   });

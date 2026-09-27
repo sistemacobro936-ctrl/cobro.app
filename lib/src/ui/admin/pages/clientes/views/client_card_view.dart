@@ -15,6 +15,7 @@ class ClientCardView extends StatelessWidget {
     required this.balance,
     required this.active,
     required this.id,
+    this.orden=0,
   });
 
   final String initials;
@@ -25,6 +26,7 @@ class ClientCardView extends StatelessWidget {
   final String phone;
   final String balance;
   final bool active;
+  final int orden;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +65,7 @@ class ClientCardView extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                initials,
+                "$orden",
                 style: const TextStyle(
                   color: Color(0xFF4164E8),
                   fontSize: 15,
@@ -167,6 +169,14 @@ class ClientCardView extends StatelessWidget {
                 },
                 icon: Icons.visibility_outlined,
                 color: const Color(0xFFFFA62B),
+              ),
+              const SizedBox(height: 7),
+
+              _actionButton(
+                onTap: () {
+                },
+                icon: Icons.back_hand_sharp,
+                color: Colors.green,
               ),
             ],
           ),

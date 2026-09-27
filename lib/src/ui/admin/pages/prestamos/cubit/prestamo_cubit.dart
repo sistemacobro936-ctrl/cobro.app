@@ -5,10 +5,12 @@ import 'package:personal/get_it.dart';
 import 'package:personal/src/common/shared/shared.dart';
 import 'package:personal/src/common/utils/app_dialog_util.dart';
 import 'package:personal/src/common/utils/date_util.dart';
+import 'package:personal/src/common/utils/fechas_pago_util.dart';
 import 'package:personal/src/domain/dto/crear_prestamo_dto.dart';
 import 'package:personal/src/domain/dto/cuota_esperada_dto.dart';
 import 'package:personal/src/domain/dto/pago_dto.dart';
 import 'package:personal/src/domain/dto/prestamo_fecha_dto.dart';
+import 'package:personal/src/domain/dto/reembolso_dto.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
 import 'package:personal/src/domain/entities/config_entity.dart';
 import 'package:personal/src/domain/entities/prestamo_entity.dart';
@@ -333,6 +335,42 @@ class PrestamoCubit extends Cubit<PrestamoState> {
     emit(state.copyWith(loading: false));
   }
 
+  /// Renueva el crédito de un préstamo activo: la deuda actual y el seguro
+  /// se descuentan del nuevo monto y al cliente solo se le entrega la
+  /// diferencia. Si la caja de la ruta no alcanza para esa diferencia, el
+  /// backend rechaza la operación con un mensaje explicando qué hace falta;
+  /// ese mensaje se muestra tal cual, no como un error genérico.
+  Future<bool> reembolso({
+    required String prestamoId,
+    required ReembolsoDto dto,
+  }) async {
+    emit(state.copyWith(loadingBtn: true));
+    final r = await _prestamosRepo.reembolso(prestamoId: prestamoId, dto: dto);
+
+    final ok = r.fold(
+      (l) {
+        AppDialogUtil.error(
+          state.context,
+          title: 'No se pudo aplicar el reembolso',
+          message: l.props[0].toString(),
+        );
+        return false;
+      },
+      (_) {
+        AppDialogUtil.success(
+          state.context,
+          message: 'Reembolso aplicado con éxito.',
+        );
+        detallePrestamo(prestamoId);
+        listarPrestamo();
+        return true;
+      },
+    );
+
+    emit(state.copyWith(loadingBtn: false));
+    return ok;
+  }
+
   Future<bool> revertirPago({
     required String pagoId,
   }) async {
@@ -424,82 +462,16 @@ class PrestamoCubit extends Cubit<PrestamoState> {
   }
 
   List<DateTime> generarFechasPago() {
-    final config = Shared.getConfig;
-
     final fechaInicial = state.fechaInicial;
     final periodo = state.periodoSeleccionado;
 
-    if (config == null || fechaInicial == null || periodo == null) {
-      return [];
-    }
+    if (fechaInicial == null || periodo == null) return [];
 
-    final cuotas = numeroCuotas;
-
-    if (cuotas <= 0) {
-      return [];
-    }
-
-    final diasPago = config.diasCobro
-        .where((e) => e.habilitado && e.diaSemana != null)
-        .map((e) => e.diaSemana!)
-        .toSet();
-
-    if (diasPago.isEmpty) {
-      return [];
-    }
-
-    final fechas = <DateTime>[];
-
-    var fecha = fechaInicial;
-
-    for (var i = 0; i < cuotas; i++) {
-      fecha = _calcularSiguienteFechaPago(
-        fechaActual: fecha,
-        periodo: periodo,
-        diasPago: diasPago,
-      );
-
-      fechas.add(fecha);
-    }
-
-    return fechas;
-  }
-
-  DateTime _calcularSiguienteFechaPago({
-    required DateTime fechaActual,
-    required dynamic periodo,
-    required Set<int> diasPago,
-  }) {
-    final codigo = periodo.codigo?.toUpperCase();
-
-    DateTime fecha;
-
-    switch (codigo) {
-      case 'DIARIO':
-        fecha = fechaActual.add(const Duration(days: 1));
-        break;
-      case 'SEMANAL':
-        fecha = fechaActual.add(const Duration(days: 7));
-        break;
-
-      case 'QUINCENAL':
-        fecha = fechaActual.add(const Duration(days: 15));
-        break;
-      case 'MENSUAL':
-        fecha = fechaActual.add(const Duration(days: 30));
-        break;
-
-      default:
-        fecha = fechaActual.add(Duration(days: periodo.cantidadDias ?? 1));
-    }
-
-    // Buscar el siguiente día habilitado
-    // para realizar el cobro.
-    while (!diasPago.contains(fecha.weekday)) {
-      fecha = fecha.add(const Duration(days: 1));
-    }
-
-    return fecha;
+    return FechasPagoUtil.generar(
+      fechaInicial: fechaInicial,
+      periodo: periodo,
+      cuotas: numeroCuotas,
+    );
   }
 
   List<CuotaEsperada> _generarCuotasEsperadas({

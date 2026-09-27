@@ -102,6 +102,28 @@ class CajaRepoImpl implements CajaRepo {
   }
 
   @override
+  Future<Either<Failure, dynamic>> retiroCapital({
+    required String cajaId,
+    required int valor,
+    String? observacion,
+  }) async {
+    try {
+      final response = await cajaService.retiroCapital(
+        cajaId: cajaId,
+        valor: valor,
+        observacion: observacion,
+      );
+      return Right(response);
+    } on ServerExceptions catch (e) {
+      final failure = ServerFailure(message: e.message);
+      return Left(failure);
+    } catch (e) {
+      final failure = ServerFailure(message: "Error inesperado: $e");
+      return Left(failure);
+    }
+  }
+
+  @override
   Future<Either<Failure, MovimientosCajaEntity>> movimientos({
     required String cajaId,
   }) async {

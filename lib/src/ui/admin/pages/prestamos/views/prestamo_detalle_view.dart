@@ -4,6 +4,7 @@ import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/domain/entities/prestamo_entity.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/cubit/prestamo_cubit.dart';
+import 'package:personal/src/ui/admin/pages/prestamos/views/dialogo_reembolso.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/views/pagos.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/views/prestamos_home.dart';
 
@@ -15,55 +16,62 @@ class PrestamoDetalleView extends StatelessWidget {
     return BlocBuilder<PrestamoCubit, PrestamoState>(
       builder: (context, state) {
         pEntity = state.prestamo!;
-        return Scaffold(
-          backgroundColor: const Color(0xFFF6F7FB),
-          appBar: AppBar(
-            backgroundColor: AppTheme.primaryColor,
-            elevation: 0,
-            leading: IconButton(
-              onPressed: () {
-                context.read<PrestamoCubit>().onGetChild(PrestamosHome());
-              },
-              icon: const Icon(
-                Icons.arrow_back_ios_new_rounded,
-                size: 19,
-                color: Colors.white,
+        return SafeArea(
+          child: Scaffold(
+            backgroundColor: const Color(0xFFF6F7FB),
+            appBar: AppBar(
+              backgroundColor: AppTheme.primaryColor,
+              elevation: 0,
+              leading: IconButton(
+                onPressed: () {
+                  context.read<PrestamoCubit>().onGetChild(PrestamosHome());
+                },
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  size: 19,
+                  color: Colors.white,
+                ),
+              ),
+              title: const Text(
+                'Detalle del préstamo',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
-            title: const Text(
-              'Detalle del préstamo',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 5, 16, 25),
+              child: Column(
+                children: [
+                  _loanHeader(),
+          
+                  const SizedBox(height: 12),
+          
+                  _summaryCard(),
+          
+                  const SizedBox(height: 12),
+          
+                  _loanInfoCard(),
+          
+                  const SizedBox(height: 12),
+          
+                  _datesCard(),
+          
+                  const SizedBox(height: 12),
+          
+                  _clientCard(),
+          
+                  const SizedBox(height: 20),
+          
+                  _paymentsButton(),
+          
+                  if (pEntity.estado == 'ACTIVO') ...[
+                    const SizedBox(height: 12),
+                    _reembolsoButton(),
+                  ],
+                ],
               ),
-            ),
-          ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 5, 16, 25),
-            child: Column(
-              children: [
-                _loanHeader(),
-
-                const SizedBox(height: 12),
-
-                _summaryCard(),
-
-                const SizedBox(height: 12),
-
-                _loanInfoCard(),
-
-                const SizedBox(height: 12),
-
-                _datesCard(),
-
-                const SizedBox(height: 12),
-
-                _clientCard(),
-
-                const SizedBox(height: 20),
-
-                _paymentsButton(),
-              ],
             ),
           ),
         );
@@ -348,6 +356,40 @@ class PrestamoDetalleView extends StatelessWidget {
                 color: Colors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _reembolsoButton() {
+    return Builder(
+      builder: (context) {
+        return SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              final cubit = context.read<PrestamoCubit>();
+              mostrarDialogoReembolso(
+                context,
+                prestamo: pEntity,
+                onConfirmar: (prestamoId, dto) =>
+                    cubit.reembolso(prestamoId: prestamoId, dto: dto),
+              );
+            },
+            icon: const Icon(Icons.autorenew_rounded, size: 18),
+            label: const Text(
+              'Reembolso (renovar crédito)',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.primaryColor,
+              side: BorderSide(color: AppTheme.primaryColor),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
               ),
             ),
           ),
