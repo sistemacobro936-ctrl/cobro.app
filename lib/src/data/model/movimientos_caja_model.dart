@@ -22,6 +22,7 @@ class MovimientosCajaModel extends MovimientosCajaEntity {
     required super.inyeccionesCapital,
     required super.pagosDobles,
     required super.pagosMenores,
+    required super.prestamosDelDia,
   });
 
   factory MovimientosCajaModel.fromJson(Map<String, dynamic> json) {
@@ -42,6 +43,8 @@ class MovimientosCajaModel extends MovimientosCajaEntity {
         cantidadPagosDobles: resumen['cantidadPagosDobles'] ?? 0,
         cantidadPagosMenores: resumen['cantidadPagosMenores'] ?? 0,
         faltanteTotal: resumen['faltanteTotal'] ?? 0,
+        cantidadPrestamos: resumen['cantidadPrestamos'] ?? 0,
+        totalPrestado: resumen['totalPrestado'] ?? 0,
       ),
       inyeccionesCapital: _lista(json['inyeccionesCapital'])
           .map(
@@ -79,6 +82,22 @@ class MovimientosCajaModel extends MovimientosCajaEntity {
               faltante: e['faltante'] ?? 0,
               fecha: _fecha(e['fecha']),
               pagos: _pagos(e['pagos']),
+            ),
+          )
+          .toList(),
+      prestamosDelDia: _lista(json['prestamosDelDia'])
+          .map(
+            (e) => PrestamoDelDiaEntity(
+              id: e['id'] ?? '',
+              clienteNombre: e['clienteNombre'] ?? '',
+              clienteCedula: e['clienteCedula'] ?? '',
+              monto: e['monto'] ?? 0,
+              valorSeguro: e['valorSeguro'] ?? 0,
+              valorCuota: e['valorCuota'] ?? 0,
+              numeroCuotas: e['numeroCuotas'] ?? 0,
+              frecuencia: e['frecuencia'] ?? '',
+              estado: e['estado'] ?? '',
+              fecha: _fecha(e['fecha']),
             ),
           )
           .toList(),

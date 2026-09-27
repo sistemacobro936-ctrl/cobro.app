@@ -134,7 +134,7 @@ class PrestamoCardView extends StatelessWidget {
             children: [
               Expanded(
                 child: _loanInfo(
-                  label: 'Monto',
+                  label: 'Deuda',
                   value: amount,
                   icon: Icons.payments_outlined,
                 ),

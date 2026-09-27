@@ -11,8 +11,9 @@ void abrirMovimientosCaja(BuildContext context, CajaCubit c) {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) =>
-          BlocProvider.value(value: c, child: const MovimientosCajaView()),
+      builder:
+          (_) =>
+              BlocProvider.value(value: c, child: const MovimientosCajaView()),
     ),
   );
 }
@@ -24,8 +25,11 @@ void abrirMovimientosCajaHistorica(BuildContext context, String cajaId) {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) =>
-          BlocProvider(create: (_) => c, child: const MovimientosCajaView()),
+      builder:
+          (_) => BlocProvider(
+            create: (_) => c,
+            child: const MovimientosCajaView(),
+          ),
     ),
   );
 }
@@ -56,27 +60,30 @@ class MovimientosCajaView extends StatelessWidget {
               icon: const Icon(Icons.arrow_back, color: Colors.white),
             ),
           ),
-          body: state.loadingMovimientos
-              ? const Center(child: CircularProgressIndicator.adaptive())
-              : m == null
-              ? _mensaje('No se pudieron cargar los movimientos.')
-              : RefreshIndicator(
-                  onRefresh: context.read<CajaCubit>().movimientos,
-                  child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(12),
-                    children: [
-                      _resumen(m),
-                      const SizedBox(height: 18),
-                      _inyecciones(m.inyeccionesCapital),
-                      const SizedBox(height: 18),
-                      _pagosDobles(m.pagosDobles),
-                      const SizedBox(height: 18),
-                      _pagosMenores(m.pagosMenores),
-                      const SizedBox(height: 12),
-                    ],
+          body:
+              state.loadingMovimientos
+                  ? const Center(child: CircularProgressIndicator.adaptive())
+                  : m == null
+                  ? _mensaje('No se pudieron cargar los movimientos.')
+                  : RefreshIndicator(
+                    onRefresh: context.read<CajaCubit>().movimientos,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(12),
+                      children: [
+                        _resumen(m),
+                        const SizedBox(height: 18),
+                        _inyecciones(m.inyeccionesCapital),
+                        const SizedBox(height: 18),
+                        _pagosDobles(m.pagosDobles),
+                        const SizedBox(height: 18),
+                        _pagosMenores(m.pagosMenores),
+                        const SizedBox(height: 18),
+                        _prestamos(m.prestamosDelDia),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
                   ),
-                ),
         );
       },
     );
@@ -113,6 +120,13 @@ class MovimientosCajaView extends StatelessWidget {
             '${r.cantidadPagosMenores}',
             '\$ ${r.faltanteTotal}',
             Colors.redAccent,
+          ),
+          const SizedBox(height: 12),
+          _filaResumen(
+            'Préstamos nuevos',
+            '${r.cantidadPrestamos}',
+            '\$ ${r.totalPrestado}',
+            AppTheme.primaryColor,
           ),
         ],
       ),
@@ -159,23 +173,26 @@ class MovimientosCajaView extends StatelessWidget {
     return _section(
       title: 'Dinero agregado a la caja',
       icon: Icons.add_circle_outline_rounded,
-      child: lista.isEmpty
-          ? _vacio('No se ha agregado dinero a la caja.')
-          : Column(
-              children: lista
-                  .map(
-                    (e) => _item(
-                      icon: Icons.arrow_circle_up_rounded,
-                      color: Colors.blue,
-                      titulo: e.observacion.isEmpty
-                          ? 'Inyección de capital'
-                          : e.observacion,
-                      subtitulo: _fechaHora(e.fecha),
-                      trailing: '+\$${e.valor}',
-                    ),
-                  )
-                  .toList(),
-            ),
+      child:
+          lista.isEmpty
+              ? _vacio('No se ha agregado dinero a la caja.')
+              : Column(
+                children:
+                    lista
+                        .map(
+                          (e) => _item(
+                            icon: Icons.arrow_circle_up_rounded,
+                            color: Colors.blue,
+                            titulo:
+                                e.observacion.isEmpty
+                                    ? 'Inyección de capital'
+                                    : e.observacion,
+                            subtitulo: _fechaHora(e.fecha),
+                            trailing: '+\$${e.valor}',
+                          ),
+                        )
+                        .toList(),
+              ),
     );
   }
 
@@ -183,25 +200,27 @@ class MovimientosCajaView extends StatelessWidget {
     return _section(
       title: 'Multiples pagos',
       icon: Icons.library_add_check_outlined,
-      child: lista.isEmpty
-          ? _vacio('Ningún cliente ha pagado más de una vez.')
-          : Column(
-              children: lista
-                  .map(
-                    (e) => _item(
-                      icon: Icons.check_circle_rounded,
-                      color: Colors.green,
-                      titulo: _cliente(e.clienteNombre),
-                      subtitulo: [
-                        'Cuota \$${e.valorCuota}',
-                        '${e.cantidadPagos} pagos',
-                      ].join(' · '),
-                      detalle: _detallePagos(e.pagos),
-                      trailing: '\$${e.valorPagado}',
-                    ),
-                  )
-                  .toList(),
-            ),
+      child:
+          lista.isEmpty
+              ? _vacio('Ningún cliente ha pagado más de una vez.')
+              : Column(
+                children:
+                    lista
+                        .map(
+                          (e) => _item(
+                            icon: Icons.check_circle_rounded,
+                            color: Colors.green,
+                            titulo: _cliente(e.clienteNombre),
+                            subtitulo: [
+                              'Cuota \$${e.valorCuota}',
+                              '${e.cantidadPagos} pagos',
+                            ].join(' · '),
+                            detalle: _detallePagos(e.pagos),
+                            trailing: '\$${e.valorPagado}',
+                          ),
+                        )
+                        .toList(),
+              ),
     );
   }
 
@@ -209,25 +228,64 @@ class MovimientosCajaView extends StatelessWidget {
     return _section(
       title: 'Pagos menores',
       icon: Icons.remove_circle_outline_rounded,
-      child: lista.isEmpty
-          ? _vacio('No hay pagos por debajo de la cuota.')
-          : Column(
-              children: lista
-                  .map(
-                    (e) => _item(
-                      icon: Icons.error_outline_rounded,
-                      color: Colors.redAccent,
-                      titulo: _cliente(e.clienteNombre+"\nCC: ${e.clienteCedula}"),
-                      subtitulo: [
-                        'Cuota \$${e.valorCuota}',
-                        ' \nPagó\$${e.valorPagado}',
-                      ].join(''),
-                      detalle: _detallePagos(e.pagos),
-                      trailing: '-\$${e.faltante}',
-                    ),
-                  )
-                  .toList(),
-            ),
+      child:
+          lista.isEmpty
+              ? _vacio('No hay pagos por debajo de la cuota.')
+              : Column(
+                children:
+                    lista
+                        .map(
+                          (e) => _item(
+                            icon: Icons.error_outline_rounded,
+                            color: Colors.redAccent,
+                            titulo: _cliente(
+                              e.clienteNombre + "\nCC: ${e.clienteCedula}",
+                            ),
+                            subtitulo: [
+                              'Cuota \$${e.valorCuota}',
+                              ' \nPagó\$${e.valorPagado}',
+                            ].join(''),
+                            detalle: _detallePagos(e.pagos),
+                            trailing: '-\$${e.faltante}',
+                          ),
+                        )
+                        .toList(),
+              ),
+    );
+  }
+
+  Widget _prestamos(List<PrestamoDelDiaEntity> lista) {
+    return _section(
+      title: 'Préstamos del día',
+      icon: Icons.request_quote_outlined,
+      child:
+          lista.isEmpty
+              ? _vacio('No se asignaron préstamos nuevos hoy.')
+              : Column(
+                children:
+                    lista
+                        .map(
+                          (e) => _item(
+                            icon: Icons.request_quote_rounded,
+                            color: AppTheme.primaryColor,
+                            titulo:
+                                _cliente(e.clienteNombre) +
+                                (e.clienteCedula.isEmpty
+                                    ? ''
+                                    : '\nCC: ${e.clienteCedula}'),
+                            subtitulo: [
+                              'Cuota \$ ${e.valorCuota}',
+                              (e.frecuencia.toLowerCase()),
+                              if (e.valorSeguro > 0)
+                                'Seguro \$${e.valorSeguro}',
+                              if (_fechaHora(e.fecha) != null)
+                                _fechaHora(e.fecha)!,
+                            ].join('\n'),
+                            trailing: '\$${e.monto}',
+                          ),
+                        )
+                        .toList(),
+              ),
     );
   }
 
@@ -310,6 +368,8 @@ class MovimientosCajaView extends StatelessWidget {
                     ),
                   ),
                 ],
+                SizedBox(height: 10),
+                Divider(),
               ],
             ),
           ),

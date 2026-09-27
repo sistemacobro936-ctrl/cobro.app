@@ -143,28 +143,18 @@ Widget _drawerHeader() {
 
         const SizedBox(height: 14),
 
-        const Text(
-          'Andrés Ruiz',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+     
 
         const SizedBox(height: 4),
 
         const Text(
           'Administrador',
-          style: TextStyle(color: Colors.white70, fontSize: 12),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 25),
         ),
 
         const SizedBox(height: 3),
 
-        const Text(
-          'admin@cobroapp.com',
-          style: TextStyle(color: Colors.white54, fontSize: 10),
-        ),
+       
       ],
     ),
   );

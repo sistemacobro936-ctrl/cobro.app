@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:personal/get_it.dart';
+import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/ui/auth/auth_page.dart';
 
 void main() async {
@@ -37,6 +38,8 @@ class MyApp extends StatelessWidget {
       ],
 
       theme: ThemeData(
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: AppTheme.primaryColor),
         textTheme: const TextTheme(
           bodyMedium: TextStyle(fontSize: 16),
         ),

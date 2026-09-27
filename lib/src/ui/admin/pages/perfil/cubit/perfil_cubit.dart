@@ -58,7 +58,7 @@ class PerfilCubit extends Cubit<PerfilState> {
       passTxt,
     ].every((c) => c.text.trim().isNotEmpty);
 
-    emit(state.copyWith(btnEnabled: e));
+    emit(state.copyWith(btnEnabled: e && passTxt.text.length>=8));
   }
 
   ///Peticiones

@@ -1,10 +1,12 @@
-/// Movimientos de una caja: inyecciones de capital, pagos dobles y pagos menores
+/// Movimientos de una caja: inyecciones de capital, pagos dobles, pagos
+/// menores y préstamos nuevos del día
 class MovimientosCajaEntity {
   final MovimientosCajaInfoEntity caja;
   final ResumenMovimientosEntity resumen;
   final List<InyeccionCapitalEntity> inyeccionesCapital;
   final List<PagoDobleEntity> pagosDobles;
   final List<PagoMenorEntity> pagosMenores;
+  final List<PrestamoDelDiaEntity> prestamosDelDia;
 
   MovimientosCajaEntity({
     required this.caja,
@@ -12,6 +14,7 @@ class MovimientosCajaEntity {
     required this.inyeccionesCapital,
     required this.pagosDobles,
     required this.pagosMenores,
+    required this.prestamosDelDia,
   });
 }
 
@@ -37,6 +40,8 @@ class ResumenMovimientosEntity {
   final int cantidadPagosDobles;
   final int cantidadPagosMenores;
   final num faltanteTotal;
+  final int cantidadPrestamos;
+  final num totalPrestado;
 
   ResumenMovimientosEntity({
     required this.cantidadInyecciones,
@@ -44,6 +49,35 @@ class ResumenMovimientosEntity {
     required this.cantidadPagosDobles,
     required this.cantidadPagosMenores,
     required this.faltanteTotal,
+    required this.cantidadPrestamos,
+    required this.totalPrestado,
+  });
+}
+
+/// Préstamo nuevo asignado durante el día, con cargo a la caja
+class PrestamoDelDiaEntity {
+  final String id;
+  final String clienteNombre;
+  final String clienteCedula;
+  final num monto;
+  final num valorSeguro;
+  final num valorCuota;
+  final int numeroCuotas;
+  final String frecuencia;
+  final String estado;
+  final DateTime? fecha;
+
+  PrestamoDelDiaEntity({
+    required this.id,
+    required this.clienteNombre,
+    required this.clienteCedula,
+    required this.monto,
+    required this.valorSeguro,
+    required this.valorCuota,
+    required this.numeroCuotas,
+    required this.frecuencia,
+    required this.estado,
+    required this.fecha,
   });
 }
 
