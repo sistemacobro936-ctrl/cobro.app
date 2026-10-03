@@ -6,4 +6,9 @@ import 'package:personal/src/domain/entities/auth_entity.dart';
 abstract class AuthRepository {
     Future<Either<Failure, AuthEntity>> login({required AuthDto dto});
 
+    Future<Either<Failure, dynamic>> cambiarPassword({
+        required String nuevaPassword,
+        String? usuarioId,
+    });
+
 }

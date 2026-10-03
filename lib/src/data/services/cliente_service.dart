@@ -16,6 +16,10 @@ abstract class ClienteService {
   Future<String> crear({required CrearClienteDto dto});
   Future<dynamic> editar({required CrearClienteDto dto, required String id});
   Future<DatumClModel> obtenerCliente({required String id});
+
+  /// Mueve al cliente a esa posición dentro de su ruta; el backend reacomoda
+  /// el orden de los demás clientes de la misma ruta
+  Future<dynamic> reordenar({required String id, required int orden});
 }
 
 class ClienteServiceImpl implements ClienteService {
@@ -70,6 +74,22 @@ class ClienteServiceImpl implements ClienteService {
       final response = await apiClient.dio.patch(
         '/cliente/$id',
         data: dto.toJson(),
+      );
+
+      return response.data;
+    } on DioException catch (e) {
+      throw ServerExceptions(message: e.response!.data["message"]);
+    } catch (e) {
+      throw Exception("Error inesperado");
+    }
+  }
+
+  @override
+  Future<dynamic> reordenar({required String id, required int orden}) async {
+    try {
+      final response = await apiClient.dio.patch(
+        '/cliente/$id/orden',
+        data: {"orden": orden},
       );
 
       return response.data;

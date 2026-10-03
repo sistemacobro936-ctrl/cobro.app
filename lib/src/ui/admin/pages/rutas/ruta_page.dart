@@ -6,7 +6,6 @@ import 'package:personal/src/ui/admin/pages/rutas/cubit/ruta_cubit.dart';
 import 'package:personal/src/ui/admin/pages/rutas/views/crear_ruta_view.dart';
 import 'package:personal/src/ui/admin/pages/rutas/views/ruta_detalle_view.dart';
 import 'package:personal/src/ui/admin/pages/rutas/views/ruta_home.dart';
-import 'package:personal/src/ui/admin/views/form_client_view.dart';
 
 class RutaPage extends StatefulWidget {
   final bool showDetail;
@@ -25,7 +24,11 @@ class _RutaPageState extends State<RutaPage> {
     _cubit = RutaCubit(context: context);
     _cubit.listarRutas();
     if (widget.showDetail) {
-      _cubit.onEventChild(RutaDetalleView(ruta: widget.ruta!));
+      _cubit.movimientoRuta(idRuta: widget.ruta!.id);
+      _cubit.clienteRuta(idRuta: widget.ruta!.id);
+      _cubit.onEventChild(
+        RutaDetalleView(ruta: widget.ruta!, showDetail: widget.showDetail),
+      );
     }
   }
 
@@ -41,11 +44,9 @@ class _RutaPageState extends State<RutaPage> {
               backgroundColor: const Color(0xFFF5F7FC),
 
               floatingActionButton: Visibility(
-                visible:
-                    state.child is RutaHome ,
+                visible: state.child is RutaHome,
                 child: FloatingActionButton.extended(
                   onPressed: () {
-                   
                     c.clear();
                     c.onEventChild(CrearRutaView());
                   },

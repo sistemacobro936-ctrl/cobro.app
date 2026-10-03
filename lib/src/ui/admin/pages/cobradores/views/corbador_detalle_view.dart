@@ -109,7 +109,7 @@ class CobradorDetalleView extends StatelessWidget {
           Text(
             '${cobrador.nombre} ${cobrador.apellido}',
             style: const TextStyle(
-              color: Color(0xFF202838),
+              color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w800,
             ),
@@ -155,7 +155,7 @@ class CobradorDetalleView extends StatelessWidget {
                   children: [
                     const Text(
                       'Rutas asignadas',
-                      style: TextStyle(color: Color(0xFF929BAB), fontSize: 11),
+                      style: TextStyle(color: Color(0xFF929BAB)),
                     ),
                     const SizedBox(height: 3),
                     Text(
@@ -231,45 +231,9 @@ class CobradorDetalleView extends StatelessWidget {
                         ruta.nombre,
                         style: const TextStyle(
                           color: Color(0xFF202838),
-                          fontSize: 14,
+
                           fontWeight: FontWeight.w800,
                         ),
-                      ),
-
-                      const SizedBox(height: 4),
-
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.people_outline,
-                            size: 13,
-                            color: Color(0xFF929BAB),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${ruta.cantidadClientes} clientes',
-                            style: TextStyle(
-                              color: Color(0xFF929BAB),
-                              fontSize: 10,
-                            ),
-                          ),
-
-                          const SizedBox(width: 12),
-
-                          const Icon(
-                            Icons.account_balance_wallet_outlined,
-                            size: 13,
-                            color: Color(0xFF929BAB),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '\$${ruta.capital}',
-                            style: const TextStyle(
-                              color: Color(0xFF929BAB),
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
@@ -306,7 +270,7 @@ class CobradorDetalleView extends StatelessWidget {
             'Información',
             style: TextStyle(
               color: Color(0xFF202838),
-              fontSize: 14,
+
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -421,10 +385,7 @@ class CobradorDetalleView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(color: Color(0xFF929BAB), fontSize: 9),
-              ),
+              Text(title, style: const TextStyle(color: Color(0xFF929BAB))),
 
               const SizedBox(height: 2),
 
@@ -434,7 +395,7 @@ class CobradorDetalleView extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: Color(0xFF394354),
-                  fontSize: 12,
+
                   fontWeight: FontWeight.w700,
                 ),
               ),

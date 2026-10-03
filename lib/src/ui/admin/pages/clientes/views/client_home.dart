@@ -23,6 +23,26 @@ class ClientHome extends StatelessWidget {
             ? clientes.length
             : state.paginationClientes?.total ?? clientes.length;
 
+        // El orden (y por lo tanto arrastrar para reordenar) solo tiene
+        // sentido filtrado a una ruta puntual y sin una búsqueda activa
+        final reordenable =
+            !buscando && (state.filtroRutaId ?? '').isNotEmpty;
+        final mostrarReorder = reordenable && !cargando && clientes.isNotEmpty;
+
+        final cabecera = _cabecera(state, c, total, buscando);
+        final piePagina = state.loadingMore
+            ? const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              )
+            : const SizedBox.shrink();
+
         return Column(
           children: [
             HeaderClienteView(),
@@ -36,95 +56,145 @@ class ClientHome extends StatelessWidget {
                   }
                   return false;
                 },
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
-                  children: [
-                    SearchClienteView(
-                      controller: c.busquedaController,
-                      onSearch: c.buscar,
-                      onClear: c.limpiarBusqueda,
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _rutas(state, c),
-
-                    const SizedBox(height: 14),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            buscando
-                                ? '$total ${total == 1 ? 'resultado' : 'resultados'} para "${state.busqueda}"'
-                                : '$total ${total == 1 ? 'cliente' : 'clientes'}',
-                            style: const TextStyle(
-                              color: Color(0xFF929BAB),
-                              fontWeight: FontWeight.w600,
+                // Cuando se puede reordenar, el ReorderableListView ES el
+                // scroll (no uno anidado dentro de otro ListView): solo así
+                // Flutter hace scroll automático al arrastrar cerca del
+                // borde, para alcanzar posiciones fuera de pantalla.
+                child: mostrarReorder
+                    ? ReorderableListView.builder(
+                        buildDefaultDragHandles: false,
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
+                        header: cabecera,
+                        footer: piePagina,
+                        itemCount: clientes.length,
+                        itemBuilder: (context, index) {
+                          final cl = clientes[index];
+                          return Padding(
+                            key: ValueKey(cl.id),
+                            padding: const EdgeInsets.only(top: 14),
+                            child: ClientCardView(
+                              id: cl.id,
+                              orden: cl.orden,
+                              dragIndex: index,
+                              initials:
+                                  '${cl.nombres.substring(0, 1).toUpperCase()}${cl.apellidos.substring(0, 1).toUpperCase()}',
+                              name: cl.nombres,
+                              document: 'CC ${cl.cedula}',
+                              route: _nombreRuta(state.rutas, cl.rutaId),
+                              phone: cl.telefono,
+                              balance: '\$${cl.totalPrestado}',
+                              active: true,
                             ),
-                          ),
-                        ),
+                          );
+                        },
+                        onReorder: (oldIndex, newIndex) {
+                          if (newIndex > oldIndex) newIndex -= 1;
+                          if (newIndex == oldIndex) return;
 
-                        if (buscando)
-                          TextButton.icon(
-                            onPressed: c.limpiarBusqueda,
-                            icon: const Icon(Icons.close_rounded, size: 16),
-                            label: const Text('Limpiar búsqueda'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppTheme.primaryColor,
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          )
- 
-                      ],
-                    ),
-
-                    if (cargando)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: Center(
-                          child: CircularProgressIndicator.adaptive(),
-                        ),
+                          final movido = clientes[oldIndex];
+                          final destino = clientes[newIndex];
+                          c.reordenarCliente(
+                            id: movido.id,
+                            nuevoOrden: destino.orden,
+                          );
+                        },
                       )
-                    else if (clientes.isEmpty)
-                      _vacio(buscando)
-                    else
-                      ...clientes.map(
-                        (cl) => Container(
-                          margin: const EdgeInsets.only(top: 14),
-                          child: ClientCardView(
-                            id: cl.id,
-                            orden: cl.orden,
-                            initials:
-                                '${cl.nombres.substring(0, 1).toUpperCase()}${cl.apellidos.substring(0, 1).toUpperCase()}',
-                            name: cl.nombres,
-                            document: 'CC ${cl.cedula}',
-                            route: _nombreRuta(state.rutas, cl.rutaId),
-                            phone: cl.telefono,
-                            balance: '\$${cl.totalPrestado}',
-                            active: true,
-                          ),
-                        ),
-                      ),
+                    : ListView(
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),
+                        children: [
+                          cabecera,
 
-                    if (state.loadingMore)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Center(
-                          child: SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
+                          if (cargando)
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: Center(
+                                child: CircularProgressIndicator.adaptive(),
+                              ),
+                            )
+                          else if (clientes.isEmpty)
+                            _vacio(buscando)
+                          else
+                            ...clientes.map(
+                              (cl) => Container(
+                                margin: const EdgeInsets.only(top: 14),
+                                child: ClientCardView(
+                                  id: cl.id,
+                                  orden: cl.orden,
+                                  initials:
+                                      '${cl.nombres.substring(0, 1).toUpperCase()}${cl.apellidos.substring(0, 1).toUpperCase()}',
+                                  name: cl.nombres,
+                                  document: 'CC ${cl.cedula}',
+                                  route: _nombreRuta(state.rutas, cl.rutaId),
+                                  phone: cl.telefono,
+                                  balance: '\$${cl.totalPrestado}',
+                                  active: true,
+                                ),
+                              ),
+                            ),
+
+                          piePagina,
+                        ],
                       ),
-                  ],
-                ),
               ),
             ),
           ],
         );
       },
+    );
+  }
+
+  // ============================================================
+  // CABECERA (buscador + chips de ruta + contador)
+  // ============================================================
+
+  Widget _cabecera(
+    ClienteState state,
+    ClienteCubit c,
+    int total,
+    bool buscando,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SearchClienteView(
+          controller: c.busquedaController,
+          onSearch: c.buscar,
+          onClear: c.limpiarBusqueda,
+        ),
+
+        const SizedBox(height: 14),
+
+        _rutas(state, c),
+
+        const SizedBox(height: 14),
+
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                buscando
+                    ? '$total ${total == 1 ? 'resultado' : 'resultados'} para "${state.busqueda}"'
+                    : '$total ${total == 1 ? 'cliente' : 'clientes'}',
+                style: const TextStyle(
+                  color: Color(0xFF929BAB),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+
+            if (buscando)
+              TextButton.icon(
+                onPressed: c.limpiarBusqueda,
+                icon: const Icon(Icons.close_rounded, size: 16),
+                label: const Text('Limpiar búsqueda'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.primaryColor,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -141,12 +211,6 @@ class ClientHome extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          _chip(
-            label: 'Todos',
-            icon: Icons.groups_outlined,
-            selected: state.filtroRutaId == '',
-            onTap: () => c.seleccionarRuta(''),
-          ),
           ...rutas.map(
             (r) => _chip(
               label: r.nombre,

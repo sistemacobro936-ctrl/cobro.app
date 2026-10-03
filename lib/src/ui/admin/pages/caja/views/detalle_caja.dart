@@ -68,87 +68,49 @@ class DetalleCaja extends StatelessWidget {
                 Visibility(
                   visible: caja.estado == "ABIERTA",
                   child: Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: OutlinedButton.icon(
-                        onPressed: () => mostrarDialogoInyeccionCapital(
-                          context,
-                          context.read<CajaCubit>(),
-                        ),
-                        icon: const Icon(
-                          Icons.add_circle_outline_rounded,
-                          size: 18,
-                        ),
-                        label: const Text('Agregar dinero a la caja'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppTheme.primaryColor,
-                          side: BorderSide(color: AppTheme.primaryColor),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(11),
+                    padding: const EdgeInsets.only(bottom: 18),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _accionCaja(
+                            icon: Icons.add_circle_outline_rounded,
+                            label: 'Agregar',
+                            color: AppTheme.primaryColor,
+                            onTap: () => mostrarDialogoInyeccionCapital(
+                              context,
+                              context.read<CajaCubit>(),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                Visibility(
-                  visible: caja.estado == "ABIERTA",
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: OutlinedButton.icon(
-                        onPressed: () => mostrarDialogoRetiroCapital(
-                          context,
-                          context.read<CajaCubit>(),
-                        ),
-                        icon: const Icon(
-                          Icons.remove_circle_outline_rounded,
-                          size: 18,
-                        ),
-                        label: const Text('Retirar dinero de la caja'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.redAccent,
-                          side: const BorderSide(color: Colors.redAccent),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(11),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _accionCaja(
+                            icon: Icons.remove_circle_outline_rounded,
+                            label: 'Retirar',
+                            color: Colors.redAccent,
+                            onTap: () => mostrarDialogoRetiroCapital(
+                              context,
+                              context.read<CajaCubit>(),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                Visibility(
-                  visible: caja.estado == "ABIERTA",
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 44,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        mostrarModalArqueo(
-                          context,
-                          context.read<CajaCubit>(),
-                          caja.montoEsperado+caja.saldoSeguros,
-                        );
-                      },
-                      icon: const Icon(Icons.calculate_outlined, size: 18),
-                      label: const Text('Realizar arqueo'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppTheme.primaryColor,
-                        side: BorderSide(color: AppTheme.primaryColor),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(11),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _accionCaja(
+                            icon: Icons.calculate_outlined,
+                            label: 'Arqueo',
+                            color: AppTheme.primaryColor,
+                            onTap: () => mostrarModalArqueo(
+                              context,
+                              context.read<CajaCubit>(),
+                              caja.montoEsperado + caja.saldoSeguros,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 18),
                 Center(
                   child: TextButton(
                     onPressed: () => abrirMovimientosCaja(
@@ -684,6 +646,43 @@ class DetalleCaja extends StatelessWidget {
   // ============================================================
   // COMPONENTES
   // ============================================================
+
+  /// Botón compacto (ícono + etiqueta corta) para las acciones de caja,
+  /// pensado para ir de a tres en una fila
+  Widget _accionCaja({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: .06),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: .25)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _section({
     required String title,

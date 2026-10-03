@@ -4,6 +4,7 @@ import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/domain/entities/administrador_entity.dart';
 import 'package:personal/src/ui/admin/pages/perfil/cubit/perfil_cubit.dart';
 import 'package:personal/src/ui/admin/pages/perfil/views/dialogo_agregar_admin.dart';
+import 'package:personal/src/ui/admin/views/dialogo_cambiar_password.dart';
 
 class PerfilPage extends StatefulWidget {
   const PerfilPage({super.key});
@@ -50,6 +51,8 @@ class _PerfilPageState extends State<PerfilPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildPerfilHeader(state),
+                  const SizedBox(height: 18),
+                  _buildSeguridadSection(context),
                   const SizedBox(height: 18),
                   _buildAdministradoresSection(context, state),
                 ],
@@ -110,6 +113,56 @@ class _PerfilPageState extends State<PerfilPage> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSeguridadSection(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.black.withValues(alpha: .05)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withValues(alpha: .08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.lock_outline_rounded,
+              size: 18,
+              color: AppTheme.primaryColor,
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'Contraseña',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF202838),
+              ),
+            ),
+          ),
+          TextButton.icon(
+            onPressed: () => mostrarDialogoCambiarPassword(
+              context,
+              titulo: 'Cambiar contraseña',
+              subtitulo: 'Actualiza la contraseña de tu cuenta.',
+              onConfirmar: _cubit.cambiarPassword,
+            ),
+            icon: const Icon(Icons.lock_reset_rounded, size: 18),
+            label: const Text('Cambiar'),
           ),
         ],
       ),

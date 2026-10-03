@@ -15,7 +15,7 @@ class CollectCardCView extends StatelessWidget {
   final List<DatumREntity> rutas;
   final String id;
   final String phone;
-  final int clients;
+
   final String collected;
   final String avatar;
   final bool active;
@@ -24,7 +24,7 @@ class CollectCardCView extends StatelessWidget {
     super.key,
     required this.name,
     required this.rutas,
-    required this.clients,
+    
     required this.collected,
     required this.avatar,
     required this.active,
@@ -242,25 +242,7 @@ class CollectCardCView extends StatelessWidget {
 
             const SizedBox(height: 5),
 
-            Row(
-              children: [
-                const Icon(
-                  Icons.people_outline,
-                  size: 13,
-                  color: Color(0xFF929BAB),
-                ),
-
-                const SizedBox(width: 4),
-
-                Text(
-                  '$clients ${clients == 1 ? 'cliente' : 'clientes'}',
-                  style: const TextStyle(
-                    color: Color(0xFF7B8494),
-                   
-                  ),
-                ),
-              ],
-            ),
+     
           ],
         );
       },

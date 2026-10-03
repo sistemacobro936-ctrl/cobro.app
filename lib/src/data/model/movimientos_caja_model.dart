@@ -15,14 +15,49 @@ List<PagoMovimientoEntity> _pagos(dynamic value) => _lista(value)
     )
     .toList();
 
+/// Inyecciones/retiros de capital y retiros de seguro comparten esta forma
+List<InyeccionCapitalEntity> _capitalItems(dynamic value) => _lista(value)
+    .map(
+      (e) => InyeccionCapitalEntity(
+        id: e['id'] ?? '',
+        valor: e['valor'] ?? 0,
+        observacion: e['observacion'] ?? '',
+        fecha: _fecha(e['fecha']),
+      ),
+    )
+    .toList();
+
+/// Préstamos nuevos y reembolsos del día comparten esta forma; los
+/// reembolsos traen además prestamoAnteriorId
+List<PrestamoDelDiaEntity> _prestamos(dynamic value) => _lista(value)
+    .map(
+      (e) => PrestamoDelDiaEntity(
+        id: e['id'] ?? '',
+        clienteNombre: e['clienteNombre'] ?? '',
+        clienteCedula: e['clienteCedula'] ?? '',
+        monto: e['monto'] ?? 0,
+        valorSeguro: e['valorSeguro'] ?? 0,
+        valorCuota: e['valorCuota'] ?? 0,
+        numeroCuotas: e['numeroCuotas'] ?? 0,
+        frecuencia: e['frecuencia'] ?? '',
+        estado: e['estado'] ?? '',
+        fecha: _fecha(e['fecha']),
+        prestamoAnteriorId: e['prestamoAnteriorId'],
+      ),
+    )
+    .toList();
+
 class MovimientosCajaModel extends MovimientosCajaEntity {
   MovimientosCajaModel({
     required super.caja,
     required super.resumen,
     required super.inyeccionesCapital,
+    required super.retirosCapital,
+    required super.retirosSeguro,
     required super.pagosDobles,
     required super.pagosMenores,
     required super.prestamosDelDia,
+    required super.reembolsosDelDia,
   });
 
   factory MovimientosCajaModel.fromJson(Map<String, dynamic> json) {
@@ -40,22 +75,21 @@ class MovimientosCajaModel extends MovimientosCajaEntity {
       resumen: ResumenMovimientosEntity(
         cantidadInyecciones: resumen['cantidadInyecciones'] ?? 0,
         totalInyectado: resumen['totalInyectado'] ?? 0,
+        cantidadRetirosCapital: resumen['cantidadRetirosCapital'] ?? 0,
+        totalRetiradoCapital: resumen['totalRetiradoCapital'] ?? 0,
+        cantidadRetirosSeguro: resumen['cantidadRetirosSeguro'] ?? 0,
+        totalRetiradoSeguro: resumen['totalRetiradoSeguro'] ?? 0,
         cantidadPagosDobles: resumen['cantidadPagosDobles'] ?? 0,
         cantidadPagosMenores: resumen['cantidadPagosMenores'] ?? 0,
         faltanteTotal: resumen['faltanteTotal'] ?? 0,
         cantidadPrestamos: resumen['cantidadPrestamos'] ?? 0,
         totalPrestado: resumen['totalPrestado'] ?? 0,
+        cantidadReembolsos: resumen['cantidadReembolsos'] ?? 0,
+        totalReembolsado: resumen['totalReembolsado'] ?? 0,
       ),
-      inyeccionesCapital: _lista(json['inyeccionesCapital'])
-          .map(
-            (e) => InyeccionCapitalEntity(
-              id: e['id'] ?? '',
-              valor: e['valor'] ?? 0,
-              observacion: e['observacion'] ?? '',
-              fecha: _fecha(e['fecha']),
-            ),
-          )
-          .toList(),
+      inyeccionesCapital: _capitalItems(json['inyeccionesCapital']),
+      retirosCapital: _capitalItems(json['retirosCapital']),
+      retirosSeguro: _capitalItems(json['retirosSeguro']),
       pagosDobles: _lista(json['pagosDobles'])
           .map(
             (e) => PagoDobleEntity(
@@ -85,22 +119,8 @@ class MovimientosCajaModel extends MovimientosCajaEntity {
             ),
           )
           .toList(),
-      prestamosDelDia: _lista(json['prestamosDelDia'])
-          .map(
-            (e) => PrestamoDelDiaEntity(
-              id: e['id'] ?? '',
-              clienteNombre: e['clienteNombre'] ?? '',
-              clienteCedula: e['clienteCedula'] ?? '',
-              monto: e['monto'] ?? 0,
-              valorSeguro: e['valorSeguro'] ?? 0,
-              valorCuota: e['valorCuota'] ?? 0,
-              numeroCuotas: e['numeroCuotas'] ?? 0,
-              frecuencia: e['frecuencia'] ?? '',
-              estado: e['estado'] ?? '',
-              fecha: _fecha(e['fecha']),
-            ),
-          )
-          .toList(),
+      prestamosDelDia: _prestamos(json['prestamosDelDia']),
+      reembolsosDelDia: _prestamos(json['reembolsosDelDia']),
     );
   }
 }

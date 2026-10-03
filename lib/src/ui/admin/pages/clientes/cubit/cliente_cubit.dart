@@ -256,6 +256,23 @@ class ClienteCubit extends Cubit<ClienteState> {
     emit(state.copyWith(loadingBtn: false));
   }
 
+  /// Mueve un cliente a otra posición dentro de la ruta seleccionada y
+  /// recarga la lista para reflejar el nuevo orden de todos
+  Future<void> reordenarCliente({
+    required String id,
+    required int nuevoOrden,
+  }) async {
+    emit(state.copyWith(loadingLista: true));
+    final r = await _clienteRepo.reordenar(id: id, orden: nuevoOrden);
+    r.fold(
+      (l) {
+        AppDialogUtil.error(state.context, message: l.props[0].toString());
+      },
+      (_) => cargarClientes(),
+    );
+    emit(state.copyWith(loadingLista: false));
+  }
+
   void detalleCliente(String id) async {
     emit(state.copyWith(loading: true));
     final r = await _clienteRepo.obtenerCliente(id: id);

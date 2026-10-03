@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/ui/admin/pages/cobradores/cubit/cobrador_cubit.dart';
 import 'package:personal/src/ui/admin/pages/cobradores/views/cobrador_home.dart';
+import 'package:personal/src/ui/admin/views/dialogo_cambiar_password.dart';
 import 'package:personal/src/ui/widgets/widgets.dart';
 
 class CreateCView extends StatelessWidget {
@@ -121,19 +122,17 @@ class CreateCView extends StatelessWidget {
 
                   const SizedBox(height: 14),
 
-                  Visibility(
-                    visible: !isEdit,
-                    child: InputWidget.input(
+                  InputWidget.input(
                       label: 'Usuario',
                       hintText: 'Asigne un usuario',
-                      enabled: !state.loadingbtn,
+                      enabled: !state.loadingbtn && !isEdit,
 
                       prefixIcon: Icons.account_circle_outlined,
                       controller: c.userTxt,
                       onChanged: (e) {
                         c.enbaledBtn();
                       },
-                    ),
+                    
                   ),
 
                   const SizedBox(height: 16),
@@ -160,6 +159,37 @@ class CreateCView extends StatelessWidget {
                       },
                     ),
                   ),
+
+                  if (isEdit) ...[
+                    const SizedBox(height: 28),
+                    _sectionTitle(
+                      icon: Icons.lock_outline_rounded,
+                      title: 'Seguridad',
+                    ),
+                    const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: OutlinedButton.icon(
+                        onPressed: () => mostrarDialogoCambiarPassword(
+                          context,
+                          titulo: 'Cambiar contraseña',
+                          subtitulo:
+                              'Nueva contraseña para ${c.nameTxt.text.trim().isEmpty ? "este cobrador" : c.nameTxt.text.trim()}.',
+                          onConfirmar: c.cambiarPasswordCobrador,
+                        ),
+                        icon: const Icon(Icons.lock_reset_rounded, size: 18),
+                        label: const Text('Cambiar contraseña'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.primaryColor,
+                          side: BorderSide(color: AppTheme.primaryColor),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
 
                   const SizedBox(height: 30),
 

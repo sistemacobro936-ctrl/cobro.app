@@ -16,6 +16,7 @@ class ClientCardView extends StatelessWidget {
     required this.active,
     required this.id,
     this.orden=0,
+    this.dragIndex,
   });
 
   final String initials;
@@ -27,6 +28,11 @@ class ClientCardView extends StatelessWidget {
   final String balance;
   final bool active;
   final int orden;
+
+  /// Posición dentro del ReorderableListView; con esto la mano actúa como
+  /// manija para arrastrar y reordenar. Null = no se puede reordenar ahora
+  /// (hay búsqueda activa o está en "Todos", donde el orden no aplica).
+  final int? dragIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -172,12 +178,20 @@ class ClientCardView extends StatelessWidget {
               ),
               const SizedBox(height: 7),
 
-              _actionButton(
-                onTap: () {
-                },
-                icon: Icons.back_hand_sharp,
-                color: Colors.green,
-              ),
+              dragIndex != null
+                  ? ReorderableDragStartListener(
+                      index: dragIndex!,
+                      child: _actionButton(
+                        onTap: () {},
+                        icon: Icons.back_hand_sharp,
+                        color: Colors.green,
+                      ),
+                    )
+                  : _actionButton(
+                      onTap: () {},
+                      icon: Icons.back_hand_sharp,
+                      color: const Color(0xFFB0B6C0),
+                    ),
             ],
           ),
         ],

@@ -1,20 +1,26 @@
-/// Movimientos de una caja: inyecciones de capital, pagos dobles, pagos
-/// menores y préstamos nuevos del día
+/// Movimientos de una caja: inyecciones y retiros de capital, retiros de
+/// seguro, pagos dobles, pagos menores, préstamos nuevos y reembolsos del día
 class MovimientosCajaEntity {
   final MovimientosCajaInfoEntity caja;
   final ResumenMovimientosEntity resumen;
   final List<InyeccionCapitalEntity> inyeccionesCapital;
+  final List<InyeccionCapitalEntity> retirosCapital;
+  final List<InyeccionCapitalEntity> retirosSeguro;
   final List<PagoDobleEntity> pagosDobles;
   final List<PagoMenorEntity> pagosMenores;
   final List<PrestamoDelDiaEntity> prestamosDelDia;
+  final List<PrestamoDelDiaEntity> reembolsosDelDia;
 
   MovimientosCajaEntity({
     required this.caja,
     required this.resumen,
     required this.inyeccionesCapital,
+    required this.retirosCapital,
+    required this.retirosSeguro,
     required this.pagosDobles,
     required this.pagosMenores,
     required this.prestamosDelDia,
+    required this.reembolsosDelDia,
   });
 }
 
@@ -37,24 +43,38 @@ class MovimientosCajaInfoEntity {
 class ResumenMovimientosEntity {
   final int cantidadInyecciones;
   final num totalInyectado;
+  final int cantidadRetirosCapital;
+  final num totalRetiradoCapital;
+  final int cantidadRetirosSeguro;
+  final num totalRetiradoSeguro;
   final int cantidadPagosDobles;
   final int cantidadPagosMenores;
   final num faltanteTotal;
   final int cantidadPrestamos;
   final num totalPrestado;
+  final int cantidadReembolsos;
+  final num totalReembolsado;
 
   ResumenMovimientosEntity({
     required this.cantidadInyecciones,
     required this.totalInyectado,
+    required this.cantidadRetirosCapital,
+    required this.totalRetiradoCapital,
+    required this.cantidadRetirosSeguro,
+    required this.totalRetiradoSeguro,
     required this.cantidadPagosDobles,
     required this.cantidadPagosMenores,
     required this.faltanteTotal,
     required this.cantidadPrestamos,
     required this.totalPrestado,
+    required this.cantidadReembolsos,
+    required this.totalReembolsado,
   });
 }
 
-/// Préstamo nuevo asignado durante el día, con cargo a la caja
+/// Préstamo nuevo asignado durante el día, con cargo a la caja. Cuando viene
+/// de un reembolso (renovación de crédito), trae el id del préstamo que
+/// renovó en [prestamoAnteriorId].
 class PrestamoDelDiaEntity {
   final String id;
   final String clienteNombre;
@@ -66,6 +86,7 @@ class PrestamoDelDiaEntity {
   final String frecuencia;
   final String estado;
   final DateTime? fecha;
+  final String? prestamoAnteriorId;
 
   PrestamoDelDiaEntity({
     required this.id,
@@ -78,9 +99,13 @@ class PrestamoDelDiaEntity {
     required this.frecuencia,
     required this.estado,
     required this.fecha,
+    this.prestamoAnteriorId,
   });
+
+  bool get esReembolso => prestamoAnteriorId != null;
 }
 
+/// Movimiento simple de caja: inyección/retiro de capital, retiro de seguro
 class InyeccionCapitalEntity {
   final String id;
   final num valor;

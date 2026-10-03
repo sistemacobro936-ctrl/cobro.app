@@ -7,7 +7,9 @@ import 'package:personal/src/common/utils/app_dialog_util.dart';
 import 'package:personal/src/common/utils/secure_storage_util.dart';
 import 'package:personal/src/domain/dto/administrador_dto.dart';
 import 'package:personal/src/domain/entities/administrador_entity.dart';
+import 'package:personal/src/domain/repository/auth_repo.dart';
 import 'package:personal/src/domain/repository/negocio_repo.dart';
+import 'package:personal/src/ui/auth/auth_page.dart';
 
 part 'perfil_state.dart';
 
@@ -16,6 +18,7 @@ class PerfilCubit extends Cubit<PerfilState> {
   ///
   ///
   final _negocioRepo = sl<NegocioRepo>();
+  final _authRepo = sl<AuthRepository>();
 
   ///Constructor
   ///
@@ -58,7 +61,7 @@ class PerfilCubit extends Cubit<PerfilState> {
       passTxt,
     ].every((c) => c.text.trim().isNotEmpty);
 
-    emit(state.copyWith(btnEnabled: e && passTxt.text.length>=8));
+    emit(state.copyWith(btnEnabled: e && passTxt.text.length >= 8));
   }
 
   ///Peticiones
@@ -115,6 +118,30 @@ class PerfilCubit extends Cubit<PerfilState> {
       },
     );
     emit(state.copyWith(loadingBtn: false));
+  }
+
+  /// Cambia la contraseña de quien está autenticado
+  void cambiarPassword(String nuevaPassword) async {
+    emit(state.copyWith(loadingBtn: true, loading: true));
+    final r = await _authRepo.cambiarPassword(nuevaPassword: nuevaPassword);
+    r.fold(
+      (l) {
+        AppDialogUtil.error(state.context, message: l.props[0].toString());
+      },
+      (r) async {
+        AppDialogUtil.success(
+          state.context,
+          message: "Contraseña actualizada con éxito.",
+        );
+        await SecureStorageUtil().deleteAll();
+        Navigator.pushAndRemoveUntil(
+          state.context,
+          MaterialPageRoute(builder: (_) => AuthPage()),
+          (_) => false,
+        );
+      },
+    );
+    emit(state.copyWith(loadingBtn: false, loading: false));
   }
 
   ///Otros

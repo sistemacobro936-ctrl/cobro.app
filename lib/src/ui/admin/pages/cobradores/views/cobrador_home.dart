@@ -34,10 +34,7 @@ class CobradorHome extends StatelessWidget {
                           id: c.id,
                           rutas: c.rutas,
 
-                          clients: c.rutas.fold<int>(
-                            0,
-                            (total, ruta) => total + (ruta.cantidadClientes),
-                          ),
+                      
                           collected: '\$ 0',
                           avatar: '👩‍💼',
                           active: true,

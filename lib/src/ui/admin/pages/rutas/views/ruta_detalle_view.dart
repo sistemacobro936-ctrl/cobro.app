@@ -10,7 +10,12 @@ import 'package:personal/src/ui/admin/views/form_client_view.dart';
 
 class RutaDetalleView extends StatefulWidget {
   final DatumREntity ruta;
-  const RutaDetalleView({super.key, required this.ruta});
+  final bool showDetail;
+  const RutaDetalleView({
+    super.key,
+    required this.ruta,
+    this.showDetail = false,
+  });
 
   @override
   State<RutaDetalleView> createState() => _RutaDetalleViewState();
@@ -68,6 +73,10 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
             ],
             leading: IconButton(
               onPressed: () {
+                if (widget.showDetail) {
+                  Navigator.pop(context);
+                  return;
+                }
                 c.onEventChild(const RutaHome());
               },
               icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
@@ -204,7 +213,9 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
                   : Text(
                       'No se pudo cargar la información de la ruta.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white.withValues(alpha: .85)),
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: .85),
+                      ),
                     ),
             ),
           );
@@ -225,184 +236,184 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
-              children: [
-                // ─────────────────────────────────────────────
-                // ENCABEZADO DE LA RUTA
-                // ─────────────────────────────────────────────
-                Row(
-                  children: [
-                    Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: .15),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      child: const Icon(
-                        Icons.route_rounded,
-                        color: Colors.white,
-                        size: 28,
-                      ),
+            children: [
+              // ─────────────────────────────────────────────
+              // ENCABEZADO DE LA RUTA
+              // ─────────────────────────────────────────────
+              Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: .15),
+                      borderRadius: BorderRadius.circular(15),
                     ),
-          
-                    const SizedBox(width: 14),
-          
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.ruta.nombre,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 17,
-                            ),
+                    child: const Icon(
+                      Icons.route_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+
+                  const SizedBox(width: 14),
+
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.ruta.nombre,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
                           ),
-          
-                          const SizedBox(height: 4),
-          
-                          Text(
-                            widget.ruta.descripcion.isEmpty
-                                ? 'Sin descripción'
-                                : widget.ruta.descripcion,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: .85),
-                              fontWeight: FontWeight.w500,
-                              fontSize: 13,
-                            ),
+                        ),
+
+                        const SizedBox(height: 4),
+
+                        Text(
+                          widget.ruta.descripcion.isEmpty
+                              ? 'Sin descripción'
+                              : widget.ruta.descripcion,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: .85),
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-          
-                const SizedBox(height: 18),
-          
-                // ─────────────────────────────────────────────
-                // CAPITAL / PRESTADO / DISPONIBLE
-                // ─────────────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: _headerInfo(
-                        title: 'Capital',
-                        value: '\$${movimiento.capital}',
-                      ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 18),
+
+              // ─────────────────────────────────────────────
+              // CAPITAL / PRESTADO / DISPONIBLE
+              // ─────────────────────────────────────────────
+              Row(
+                children: [
+                  Expanded(
+                    child: _headerInfo(
+                      title: 'Capital',
+                      value: '\$${movimiento.capital}',
                     ),
-          
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: Colors.white.withValues(alpha: .15),
+                  ),
+
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: Colors.white.withValues(alpha: .15),
+                  ),
+
+                  Expanded(
+                    child: _headerInfo(
+                      title: 'Prestado',
+                      value: '\$${movimiento.totalPrestado}',
                     ),
-          
-                    Expanded(
-                      child: _headerInfo(
-                        title: 'Prestado',
-                        value: '\$${movimiento.totalPrestado}',
-                      ),
+                  ),
+
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: Colors.white.withValues(alpha: .15),
+                  ),
+
+                  Expanded(
+                    child: _headerInfo(
+                      title: 'Disponible',
+                      value: '\$${movimiento.disponible}',
                     ),
-          
-                    Container(
-                      width: 1,
-                      height: 40,
-                      color: Colors.white.withValues(alpha: .15),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              Divider(height: 1, color: Colors.white.withValues(alpha: .15)),
+
+              const SizedBox(height: 14),
+
+              // ─────────────────────────────────────────────
+              // INFORMACIÓN DEL MOVIMIENTO
+              // ─────────────────────────────────────────────
+              Row(
+                children: [
+                  Expanded(
+                    child: _headerInfo(
+                      title: 'Préstamos',
+                      value: '${movimiento.totalPrestamos}',
                     ),
-          
-                    Expanded(
-                      child: _headerInfo(
-                        title: 'Disponible',
-                        value: '\$${movimiento.disponible}',
-                      ),
+                  ),
+
+                  Container(
+                    width: 1,
+                    height: 35,
+                    color: Colors.white.withValues(alpha: .15),
+                  ),
+
+                  Expanded(
+                    child: _headerInfo(
+                      title: 'Ganancia',
+                      value: '\$${movimiento.gananciaEsperada}',
                     ),
-                  ],
-                ),
-          
-                const SizedBox(height: 16),
-          
-                Divider(height: 1, color: Colors.white.withValues(alpha: .15)),
-          
-                const SizedBox(height: 14),
-          
-                // ─────────────────────────────────────────────
-                // INFORMACIÓN DEL MOVIMIENTO
-                // ─────────────────────────────────────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: _headerInfo(
-                        title: 'Préstamos',
-                        value: '${movimiento.totalPrestamos}',
-                      ),
+                  ),
+
+                  Container(
+                    width: 1,
+                    height: 35,
+                    color: Colors.white.withValues(alpha: .15),
+                  ),
+
+                  Expanded(
+                    child: _headerInfo(
+                      title: 'Seguros',
+                      value: '\$${movimiento.totalSeguro}',
                     ),
-          
-                    Container(
-                      width: 1,
-                      height: 35,
-                      color: Colors.white.withValues(alpha: .15),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 14),
+
+              // ─────────────────────────────────────────────
+              // COBRADOR / CLIENTES
+              // ─────────────────────────────────────────────
+              Divider(height: 1, color: Colors.white.withValues(alpha: .15)),
+
+              const SizedBox(height: 14),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: _headerInfo(
+                      title: 'Cobrador',
+                      value: widget.ruta.cobrador?.nombre ?? 'Sin asignación',
                     ),
-          
-                    Expanded(
-                      child: _headerInfo(
-                        title: 'Ganancia',
-                        value: '\$${movimiento.gananciaEsperada}',
-                      ),
+                  ),
+
+                  Container(
+                    width: 1,
+                    height: 35,
+                    color: Colors.white.withValues(alpha: .15),
+                  ),
+
+                  Expanded(
+                    child: _headerInfo(
+                      title: 'Clientes',
+                      value: '${widget.ruta.cantidadClientes}',
                     ),
-          
-                    Container(
-                      width: 1,
-                      height: 35,
-                      color: Colors.white.withValues(alpha: .15),
-                    ),
-          
-                    Expanded(
-                      child: _headerInfo(
-                        title: 'Seguros',
-                        value: '\$${movimiento.totalSeguro}',
-                      ),
-                    ),
-                  ],
-                ),
-          
-                const SizedBox(height: 14),
-          
-                // ─────────────────────────────────────────────
-                // COBRADOR / CLIENTES
-                // ─────────────────────────────────────────────
-                Divider(height: 1, color: Colors.white.withValues(alpha: .15)),
-          
-                const SizedBox(height: 14),
-          
-                Row(
-                  children: [
-                    Expanded(
-                      child: _headerInfo(
-                        title: 'Cobrador',
-                        value: widget.ruta.cobrador?.nombre ?? 'Sin asignación',
-                      ),
-                    ),
-          
-                    Container(
-                      width: 1,
-                      height: 35,
-                      color: Colors.white.withValues(alpha: .15),
-                    ),
-          
-                    Expanded(
-                      child: _headerInfo(
-                        title: 'Clientes',
-                        value: '${widget.ruta.cantidadClientes}',
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
       },
     );
   }
@@ -515,6 +526,7 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
                     DetalleClienteView(
                       cliente: cliente,
                       onBack: () {
+                       
                         c.onEventChild(RutaHome());
                       },
                       onEdit: () {},

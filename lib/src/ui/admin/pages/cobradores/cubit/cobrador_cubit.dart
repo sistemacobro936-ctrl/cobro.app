@@ -7,6 +7,7 @@ import 'package:personal/src/common/utils/app_dialog_util.dart';
 import 'package:personal/src/common/utils/update_util.dart';
 import 'package:personal/src/domain/dto/crear_cobrador_dto.dart';
 import 'package:personal/src/domain/entities/cobrador_entity.dart';
+import 'package:personal/src/domain/repository/auth_repo.dart';
 import 'package:personal/src/domain/repository/ruta_repo.dart';
 import 'package:personal/src/domain/repository/usuario_repo.dart';
 import 'package:personal/src/ui/admin/pages/cobradores/views/cobrador_home.dart';
@@ -19,6 +20,7 @@ class CobradorCubit extends Cubit<CobradorState> {
   ///
   final _usuarioRepo = sl<UsuarioRepository>();
   final _rutaRepo = sl<RutaRepo>();
+  final _authRepo = sl<AuthRepository>();
 
   ///Constructor
   ///
@@ -175,6 +177,27 @@ class CobradorCubit extends Cubit<CobradorState> {
     emit(state.copyWith(loadingbtn: false));
   }
 
+  /// Cambia la contraseña del cobrador que se está editando
+  void cambiarPasswordCobrador(String nuevaPassword) async {
+    emit(state.copyWith(loadingbtn: true));
+    final r = await _authRepo.cambiarPassword(
+      nuevaPassword: nuevaPassword,
+      usuarioId: state.cobrador!.id,
+    );
+    r.fold(
+      (l) {
+        AppDialogUtil.error(state.context, message: l.props[0].toString());
+      },
+      (r) {
+        AppDialogUtil.success(
+          state.context,
+          message: "Contraseña del cobrador actualizada con éxito.",
+        );
+      },
+    );
+    emit(state.copyWith(loadingbtn: false));
+  }
+
   ///Navegacion
   ///
   ///
@@ -191,6 +214,7 @@ class CobradorCubit extends Cubit<CobradorState> {
     lastNameTxt.text = c.apellido;
     ideTxt.text = c.documento;
     contacTxt.text = c.telefono;
+    userTxt.text=c.usuario;
   }
 
   void clear() {

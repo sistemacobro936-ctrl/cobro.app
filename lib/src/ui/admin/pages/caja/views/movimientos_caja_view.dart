@@ -75,11 +75,17 @@ class MovimientosCajaView extends StatelessWidget {
                         const SizedBox(height: 18),
                         _inyecciones(m.inyeccionesCapital),
                         const SizedBox(height: 18),
+                        _retirosCapital(m.retirosCapital),
+                        const SizedBox(height: 18),
+                        _retirosSeguro(m.retirosSeguro),
+                        const SizedBox(height: 18),
                         _pagosDobles(m.pagosDobles),
                         const SizedBox(height: 18),
                         _pagosMenores(m.pagosMenores),
                         const SizedBox(height: 18),
                         _prestamos(m.prestamosDelDia),
+                        const SizedBox(height: 18),
+                        _reembolsos(m.reembolsosDelDia),
                         const SizedBox(height: 12),
                       ],
                     ),
@@ -109,6 +115,20 @@ class MovimientosCajaView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _filaResumen(
+            'Retiros de capital',
+            '${r.cantidadRetirosCapital}',
+            '\$ ${r.totalRetiradoCapital}',
+            Colors.redAccent,
+          ),
+          const SizedBox(height: 12),
+          _filaResumen(
+            'Retiros de seguro',
+            '${r.cantidadRetirosSeguro}',
+            '\$ ${r.totalRetiradoSeguro}',
+            Colors.orange,
+          ),
+          const SizedBox(height: 12),
+          _filaResumen(
             'Multiples pagos',
             '${r.cantidadPagosDobles}',
             null,
@@ -127,6 +147,13 @@ class MovimientosCajaView extends StatelessWidget {
             '${r.cantidadPrestamos}',
             '\$ ${r.totalPrestado}',
             AppTheme.primaryColor,
+          ),
+          const SizedBox(height: 12),
+          _filaResumen(
+            'Reembolsos',
+            '${r.cantidadReembolsos}',
+            '\$ ${r.totalReembolsado}',
+            Colors.deepPurple,
           ),
         ],
       ),
@@ -193,6 +220,54 @@ class MovimientosCajaView extends StatelessWidget {
                         )
                         .toList(),
               ),
+    );
+  }
+
+  Widget _retirosCapital(List<InyeccionCapitalEntity> lista) {
+    return _section(
+      title: 'Retiros de capital',
+      icon: Icons.remove_circle_outline_rounded,
+      child: lista.isEmpty
+          ? _vacio('No se ha retirado dinero de la caja.')
+          : Column(
+              children: lista
+                  .map(
+                    (e) => _item(
+                      icon: Icons.arrow_circle_down_rounded,
+                      color: Colors.redAccent,
+                      titulo: e.observacion.isEmpty
+                          ? 'Retiro de capital'
+                          : e.observacion,
+                      subtitulo: _fechaHora(e.fecha),
+                      trailing: '-\$${e.valor}',
+                    ),
+                  )
+                  .toList(),
+            ),
+    );
+  }
+
+  Widget _retirosSeguro(List<InyeccionCapitalEntity> lista) {
+    return _section(
+      title: 'Retiros de seguro',
+      icon: Icons.shield_outlined,
+      child: lista.isEmpty
+          ? _vacio('No se ha retirado seguro de la caja.')
+          : Column(
+              children: lista
+                  .map(
+                    (e) => _item(
+                      icon: Icons.arrow_circle_down_rounded,
+                      color: Colors.orange,
+                      titulo: e.observacion.isEmpty
+                          ? 'Retiro de seguro'
+                          : e.observacion,
+                      subtitulo: _fechaHora(e.fecha),
+                      trailing: '-\$${e.valor}',
+                    ),
+                  )
+                  .toList(),
+            ),
     );
   }
 
@@ -286,6 +361,38 @@ class MovimientosCajaView extends StatelessWidget {
                         )
                         .toList(),
               ),
+    );
+  }
+
+  Widget _reembolsos(List<PrestamoDelDiaEntity> lista) {
+    return _section(
+      title: 'Reembolsos del día',
+      icon: Icons.autorenew_rounded,
+      child: lista.isEmpty
+          ? _vacio('No se aplicaron reembolsos hoy.')
+          : Column(
+              children: lista
+                  .map(
+                    (e) => _item(
+                      icon: Icons.autorenew_rounded,
+                      color: Colors.deepPurple,
+                      titulo:
+                          _cliente(e.clienteNombre) +
+                          (e.clienteCedula.isEmpty
+                              ? ''
+                              : '\nCC: ${e.clienteCedula}'),
+                      subtitulo: [
+                        'Nuevo monto \$${e.monto}',
+                        'Cuota \$${e.valorCuota} · ${e.frecuencia.toLowerCase()}',
+                        if (e.valorSeguro > 0) 'Seguro \$${e.valorSeguro}',
+                        if (_fechaHora(e.fecha) != null) _fechaHora(e.fecha)!,
+                      ].join('\n'),
+                      trailing: '\$${e.monto}',
+                     
+                    ),
+                  )
+                  .toList(),
+            ),
     );
   }
 

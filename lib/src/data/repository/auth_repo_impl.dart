@@ -26,4 +26,25 @@ class AuthRepoImpl implements AuthRepository {
       return Left(failure);
     }
   }
+
+  @override
+  Future<Either<Failure, dynamic>> cambiarPassword({
+    required String nuevaPassword,
+    String? usuarioId,
+  }) async {
+    try {
+      final resp = await authService.cambiarPassword(
+        nuevaPassword: nuevaPassword,
+        usuarioId: usuarioId,
+      );
+
+      return Right(resp);
+    } on ServerExceptions catch (e) {
+      final failure = ServerFailure(message: e.message);
+      return Left(failure);
+    } catch (e) {
+      final failure = ServerFailure(message: "Error inesperado: $e");
+      return Left(failure);
+    }
+  }
 }

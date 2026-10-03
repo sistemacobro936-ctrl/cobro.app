@@ -31,6 +31,7 @@ class DatumCModel extends DatumCEntity {
     required super.email,
     required super.estado,
     required super.rutas,
+    super.usuario,
   });
 
   factory DatumCModel.fromJson(Map<String, dynamic> json) => DatumCModel(
@@ -41,6 +42,7 @@ class DatumCModel extends DatumCEntity {
     telefono: json["telefono"] ?? "",
     email: json["email"] ?? "",
     estado: json["estado"] ?? "",
+    usuario: json["usuario"] ?? "",
     rutas: json["rutas"] == null
     ? []
     : List<DatumRModel>.from(
