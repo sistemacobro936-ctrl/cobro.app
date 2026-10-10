@@ -12,8 +12,6 @@ class GastoRutaModel extends GastoRutaEntity {
     required super.estado,
     required super.registradoPorNombre,
     required super.motivoAnulacion,
-    super.empleadoId,
-    super.empleadoNombre,
   });
 
   factory GastoRutaModel.fromJson(Map<String, dynamic> json) => GastoRutaModel(
@@ -27,8 +25,6 @@ class GastoRutaModel extends GastoRutaEntity {
     estado: json['estado'] ?? 'ACTIVO',
     registradoPorNombre: json['registradoPorNombre'] ?? '',
     motivoAnulacion: json['motivoAnulacion'] ?? '',
-    empleadoId: json['empleadoId'],
-    empleadoNombre: json['empleadoNombre'],
   );
 }
 

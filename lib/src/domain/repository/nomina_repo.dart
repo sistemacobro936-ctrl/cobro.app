@@ -6,6 +6,7 @@ import 'package:personal/src/domain/entities/nomina_entity.dart';
 abstract class NominaRepo {
   Future<Either<Failure, CalculoNominaEntity>> calcular({
     required String cobradorId,
+    required ConceptoCalculo concepto,
     String? fechaInicio,
     String? fechaFin,
   });
@@ -16,6 +17,11 @@ abstract class NominaRepo {
 
   Future<Either<Failure, PagoSupervisorEntity>> pagarSupervisor({
     required PagoNominaSupervisorDto dto,
+  });
+
+  Future<Either<Failure, bool>> anular({
+    required String id,
+    required String motivo,
   });
 
   Future<Either<Failure, HistorialNominaEntity>> historial({

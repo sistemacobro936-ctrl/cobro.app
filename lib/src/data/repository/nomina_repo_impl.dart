@@ -14,12 +14,14 @@ class NominaRepoImpl implements NominaRepo {
   @override
   Future<Either<Failure, CalculoNominaEntity>> calcular({
     required String cobradorId,
+    required ConceptoCalculo concepto,
     String? fechaInicio,
     String? fechaFin,
   }) async {
     try {
       final response = await nominaService.calcular(
         cobradorId: cobradorId,
+        concepto: concepto,
         fechaInicio: fechaInicio,
         fechaFin: fechaFin,
       );
@@ -75,6 +77,21 @@ class NominaRepoImpl implements NominaRepo {
         page: page,
         limit: limit,
       );
+      return Right(response);
+    } on ServerExceptions catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: "Error inesperado: $e"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> anular({
+    required String id,
+    required String motivo,
+  }) async {
+    try {
+      final response = await nominaService.anular(id: id, motivo: motivo);
       return Right(response);
     } on ServerExceptions catch (e) {
       return Left(ServerFailure(message: e.message));

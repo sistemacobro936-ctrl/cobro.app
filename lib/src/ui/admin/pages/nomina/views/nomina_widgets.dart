@@ -236,10 +236,7 @@ class PeriodoSelector extends StatelessWidget {
                 child: Text(
                   '${_meses[p.mes.month - 1]} ${p.mes.year}',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: nominaTexto,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
               IconButton(
@@ -261,10 +258,8 @@ class PeriodoSelector extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        Text(
-          '${fechaCorta(p.inicio)} – ${fechaCorta(p.fin)}',
-          style: const TextStyle(color: nominaGris),
-        ),
+        Text('${fechaCorta(p.inicio)} – ${fechaCorta(p.fin)}'),
+        Divider(),
       ],
     );
   }

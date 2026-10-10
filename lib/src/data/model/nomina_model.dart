@@ -7,15 +7,10 @@ num _num(dynamic v) => v is num ? v : num.tryParse('$v') ?? 0;
 num? _numOrNull(dynamic v) => v == null ? null : num.tryParse('$v');
 
 class ComisionModel extends ComisionEntity {
-  ComisionModel({
-    required super.id,
-    required super.comisionBase,
-    required super.comisionPorcentaje,
-  });
+  ComisionModel({required super.id, required super.comisionPorcentaje});
 
   factory ComisionModel.fromJson(Map<String, dynamic> json) => ComisionModel(
     id: json['id'] ?? '',
-    comisionBase: ComisionBaseX.fromApi(json['comisionBase']),
     comisionPorcentaje: _numOrNull(json['comisionPorcentaje']),
   );
 }
@@ -51,9 +46,11 @@ class TotalesNominaModel extends TotalesNominaEntity {
 
 class CalculoNominaModel extends CalculoNominaEntity {
   CalculoNominaModel({
+    required super.cobradorId,
     required super.cobradorNombre,
-    required super.comisionConfigurada,
-    required super.comisionBase,
+    required super.fechaInicio,
+    required super.fechaFin,
+    required super.concepto,
     required super.comisionPorcentaje,
     required super.resumen,
     required super.rutas,
@@ -63,9 +60,11 @@ class CalculoNominaModel extends CalculoNominaEntity {
 
   factory CalculoNominaModel.fromJson(Map<String, dynamic> json) =>
       CalculoNominaModel(
+        cobradorId: json['cobradorId'] ?? '',
         cobradorNombre: json['cobradorNombre'] ?? '',
-        comisionConfigurada: json['comisionConfigurada'] ?? false,
-        comisionBase: ComisionBaseX.fromApi(json['comisionBase']),
+        fechaInicio: '${json['fechaInicio'] ?? ''}',
+        fechaFin: '${json['fechaFin'] ?? ''}',
+        concepto: ConceptoCalculoX.fromApi(json['concepto']),
         comisionPorcentaje: _numOrNull(json['comisionPorcentaje']),
         resumen: TotalesNominaModel.fromJson(
           (json['resumen'] as Map<String, dynamic>?) ?? {},
@@ -101,8 +100,9 @@ class CalculoNominaModel extends CalculoNominaEntity {
               (x) => AsignacionNominaEntity(
                 rutaId: x['rutaId'] ?? '',
                 rutaNombre: x['rutaNombre'] ?? '',
-                inicio: DateTime.tryParse('${x['inicio']}'),
-                fin: DateTime.tryParse('${x['fin']}'),
+                // Vienen en UTC: se muestran en hora de Bogotá
+                inicio: DateTime.tryParse('${x['inicio']}')?.toLocal(),
+                fin: DateTime.tryParse('${x['fin']}')?.toLocal(),
                 vigente: x['vigente'] ?? false,
               ),
             )
@@ -113,15 +113,19 @@ class CalculoNominaModel extends CalculoNominaEntity {
 class PagoSupervisorModel extends PagoSupervisorEntity {
   PagoSupervisorModel({
     required super.empleadoId,
+    required super.lote,
     required super.totalPagado,
-    required super.cantidadGastos,
+    required super.pagos,
   });
 
   factory PagoSupervisorModel.fromJson(Map<String, dynamic> json) =>
       PagoSupervisorModel(
         empleadoId: json['empleadoId'] ?? '',
+        lote: '${json['lote'] ?? ''}',
         totalPagado: _num(json['totalPagado']).round(),
-        cantidadGastos: ((json['gastos'] as List?) ?? []).length,
+        pagos: ((json['pagos'] as List?) ?? [])
+            .map((x) => PagoNominaModel.fromJson(x))
+            .toList(),
       );
 }
 
@@ -130,10 +134,16 @@ class PagoNominaModel extends PagoNominaEntity {
     required super.id,
     required super.rutaId,
     required super.rutaNombre,
+    required super.empleadoId,
     required super.concepto,
     required super.valor,
-    required super.fechaGasto,
+    required super.observacion,
+    required super.fechaPago,
+    required super.lote,
     required super.estado,
+    required super.motivoAnulacion,
+    required super.fechaAnulacion,
+    required super.createdAt,
   });
 
   factory PagoNominaModel.fromJson(Map<String, dynamic> json) =>
@@ -141,11 +151,20 @@ class PagoNominaModel extends PagoNominaEntity {
         id: json['id'] ?? '',
         rutaId: json['rutaId'] ?? '',
         rutaNombre: json['rutaNombre'] ?? '',
+        empleadoId: json['empleadoId'] ?? '',
         concepto: json['concepto'] ?? '',
         valor: _num(json['valor']),
+        observacion: json['observacion'] ?? '',
         // Sin toLocal: es una fecha sin hora y podría correrse de día
-        fechaGasto: DateTime.tryParse('${json['fechaGasto']}'),
+        fechaPago: DateTime.tryParse('${json['fechaPago']}'),
+        lote: json['lote'],
         estado: json['estado'] ?? 'ACTIVO',
+        motivoAnulacion: json['motivoAnulacion'] ?? '',
+        // Con hora, en UTC: se muestra en hora de Bogotá
+        fechaAnulacion: DateTime.tryParse(
+          '${json['fechaAnulacion']}',
+        )?.toLocal(),
+        createdAt: DateTime.tryParse('${json['createdAt']}')?.toLocal(),
       );
 }
 
@@ -167,7 +186,9 @@ class HistorialNominaModel extends HistorialNominaEntity {
         total: _num(resumen['total']),
       ),
       pagos: List<PagoNominaEntity>.from(
-        ((data['pagos'] as List?) ?? []).map((x) => PagoNominaModel.fromJson(x)),
+        ((data['pagos'] as List?) ?? []).map(
+          (x) => PagoNominaModel.fromJson(x),
+        ),
       ),
       pagination: PaginationModel.fromJson(
         (json['pagination'] as Map<String, dynamic>?) ?? {},

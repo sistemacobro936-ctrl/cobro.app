@@ -1,5 +1,4 @@
 import 'package:personal/src/common/utils/date_util.dart';
-import 'package:personal/src/domain/entities/nomina_entity.dart';
 
 class PagoNominaCobradorDto {
   final String rutaId;
@@ -7,7 +6,7 @@ class PagoNominaCobradorDto {
   final int valor;
   final String? concepto;
   final String? observacion;
-  final DateTime? fechaGasto;
+  final DateTime? fechaPago;
 
   PagoNominaCobradorDto({
     required this.rutaId,
@@ -15,7 +14,7 @@ class PagoNominaCobradorDto {
     required this.valor,
     this.concepto,
     this.observacion,
-    this.fechaGasto,
+    this.fechaPago,
   });
 
   Map<String, dynamic> toJson() => {
@@ -25,7 +24,7 @@ class PagoNominaCobradorDto {
     if (concepto != null && concepto!.isNotEmpty) "concepto": concepto,
     if (observacion != null && observacion!.isNotEmpty)
       "observacion": observacion,
-    if (fechaGasto != null) "fechaGasto": DateUtil.formatDate(fechaGasto!),
+    if (fechaPago != null) "fechaPago": DateUtil.formatDate(fechaPago!),
   };
 }
 
@@ -43,14 +42,14 @@ class PagoNominaSupervisorDto {
   final List<RepartoNominaDto> repartos;
   final String? concepto;
   final String? observacion;
-  final DateTime? fechaGasto;
+  final DateTime? fechaPago;
 
   PagoNominaSupervisorDto({
     required this.empleadoId,
     required this.repartos,
     this.concepto,
     this.observacion,
-    this.fechaGasto,
+    this.fechaPago,
   });
 
   Map<String, dynamic> toJson() => {
@@ -59,19 +58,15 @@ class PagoNominaSupervisorDto {
     if (concepto != null && concepto!.isNotEmpty) "concepto": concepto,
     if (observacion != null && observacion!.isNotEmpty)
       "observacion": observacion,
-    if (fechaGasto != null) "fechaGasto": DateUtil.formatDate(fechaGasto!),
+    if (fechaPago != null) "fechaPago": DateUtil.formatDate(fechaPago!),
   };
 }
 
-/// Comisión de un usuario. Se envían ambos campos; null los deja sin configurar
+/// % de la boleta del cobrador (entero de 0 a 100)
 class ComisionDto {
-  final ComisionBase? comisionBase;
-  final num? comisionPorcentaje;
+  final int comisionPorcentaje;
 
-  ComisionDto({required this.comisionBase, required this.comisionPorcentaje});
+  ComisionDto({required this.comisionPorcentaje});
 
-  Map<String, dynamic> toJson() => {
-    "comisionBase": comisionBase?.api,
-    "comisionPorcentaje": comisionPorcentaje,
-  };
+  Map<String, dynamic> toJson() => {"comisionPorcentaje": comisionPorcentaje};
 }

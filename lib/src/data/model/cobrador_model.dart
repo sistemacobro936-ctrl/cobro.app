@@ -45,7 +45,7 @@ class DatumCModel extends DatumCEntity {
     email: json["email"] ?? "",
     estado: json["estado"] ?? "",
     usuario: json["usuario"] ?? "",
-    comision: json.containsKey("comisionBase")
+    comision: json.containsKey("comisionPorcentaje")
         ? ComisionModel.fromJson(json)
         : null,
     rutas: json["rutas"] == null

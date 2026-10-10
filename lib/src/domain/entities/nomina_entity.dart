@@ -1,47 +1,24 @@
 import 'package:personal/src/domain/entities/pagination_entity.dart';
 
-/// Base sobre la que se calcula la comisión de un usuario
-enum ComisionBase { cobrado, prestado, seguro }
+/// Qué se le paga al cobrador
+enum ConceptoCalculo { nomina, seguro }
 
-extension ComisionBaseX on ComisionBase {
+extension ConceptoCalculoX on ConceptoCalculo {
   String get api => name.toUpperCase();
 
-  String get titulo => switch (this) {
-    ComisionBase.cobrado => 'Cobrado',
-    ComisionBase.prestado => 'Prestado',
-    ComisionBase.seguro => 'Seguro',
-  };
-
-  String get descripcion => switch (this) {
-    ComisionBase.cobrado =>
-      '% de lo cobrado (pagos aplicados) en la ruta durante el período.',
-    ComisionBase.prestado =>
-      '% de lo prestado (préstamos nuevos) en la ruta durante el período.',
-    ComisionBase.seguro =>
-      '% del seguro (boletas) de los préstamos nuevos del período.',
-  };
-
-  static ComisionBase? fromApi(dynamic v) {
-    for (final b in ComisionBase.values) {
-      if (b.api == '$v'.toUpperCase()) return b;
-    }
-    return null;
-  }
+  static ConceptoCalculo fromApi(dynamic v) => '$v'.toUpperCase() == 'SEGURO'
+      ? ConceptoCalculo.seguro
+      : ConceptoCalculo.nomina;
 }
 
-/// Comisión configurada de un usuario; ambos campos en null = sin configurar
+/// % de la boleta (seguro) que le corresponde al cobrador
 class ComisionEntity {
   final String id;
-  final ComisionBase? comisionBase;
   final num? comisionPorcentaje;
 
-  ComisionEntity({
-    required this.id,
-    required this.comisionBase,
-    required this.comisionPorcentaje,
-  });
+  ComisionEntity({required this.id, required this.comisionPorcentaje});
 
-  bool get configurada => comisionBase != null && comisionPorcentaje != null;
+  bool get configurada => comisionPorcentaje != null;
 }
 
 /// Totales de un período (del cobrador completo o de una ruta)
@@ -55,7 +32,7 @@ class TotalesNominaEntity {
   final num interesGenerado;
   final num gastos;
 
-  /// Null si el cobrador no tiene comisión configurada
+  /// Solo en SEGURO: boleta generada y su % para el cobrador
   final num? base;
   final int? montoSugerido;
 
@@ -73,7 +50,7 @@ class TotalesNominaEntity {
   });
 }
 
-/// Totales de una ruta; se paga un gasto por cada una
+/// Totales de una ruta; se hace un pago por cada una
 class RutaCalculoNominaEntity {
   final String rutaId;
   final String rutaNombre;
@@ -130,11 +107,15 @@ class AsignacionNominaEntity {
   });
 }
 
-/// Resumen y nómina sugerida de un cobrador (no guarda nada)
+/// Resumen y valor sugerido de un cobrador (no guarda nada)
 class CalculoNominaEntity {
+  final String cobradorId;
   final String cobradorNombre;
-  final bool comisionConfigurada;
-  final ComisionBase? comisionBase;
+  final String fechaInicio;
+  final String fechaFin;
+  final ConceptoCalculo concepto;
+
+  /// Null en NOMINA
   final num? comisionPorcentaje;
   final TotalesNominaEntity resumen;
   final List<RutaCalculoNominaEntity> rutas;
@@ -142,9 +123,11 @@ class CalculoNominaEntity {
   final List<AsignacionNominaEntity> asignaciones;
 
   CalculoNominaEntity({
+    required this.cobradorId,
     required this.cobradorNombre,
-    required this.comisionConfigurada,
-    required this.comisionBase,
+    required this.fechaInicio,
+    required this.fechaFin,
+    required this.concepto,
     required this.comisionPorcentaje,
     required this.resumen,
     required this.rutas,
@@ -153,37 +136,53 @@ class CalculoNominaEntity {
   });
 }
 
-/// Resultado de pagar a un supervisor/admin repartido entre rutas
+/// Resultado de pagar a un supervisor/admin: un pago por ruta, mismo lote
 class PagoSupervisorEntity {
   final String empleadoId;
+  final String lote;
   final int totalPagado;
-  final int cantidadGastos;
+  final List<PagoNominaEntity> pagos;
 
   PagoSupervisorEntity({
     required this.empleadoId,
+    required this.lote,
     required this.totalPagado,
-    required this.cantidadGastos,
+    required this.pagos,
   });
 }
 
-/// Pago de nómina del historial de un empleado
+/// Pago de nómina (tabla propia, no es gasto de ruta)
 class PagoNominaEntity {
   final String id;
   final String rutaId;
   final String rutaNombre;
+  final String empleadoId;
   final String concepto;
   final num valor;
-  final DateTime? fechaGasto;
+  final String observacion;
+  final DateTime? fechaPago;
+
+  /// Agrupa los pagos de un mismo pago repartido de supervisor
+  final String? lote;
   final String estado;
+  final String motivoAnulacion;
+  final DateTime? fechaAnulacion;
+  final DateTime? createdAt;
 
   PagoNominaEntity({
     required this.id,
     required this.rutaId,
     required this.rutaNombre,
+    required this.empleadoId,
     required this.concepto,
     required this.valor,
-    required this.fechaGasto,
+    required this.observacion,
+    required this.fechaPago,
+    required this.lote,
     required this.estado,
+    required this.motivoAnulacion,
+    required this.fechaAnulacion,
+    required this.createdAt,
   });
 
   bool get anulado => estado == 'ANULADO';

@@ -4,25 +4,30 @@ class PagarCobradorState extends Equatable {
   final BuildContext context;
   final bool loading;
   final bool loadingCalculo;
-  final bool loadingBtn;
 
-  /// Todas las rutas del admin, para conocer su capital
-  final List<DatumREntity> rutas;
+  /// Ruta que se está pagando en este momento
+  final String? pagando;
+
   final List<EmpleadoNomina> empleados;
   final String? empleadoId;
-
   final PeriodoNomina periodo;
+
+  /// Pestaña: Nómina (valor digitado) o Seguro (% de la boleta)
+  final ConceptoCalculo tipo;
   final CalculoNominaEntity? calculo;
 
-  /// Rutas del cálculo actual que ya se pagaron
-  final Set<String> pagadas;
+  /// Disponible de cada ruta (`GET /ruta/movimiento/:id`)
+  final Map<String, int> disponibles;
 
-  /// Comisiones conocidas por empleado (del listado, del cálculo o al guardarlas)
+  /// Pagos hechos en esta pantalla ("tipo-rutaId" → valor)
+  final Map<String, int> pagadas;
+
+  /// % de boleta conocido por cobrador (del listado, del cálculo o al guardarlo)
   final Map<String, ComisionEntity> comisiones;
 
+  /// Solo NÓMINA: Nómina / Prima / Otro
   final ConceptoNomina concepto;
   final DateTime fecha;
-  final String? errorValores;
   final String? errorConcepto;
 
   /// Los valores viven en controllers: la versión fuerza el rebuild
@@ -34,15 +39,15 @@ class PagarCobradorState extends Equatable {
     required this.fecha,
     this.loading = false,
     this.loadingCalculo = false,
-    this.loadingBtn = false,
-    this.rutas = const [],
+    this.pagando,
     this.empleados = const [],
     this.empleadoId,
+    this.tipo = ConceptoCalculo.nomina,
     this.calculo,
+    this.disponibles = const {},
     this.pagadas = const {},
     this.comisiones = const {},
     this.concepto = ConceptoNomina.nomina,
-    this.errorValores,
     this.errorConcepto,
     this.version = 0,
   });
@@ -52,26 +57,26 @@ class PagarCobradorState extends Equatable {
 
   ComisionEntity? get comision => comisiones[empleadoId] ?? empleado?.comision;
 
-  /// Capital actual de una ruta, si se conoce
-  int? capitalRuta(String rutaId) =>
-      rutas.where((r) => r.id == rutaId).firstOrNull?.capital;
+  String claveRuta(String rutaId) => '${tipo.api}-$rutaId';
+
+  int? pagado(String rutaId) => pagadas[claveRuta(rutaId)];
 
   @override
   List<Object?> get props => [
     context,
     loading,
     loadingCalculo,
-    loadingBtn,
-    rutas,
+    pagando,
     empleados,
     empleadoId,
     periodo,
+    tipo,
     calculo,
+    disponibles,
     pagadas,
     comisiones,
     concepto,
     fecha,
-    errorValores,
     errorConcepto,
     version,
   ];
@@ -80,38 +85,38 @@ class PagarCobradorState extends Equatable {
   PagarCobradorState copyWith({
     bool? loading,
     bool? loadingCalculo,
-    bool? loadingBtn,
-    List<DatumREntity>? rutas,
+    String? pagando,
+    bool limpiarPagando = false,
     List<EmpleadoNomina>? empleados,
     String? empleadoId,
     PeriodoNomina? periodo,
+    ConceptoCalculo? tipo,
     CalculoNominaEntity? calculo,
     bool limpiarCalculo = false,
-    Set<String>? pagadas,
+    Map<String, int>? disponibles,
+    Map<String, int>? pagadas,
+    bool limpiarPagadas = false,
     Map<String, ComisionEntity>? comisiones,
     ConceptoNomina? concepto,
     DateTime? fecha,
-    String? errorValores,
     String? errorConcepto,
     int? version,
   }) => PagarCobradorState(
     context: context,
     loading: loading ?? this.loading,
     loadingCalculo: loadingCalculo ?? this.loadingCalculo,
-    loadingBtn: loadingBtn ?? this.loadingBtn,
-    rutas: rutas ?? this.rutas,
+    pagando: limpiarPagando ? null : pagando ?? this.pagando,
     empleados: empleados ?? this.empleados,
     empleadoId: empleadoId ?? this.empleadoId,
     periodo: periodo ?? this.periodo,
+    tipo: tipo ?? this.tipo,
     calculo: limpiarCalculo ? null : calculo ?? this.calculo,
-    // Un cálculo nuevo empieza sin rutas pagadas
-    pagadas: limpiarCalculo ? const {} : pagadas ?? this.pagadas,
+    disponibles: disponibles ?? this.disponibles,
+    // Otro cobrador u otro período empieza sin pagos marcados
+    pagadas: limpiarPagadas ? const {} : pagadas ?? this.pagadas,
     comisiones: comisiones ?? this.comisiones,
     concepto: concepto ?? this.concepto,
     fecha: fecha ?? this.fecha,
-    errorValores: errorValores == null
-        ? this.errorValores
-        : (errorValores.isEmpty ? null : errorValores),
     errorConcepto: errorConcepto == null
         ? this.errorConcepto
         : (errorConcepto.isEmpty ? null : errorConcepto),

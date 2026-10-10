@@ -134,7 +134,10 @@ class _HistorialNominaView extends StatelessWidget {
       return _mensaje(
         icon: Icons.cloud_off_rounded,
         titulo: 'No se pudo cargar el historial',
-        accion: TextButton(onPressed: c.cargar, child: const Text('Reintentar')),
+        accion: TextButton(
+          onPressed: c.cargar,
+          child: const Text('Reintentar'),
+        ),
       );
     }
     if (state.pagos.isEmpty) {
@@ -231,12 +234,64 @@ class _PagoCardState extends State<_PagoCard> {
   bool _anulando = false;
 
   Future<void> _anular() async {
+    final p = widget.pago;
+    final lote = widget.cubit.activosDelLote(p.lote);
+
+    // Pago repartido de supervisor: se puede anular solo esta ruta o todo el lote
+    var todoElLote = false;
+    if (lote.length > 1) {
+      final eleccion = await _elegirAlcance(context, lote);
+      if (eleccion == null) return;
+      todoElLote = eleccion;
+    }
+
+    if (!mounted) return;
     final motivo = await pedirMotivoAnulacion(context);
     if (motivo == null) return;
 
     setState(() => _anulando = true);
-    await widget.cubit.anular(id: widget.pago.id, motivo: motivo);
+    if (todoElLote) {
+      await widget.cubit.anularLote(lote: p.lote!, motivo: motivo);
+    } else {
+      await widget.cubit.anular(id: p.id, motivo: motivo);
+    }
     if (mounted) setState(() => _anulando = false);
+  }
+
+  /// true = todo el lote, false = solo este pago, null = cancelar
+  Future<bool?> _elegirAlcance(
+    BuildContext context,
+    List<PagoNominaEntity> lote,
+  ) {
+    final total = lote.fold<num>(0, (s, p) => s + p.valor);
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text(
+          '¿Qué quieres anular?',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+        ),
+        children: [
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Solo este pago (${widget.pago.rutaNombre}, ${MoneyUtil.format(widget.pago.valor)})',
+            ),
+          ),
+          SimpleDialogOption(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              'Todo el lote: ${lote.length} pagos, ${MoneyUtil.format(total)}',
+              style: const TextStyle(
+                color: nominaPeligro,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -246,7 +301,7 @@ class _PagoCardState extends State<_PagoCard> {
     final color = anulado ? const Color(0xFFB0B6C0) : AppTheme.primaryColor;
 
     final meta = [
-      if (p.fechaGasto != null) DateUtil.formatLectura(p.fechaGasto!),
+      if (p.fechaPago != null) DateUtil.formatLectura(p.fechaPago!),
       if (p.rutaNombre.isNotEmpty) p.rutaNombre,
     ].join(' · ');
 
@@ -306,6 +361,21 @@ class _PagoCardState extends State<_PagoCard> {
                       ),
                     ),
                   ),
+                  if (p.motivoAnulacion.isNotEmpty ||
+                      p.fechaAnulacion != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      [
+                        if (p.motivoAnulacion.isNotEmpty) p.motivoAnulacion,
+                        if (p.fechaAnulacion != null)
+                          'el ${fechaCorta(p.fechaAnulacion!)} ${p.fechaAnulacion!.hour.toString().padLeft(2, '0')}:${p.fechaAnulacion!.minute.toString().padLeft(2, '0')}',
+                      ].join(' · '),
+                      style: const TextStyle(
+                        color: nominaPeligro,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ],
               ],
             ),

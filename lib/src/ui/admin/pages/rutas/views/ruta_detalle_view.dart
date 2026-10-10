@@ -300,34 +300,33 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
                 children: [
                   Expanded(
                     child: _headerInfo(
+                      title: 'Cartera',
+                      value: '\$${movimiento.cartera}',
+                    ),
+                  ),
+
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: Colors.white.withValues(alpha: .15),
+                  ),
+
+                  Expanded(
+                    child: _headerInfo(
                       title: 'Capital',
                       value: '\$${movimiento.capital}',
                     ),
                   ),
-
                   Container(
                     width: 1,
-                    height: 40,
+                    height: 35,
                     color: Colors.white.withValues(alpha: .15),
                   ),
 
                   Expanded(
                     child: _headerInfo(
-                      title: 'Prestado',
-                      value: '\$${movimiento.totalPrestado}',
-                    ),
-                  ),
-
-                  Container(
-                    width: 1,
-                    height: 40,
-                    color: Colors.white.withValues(alpha: .15),
-                  ),
-
-                  Expanded(
-                    child: _headerInfo(
-                      title: 'Disponible',
-                      value: '\$${movimiento.disponible}',
+                      title: 'Seguros',
+                      value: '\$${movimiento.seguros}',
                     ),
                   ),
                 ],
@@ -357,23 +356,28 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
                     color: Colors.white.withValues(alpha: .15),
                   ),
 
-                  Expanded(
-                    child: _headerInfo(
-                      title: 'Ganancia',
-                      value: '\$${movimiento.gananciaEsperada}',
-                    ),
-                  ),
-
                   Container(
                     width: 1,
-                    height: 35,
+                    height: 40,
                     color: Colors.white.withValues(alpha: .15),
                   ),
 
                   Expanded(
                     child: _headerInfo(
-                      title: 'Seguros',
-                      value: '\$${movimiento.totalSeguro}',
+                      title: 'Prestado',
+                      value: '\$${movimiento.totalPrestado}',
+                    ),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: Colors.white.withValues(alpha: .15),
+                  ),
+
+                  Expanded(
+                    child: _headerInfo(
+                      title: 'Ganancia',
+                      value: '\$${movimiento.gananciaEsperada}',
                     ),
                   ),
                 ],
@@ -526,7 +530,6 @@ class _RutaDetalleViewState extends State<RutaDetalleView> {
                     DetalleClienteView(
                       cliente: cliente,
                       onBack: () {
-                       
                         c.onEventChild(RutaHome());
                       },
                       onEdit: () {},

@@ -12,10 +12,6 @@ class GastoRutaEntity {
   final String registradoPorNombre;
   final String motivoAnulacion;
 
-  /// Solo en pagos de nómina: a quién se le pagó
-  final String? empleadoId;
-  final String? empleadoNombre;
-
   GastoRutaEntity({
     required this.id,
     required this.rutaId,
@@ -26,8 +22,6 @@ class GastoRutaEntity {
     required this.estado,
     required this.registradoPorNombre,
     required this.motivoAnulacion,
-    this.empleadoId,
-    this.empleadoNombre,
   });
 
   bool get anulado => estado == 'ANULADO';

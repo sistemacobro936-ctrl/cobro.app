@@ -7,9 +7,9 @@ import 'package:personal/src/common/error/failures.dart';
 import 'package:personal/src/common/shared/shared.dart';
 import 'package:personal/src/common/utils/app_dialog_util.dart';
 import 'package:personal/src/common/utils/date_util.dart';
+import 'package:personal/src/common/utils/money_util.dart';
 import 'package:personal/src/domain/entities/nomina_entity.dart';
 import 'package:personal/src/domain/entities/pagination_entity.dart';
-import 'package:personal/src/domain/repository/gastos_repo.dart';
 import 'package:personal/src/domain/repository/negocio_repo.dart';
 import 'package:personal/src/domain/repository/nomina_repo.dart';
 import 'package:personal/src/domain/repository/usuario_repo.dart';
@@ -22,7 +22,6 @@ class HistorialNominaCubit extends Cubit<HistorialNominaState> {
   ///
   ///
   final _nominaRepo = sl<NominaRepo>();
-  final _gastosRepo = sl<GastosRepo>();
   final _usuarioRepo = sl<UsuarioRepository>();
   final _negocioRepo = sl<NegocioRepo>();
 
@@ -148,9 +147,16 @@ class HistorialNominaCubit extends Cubit<HistorialNominaState> {
     emit(state.copyWith(loadingMore: false));
   }
 
-  /// Devuelve true si se anuló; si falla muestra el error
+  /// Pagos activos cargados que comparten [lote] (pago repartido de supervisor)
+  List<PagoNominaEntity> activosDelLote(String? lote) =>
+      lote == null || lote.isEmpty
+      ? const []
+      : state.pagos.where((p) => p.lote == lote && !p.anulado).toList();
+
+  /// Devuelve true si se anuló; si falla muestra el error.
+  /// El valor vuelve al capital de la ruta
   Future<bool> anular({required String id, required String motivo}) async {
-    final r = await _gastosRepo.anularGastoRuta(id: id, motivo: motivo);
+    final r = await _nominaRepo.anular(id: id, motivo: motivo);
     if (isClosed) return false;
 
     return r.fold(
@@ -163,6 +169,43 @@ class HistorialNominaCubit extends Cubit<HistorialNominaState> {
         return true;
       },
     );
+  }
+
+  /// Anula cada pago activo del lote, uno por uno. Si uno falla se detiene
+  /// e informa cuántos alcanzaron a anularse
+  Future<void> anularLote({
+    required String lote,
+    required String motivo,
+  }) async {
+    final pagos = activosDelLote(lote);
+    var anulados = 0;
+    num total = 0;
+    String? error;
+
+    for (final p in pagos) {
+      final r = await _nominaRepo.anular(id: p.id, motivo: motivo);
+      if (isClosed) return;
+      error = r.fold((l) => l.props[0].toString(), (_) => null);
+      if (error != null) break;
+      anulados++;
+      total += p.valor;
+    }
+
+    if (error != null) {
+      AppDialogUtil.error(
+        state.context,
+        message: anulados == 0
+            ? error
+            : 'Se anularon $anulados de ${pagos.length} pagos (${MoneyUtil.format(total)}), pero el siguiente falló: $error',
+      );
+    } else {
+      AppDialogUtil.success(
+        state.context,
+        message:
+            'Se anularon los $anulados pagos del lote (${MoneyUtil.format(total)}). El valor volvió al capital de cada ruta.',
+      );
+    }
+    cargar();
   }
 
   ///Otros

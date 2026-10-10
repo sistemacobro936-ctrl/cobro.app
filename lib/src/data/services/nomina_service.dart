@@ -3,10 +3,12 @@ import 'package:personal/src/common/error/exceptions.dart';
 import 'package:personal/src/common/network/api_client.dart';
 import 'package:personal/src/data/model/nomina_model.dart';
 import 'package:personal/src/domain/dto/nomina_dto.dart';
+import 'package:personal/src/domain/entities/nomina_entity.dart';
 
 abstract class NominaService {
   Future<CalculoNominaModel> calcular({
     required String cobradorId,
+    required ConceptoCalculo concepto,
     String? fechaInicio,
     String? fechaFin,
   });
@@ -14,6 +16,7 @@ abstract class NominaService {
   Future<PagoSupervisorModel> pagarSupervisor({
     required PagoNominaSupervisorDto dto,
   });
+  Future<bool> anular({required String id, required String motivo});
   Future<HistorialNominaModel> historial({
     required String empleadoId,
     required String fechaInicio,
@@ -31,6 +34,7 @@ class NominaServiceImpl implements NominaService {
   @override
   Future<CalculoNominaModel> calcular({
     required String cobradorId,
+    required ConceptoCalculo concepto,
     String? fechaInicio,
     String? fechaFin,
   }) async {
@@ -39,6 +43,7 @@ class NominaServiceImpl implements NominaService {
         "/nomina/calcular",
         queryParameters: {
           "cobradorId": cobradorId,
+          "concepto": concepto.api,
           "fechaInicio": ?fechaInicio,
           "fechaFin": ?fechaFin,
         },
@@ -99,6 +104,22 @@ class NominaServiceImpl implements NominaService {
         },
       );
       return HistorialNominaModel.fromJson(r.data);
+    } on DioException catch (e) {
+      throw ServerExceptions(message: e.response!.data["message"]);
+    } catch (e) {
+      throw Exception("Error inesperado");
+    }
+  }
+
+  /// El pago queda ANULADO y su valor vuelve al capital de la ruta
+  @override
+  Future<bool> anular({required String id, required String motivo}) async {
+    try {
+      await apiClient.dio.patch(
+        "/nomina/$id/anular",
+        data: {"motivo": motivo},
+      );
+      return true;
     } on DioException catch (e) {
       throw ServerExceptions(message: e.response!.data["message"]);
     } catch (e) {

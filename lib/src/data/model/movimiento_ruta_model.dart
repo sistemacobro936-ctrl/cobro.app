@@ -20,8 +20,9 @@ class DataMovimientoM extends DataMovimientoE {
     required super.capital,
     required super.totalPrestado,
     required super.gananciaEsperada,
-    required super.totalSeguro,
+    required super.seguros,
     required super.totalPrestamos,
+    required super.cartera,
     required super.disponible,
   });
 
@@ -30,7 +31,8 @@ class DataMovimientoM extends DataMovimientoE {
         capital: json["capital"] ?? 0,
         totalPrestado: json["totalPrestado"] ?? 0,
         gananciaEsperada: json["gananciaEsperada"] ?? 0,
-        totalSeguro: json["totalSeguro"] ?? 0,
+        seguros: json["seguros"] ?? 0,
+        cartera: json["cartera"] ?? 0,
         totalPrestamos: json["totalPrestamos"] ?? 0,
         disponible: json["disponible"],
       );

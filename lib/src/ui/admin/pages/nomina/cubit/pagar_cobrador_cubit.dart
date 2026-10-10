@@ -8,7 +8,6 @@ import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/common/utils/money_util.dart';
 import 'package:personal/src/domain/dto/nomina_dto.dart';
 import 'package:personal/src/domain/entities/nomina_entity.dart';
-import 'package:personal/src/domain/entities/ruta_entity.dart';
 import 'package:personal/src/domain/repository/nomina_repo.dart';
 import 'package:personal/src/domain/repository/ruta_repo.dart';
 import 'package:personal/src/domain/repository/usuario_repo.dart';
@@ -60,13 +59,20 @@ class PagarCobradorCubit extends Cubit<PagarCobradorState> {
   ///
   void seleccionarEmpleado(String? id) {
     if (id == null || id == state.empleadoId) return;
-    _limpiarValores();
-    emit(state.copyWith(empleadoId: id, limpiarCalculo: true));
+    emit(state.copyWith(empleadoId: id, limpiarPagadas: true));
+    calcular();
   }
 
   void cambiarPeriodo(PeriodoNomina p) {
-    _limpiarValores();
-    emit(state.copyWith(periodo: p, limpiarCalculo: true));
+    emit(state.copyWith(periodo: p, limpiarPagadas: true));
+    calcular();
+  }
+
+  /// Nómina / Seguro: cada uno tiene su propio cálculo
+  void cambiarTipo(ConceptoCalculo t) {
+    if (t == state.tipo) return;
+    emit(state.copyWith(tipo: t));
+    calcular();
   }
 
   void cambiarConcepto(ConceptoNomina c) =>
@@ -74,9 +80,8 @@ class PagarCobradorCubit extends Cubit<PagarCobradorState> {
 
   void cambiarFecha(DateTime f) => emit(state.copyWith(fecha: f));
 
-  /// Re-emite para refrescar total y avisos mientras se escribe
-  void onValorChanged() =>
-      emit(state.copyWith(errorValores: '', version: state.version + 1));
+  /// Re-emite para refrescar avisos mientras se escribe
+  void onValorChanged() => emit(state.copyWith(version: state.version + 1));
 
   ///Peticiones
   ///
@@ -84,16 +89,10 @@ class PagarCobradorCubit extends Cubit<PagarCobradorState> {
   Future<void> cargar() async {
     emit(state.copyWith(loading: true));
 
-    // Siempre se piden las rutas: el capital tiene que estar al día
-    final rutas = await _rutaRepo.listar();
-    final cobradores = await _usuarioRepo.listarCobradores();
+    final r = await _usuarioRepo.listarCobradores();
     if (isClosed) return;
 
-    rutas.fold((_) {}, (r) {
-      Shared.setRutas = r.data;
-      emit(state.copyWith(rutas: r.data));
-    });
-    cobradores.fold(
+    r.fold(
       (l) => AppDialogUtil.error(state.context, message: l.props[0].toString()),
       (r) {
         Shared.setCobradores = r.data;
@@ -116,52 +115,72 @@ class PagarCobradorCubit extends Cubit<PagarCobradorState> {
     emit(state.copyWith(loading: false));
   }
 
-  Future<void> calcular() async {
+  /// [conservarValores]: tras un pago se mantiene lo digitado en las demás rutas
+  Future<void> calcular({bool conservarValores = false}) async {
+    final previos = conservarValores
+        ? {for (final e in valoresTxt.entries) e.key: e.value.text}
+        : const <String, String>{};
     final id = state.empleadoId;
-    if (id == null) {
-      AppDialogUtil.info(
-        state.context,
-        message: 'Elige el cobrador para calcular la nómina.',
-      );
-      return;
-    }
+    if (id == null) return;
+    final tipo = state.tipo;
+    final periodo = state.periodo;
 
     _limpiarValores();
-    emit(state.copyWith(loadingCalculo: true, limpiarCalculo: true));
+    emit(
+      state.copyWith(
+        loadingCalculo: true,
+        limpiarCalculo: true,
+        disponibles: const {},
+      ),
+    );
     final r = await _nominaRepo.calcular(
       cobradorId: id,
+      concepto: tipo,
       fechaInicio: DateUtil.formatDate(state.periodo.inicio),
       fechaFin: DateUtil.formatDate(state.periodo.fin),
     );
-    if (isClosed) return;
+    // Si cambió algún filtro mientras se calculaba, este resultado ya no aplica
+    if (isClosed ||
+        state.empleadoId != id ||
+        state.tipo != tipo ||
+        state.periodo != periodo) {
+      return;
+    }
 
-    r.fold(
-      (l) => AppDialogUtil.error(state.context, message: l.props[0].toString()),
-      (c) {
-        // Cada ruta se prellena con su monto sugerido y queda editable
-        for (final ruta in c.rutas) {
-          final sugerido = ruta.totales.montoSugerido;
-          valoresTxt[ruta.rutaId] = TextEditingController(
-            text: sugerido != null && sugerido > 0 ? '$sugerido' : '',
-          );
-        }
-        emit(
-          state.copyWith(
-            calculo: c,
-            errorValores: '',
-            comisiones: {
-              ...state.comisiones,
-              id: ComisionEntity(
-                id: id,
-                comisionBase: c.comisionBase,
-                comisionPorcentaje: c.comisionPorcentaje,
-              ),
-            },
-          ),
-        );
-      },
-    );
+    final calculo = r.fold((l) {
+      AppDialogUtil.error(state.context, message: l.props[0].toString());
+      return null;
+    }, (c) => c);
     emit(state.copyWith(loadingCalculo: false));
+    if (calculo == null) return;
+
+    // NÓMINA: valor vacío, lo digita el admin. SEGURO: prellenado con el sugerido
+    for (final ruta in calculo.rutas) {
+      final sugerido = ruta.totales.montoSugerido;
+      valoresTxt[ruta.rutaId] = TextEditingController(
+        text:
+            previos[ruta.rutaId] ??
+            (tipo == ConceptoCalculo.seguro && sugerido != null && sugerido > 0
+                ? '$sugerido'
+                : ''),
+      );
+    }
+    emit(
+      state.copyWith(
+        calculo: calculo,
+        comisiones: calculo.comisionPorcentaje == null
+            ? null
+            : {
+                ...state.comisiones,
+                id: ComisionEntity(
+                  id: id,
+                  comisionPorcentaje: calculo.comisionPorcentaje,
+                ),
+              },
+      ),
+    );
+
+    await _cargarDisponibles(calculo);
   }
 
   /// Devuelve true si se guardó; si falla muestra el error
@@ -179,104 +198,94 @@ class PagarCobradorCubit extends Cubit<PagarCobradorState> {
       },
       (c) {
         emit(state.copyWith(comisiones: {...state.comisiones, id: c}));
-        // Con la comisión nueva el cálculo ya trae base y monto sugerido
-        if (state.calculo != null) calcular();
+        // El sugerido del seguro depende del %
+        if (state.tipo == ConceptoCalculo.seguro) calcular();
         return true;
       },
     );
   }
 
-  /// Valida el formulario; true si se puede pagar
-  bool validar() {
-    final otro = conceptoOtroTxt.text.trim();
+  /// Valida el pago de una ruta; devuelve el valor o null (y muestra por qué)
+  int? validarPago(RutaCalculoNominaEntity ruta) {
+    final valor = parseValor(valoresTxt[ruta.rutaId]?.text ?? '');
+    String? error;
 
-    emit(
-      state.copyWith(
-        errorConcepto: state.concepto == ConceptoNomina.otro && otro.isEmpty
-            ? 'Ingresa el concepto'
-            : '',
-        errorValores: pagosPendientes.isEmpty
-            ? 'Ingresa el valor a pagar en al menos una ruta'
-            : '',
+    if (valor == null || valor < 1) {
+      error = 'Ingresa el valor a pagar de ${ruta.rutaNombre}.';
+    } else if (state.tipo == ConceptoCalculo.nomina &&
+        state.concepto == ConceptoNomina.otro &&
+        conceptoOtroTxt.text.trim().isEmpty) {
+      emit(state.copyWith(errorConcepto: 'Ingresa el concepto'));
+      error = 'Ingresa el concepto del pago.';
+    }
+
+    if (error != null) {
+      AppDialogUtil.info(state.context, message: error);
+      return null;
+    }
+    return valor;
+  }
+
+  /// Concepto del pago: "Seguro" en la pestaña Seguro; si no, Nómina/Prima/Otro
+  String get conceptoPago => state.tipo == ConceptoCalculo.seguro
+      ? 'Seguro'
+      : textoConcepto(state.concepto, conceptoOtroTxt.text)!;
+
+  /// Nómina y seguro se pagan igual: pago de nómina que sale del capital
+  Future<void> pagar(RutaCalculoNominaEntity ruta, int valor) async {
+    emit(state.copyWith(pagando: ruta.rutaId));
+    final r = await _nominaRepo.pagarCobrador(
+      dto: PagoNominaCobradorDto(
+        rutaId: ruta.rutaId,
+        empleadoId: state.empleadoId!,
+        valor: valor,
+        concepto: conceptoPago.toUpperCase(),
+        observacion: observacionTxt.text.trim(),
+        fechaPago: state.fecha,
       ),
     );
-    return state.errorConcepto == null && state.errorValores == null;
-  }
-
-  /// Rutas sin pagar con valor ≥ 1; las que quedan en blanco se omiten
-  List<(RutaCalculoNominaEntity, int)> get pagosPendientes {
-    final calculo = state.calculo;
-    if (calculo == null) return [];
-    return [
-      for (final r in calculo.rutas)
-        if (!state.pagadas.contains(r.rutaId))
-          if (parseValor(valoresTxt[r.rutaId]?.text ?? '') case final v?
-              when v >= 1)
-            (r, v),
-    ];
-  }
-
-  /// Un POST por ruta, en orden. Si uno falla se detiene: los anteriores
-  /// ya quedaron guardados y se marcan como pagados para no repetirlos
-  Future<void> pagar() async {
-    final pagos = pagosPendientes;
-    final concepto = textoConcepto(state.concepto, conceptoOtroTxt.text);
-    final observacion = observacionTxt.text.trim();
-    final pagadas = {...state.pagadas};
-    final antes = pagadas.length;
-    var totalPagado = 0;
-    String? error;
-    String? rutaFallida;
-
-    emit(state.copyWith(loadingBtn: true));
-    for (final (ruta, valor) in pagos) {
-      final r = await _nominaRepo.pagarCobrador(
-        dto: PagoNominaCobradorDto(
-          rutaId: ruta.rutaId,
-          empleadoId: state.empleadoId!,
-          valor: valor,
-          concepto: concepto,
-          observacion: observacion,
-          fechaGasto: state.fecha,
-        ),
-      );
-      if (isClosed) return;
-
-      error = r.fold((l) => l.props[0].toString(), (_) => null);
-      if (error != null) {
-        rutaFallida = ruta.rutaNombre;
-        break;
-      }
-      pagadas.add(ruta.rutaId);
-      totalPagado += valor;
-      // Copia: si se pasa el mismo Set, Equatable no ve el cambio
-      emit(state.copyWith(pagadas: {...pagadas}));
-    }
-    emit(state.copyWith(loadingBtn: false));
-
-    final cantidad = pagadas.length - antes;
-    if (error == null) {
-      AppDialogUtil.success(
-        state.context,
-        message:
-            'Se registró el pago de ${MoneyUtil.format(totalPagado)} a ${state.calculo?.cobradorNombre ?? 'el cobrador'} en $cantidad ${cantidad == 1 ? 'ruta' : 'rutas'}.',
-      );
-    } else {
-      AppDialogUtil.error(
-        state.context,
-        message: cantidad == 0
-            ? error
-            : 'Se pagaron $cantidad ${cantidad == 1 ? 'ruta' : 'rutas'} (${MoneyUtil.format(totalPagado)}), pero falló $rutaFallida: $error\n\nLas rutas pagadas quedaron marcadas; puedes reintentar las demás.',
-      );
-    }
-
-    // El capital de las rutas cambió
-    if (cantidad > 0) await _refrescarRutas();
+    if (isClosed) return;
+    _despuesDePagar(
+      r.fold((l) => l.props[0].toString(), (_) => null),
+      ruta,
+      valor,
+    );
   }
 
   ///Otros
   ///
   ///
+  void _despuesDePagar(String? error, RutaCalculoNominaEntity ruta, int valor) {
+    emit(state.copyWith(limpiarPagando: true));
+    if (error != null) {
+      AppDialogUtil.error(state.context, message: error);
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        pagadas: {...state.pagadas, state.claveRuta(ruta.rutaId): valor},
+      ),
+    );
+    AppDialogUtil.success(
+      state.context,
+      message:
+          'Se pagaron ${MoneyUtil.format(valor)} de ${conceptoPago.toLowerCase()} en ${ruta.rutaNombre}.',
+    );
+    // Recarga el cálculo junto con el disponible de cada ruta
+    calcular(conservarValores: true);
+  }
+
+  Future<void> _cargarDisponibles(CalculoNominaEntity calculo) async {
+    final disponibles = <String, int>{};
+    for (final ruta in calculo.rutas) {
+      final r = await _rutaRepo.movimiento(idRuta: ruta.rutaId);
+      r.fold((_) {}, (m) => disponibles[ruta.rutaId] = m.data.disponible+m.data.seguros);
+    }
+    if (isClosed || state.calculo != calculo) return;
+    emit(state.copyWith(disponibles: disponibles));
+  }
+
   void _limpiarValores() {
     final controllers = valoresTxt.values.toList();
     valoresTxt.clear();
@@ -285,15 +294,6 @@ class PagarCobradorCubit extends Cubit<PagarCobradorState> {
       for (final c in controllers) {
         c.dispose();
       }
-    });
-  }
-
-  Future<void> _refrescarRutas() async {
-    final r = await _rutaRepo.listar();
-    if (isClosed) return;
-    r.fold((_) {}, (r) {
-      Shared.setRutas = r.data;
-      emit(state.copyWith(rutas: r.data));
     });
   }
 }

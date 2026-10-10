@@ -85,7 +85,9 @@ class PagarSupervisorCubit extends Cubit<PagarSupervisorState> {
     if (_filas.length <= 1) return;
     _filas.remove(fila);
     // Se libera después del frame para que el TextField no lo use ya cerrado
-    WidgetsBinding.instance.addPostFrameCallback((_) => fila.valorTxt.dispose());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => fila.valorTxt.dispose(),
+    );
     _emitFilas();
   }
 
@@ -179,9 +181,8 @@ class PagarSupervisorCubit extends Cubit<PagarSupervisorState> {
   }
 
   /// Repartos con nombre de ruta, para la confirmación
-  List<(String, int)> get desglose => _filas
-      .map((f) => (state.nombreRuta(f.rutaId), f.valor ?? 0))
-      .toList();
+  List<(String, int)> get desglose =>
+      _filas.map((f) => (state.nombreRuta(f.rutaId), f.valor ?? 0)).toList();
 
   /// Rutas cuyo capital conocido queda negativo con este pago
   List<String> get rutasSinCapital => _filas
@@ -207,7 +208,7 @@ class PagarSupervisorCubit extends Cubit<PagarSupervisorState> {
           porDefecto: conceptoSupervisor,
         ),
         observacion: observacionTxt.text.trim(),
-        fechaGasto: state.fecha,
+        fechaPago: state.fecha,
       ),
     );
     if (isClosed) return;
@@ -227,7 +228,7 @@ class PagarSupervisorCubit extends Cubit<PagarSupervisorState> {
     AppDialogUtil.success(
       state.context,
       message:
-          'Se registró el pago de ${MoneyUtil.format(pago.totalPagado)} repartido en ${pago.cantidadGastos} ${pago.cantidadGastos == 1 ? 'ruta' : 'rutas'}.',
+          'Se registró el pago de ${MoneyUtil.format(pago.totalPagado)} repartido en ${pago.pagos.length} ${pago.pagos.length == 1 ? 'ruta' : 'rutas'}.',
     );
 
     // El capital de las rutas cambió

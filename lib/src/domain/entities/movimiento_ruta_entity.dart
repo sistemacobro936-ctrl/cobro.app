@@ -15,7 +15,8 @@ class DataMovimientoE {
     final int capital;
     final int totalPrestado;
     final int gananciaEsperada;
-    final int totalSeguro;
+    final int seguros;
+    final int cartera;
     final int disponible;
     final int totalPrestamos;
 
@@ -23,7 +24,8 @@ class DataMovimientoE {
         required this.capital,
         required this.totalPrestado,
         required this.gananciaEsperada,
-        required this.totalSeguro,
+        required this.seguros,
+        required this.cartera,
         required this.disponible,
         required this.totalPrestamos,
     });

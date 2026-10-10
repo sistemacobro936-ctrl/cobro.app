@@ -6,7 +6,7 @@ import 'package:personal/src/ui/admin/pages/nomina/views/pagar_cobrador_page.dar
 import 'package:personal/src/ui/admin/pages/nomina/views/pagar_supervisor_page.dart';
 
 /// Nómina y prima de los empleados (solo ADMIN).
-/// Cada pago se guarda como gasto de ruta y se descuenta de su capital
+/// Cada pago se guarda en la tabla de nómina y se descuenta del capital de la ruta
 class NominaPage extends StatelessWidget {
   const NominaPage({super.key});
 
@@ -26,7 +26,7 @@ class NominaPage extends StatelessWidget {
             context,
             icon: Icons.delivery_dining_outlined,
             titulo: 'Pagar a cobrador',
-            detalle: 'Sale completo del capital de su ruta.',
+            detalle: 'Nómina o seguro (boleta) por cada ruta trabajada.',
             page: const PagarCobradorPage(),
           ),
           const SizedBox(height: 12),

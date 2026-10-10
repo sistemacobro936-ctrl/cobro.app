@@ -165,6 +165,18 @@ class MovimientoRutaView extends StatelessWidget {
           Colors.redAccent,
           'Gasto',
         );
+      case 'NOMINA_PAGADA':
+        return _EstiloTipo(
+          Icons.payments_outlined,
+          Colors.deepOrange,
+          'Nómina',
+        );
+      case 'NOMINA_ANULADA':
+        return _EstiloTipo(
+          Icons.undo_rounded,
+          const Color(0xFF929BAB),
+          'Nómina anulada',
+        );
       default:
         return _EstiloTipo(
           Icons.history_rounded,
