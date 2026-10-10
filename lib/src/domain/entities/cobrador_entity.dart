@@ -1,3 +1,4 @@
+import 'package:personal/src/domain/entities/nomina_entity.dart';
 import 'package:personal/src/domain/entities/ruta_entity.dart';
 
 class CobradorEntity {
@@ -19,6 +20,9 @@ class DatumCEntity {
   final String usuario;
   final List<DatumREntity> rutas;
 
+  /// Null si el backend no envía la comisión en esta respuesta
+  final ComisionEntity? comision;
+
   DatumCEntity({
     required this.id,
     required this.nombre,
@@ -29,5 +33,6 @@ class DatumCEntity {
     required this.estado,
     required this.rutas,
     this.usuario = "",
+    this.comision,
   });
 }

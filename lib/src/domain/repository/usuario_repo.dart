@@ -1,7 +1,9 @@
 import 'package:dartz/dartz.dart';
 import 'package:personal/src/common/error/failures.dart';
 import 'package:personal/src/domain/dto/crear_cobrador_dto.dart';
+import 'package:personal/src/domain/dto/nomina_dto.dart';
 import 'package:personal/src/domain/entities/cobrador_entity.dart';
+import 'package:personal/src/domain/entities/nomina_entity.dart';
 
 abstract class UsuarioRepository {
   Future<Either<Failure, CobradorEntity>> listarCobradores();
@@ -13,5 +15,9 @@ abstract class UsuarioRepository {
   });
   Future<Either<Failure, dynamic>> crearCobrador({
     required CrearCobradorDto dto,
+  });
+  Future<Either<Failure, ComisionEntity>> actualizarComision({
+    required String id,
+    required ComisionDto dto,
   });
 }

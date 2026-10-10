@@ -4,6 +4,7 @@ import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/secure_storage_util.dart';
 import 'package:personal/src/ui/admin/pages/config/config_page.dart';
 import 'package:personal/src/ui/admin/pages/contabilidad/contabilidad_page.dart';
+import 'package:personal/src/ui/admin/pages/nomina/nomina_page.dart';
 import 'package:personal/src/ui/admin/pages/perfil/perfil_page.dart';
 import 'package:personal/src/ui/admin/pages/rutas/ruta_page.dart';
 import 'package:personal/src/ui/auth/auth_page.dart';
@@ -65,6 +66,18 @@ class DrawerHome extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const ContabilidadPage()),
+                      );
+                    },
+                  ),
+                  _drawerItem(
+                    icon: Icons.payments_outlined,
+                    title: 'Nómina',
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const NominaPage()),
                       );
                     },
                   ),

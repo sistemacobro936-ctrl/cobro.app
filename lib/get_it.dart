@@ -10,6 +10,7 @@ import 'package:personal/src/data/repository/config_repo_impl.dart';
 import 'package:personal/src/data/repository/gastos_repo_impl.dart';
 import 'package:personal/src/data/repository/movimiento_repo_impl.dart';
 import 'package:personal/src/data/repository/negocio_repo_impl.dart';
+import 'package:personal/src/data/repository/nomina_repo_impl.dart';
 import 'package:personal/src/data/repository/pago_repo_impl.dart';
 import 'package:personal/src/data/repository/prestamo_repo_impl.dart';
 import 'package:personal/src/data/repository/ruta_repo_impl.dart';
@@ -23,6 +24,7 @@ import 'package:personal/src/data/services/cliente_service.dart';
 import 'package:personal/src/data/services/config_service.dart';
 import 'package:personal/src/data/services/gasto_service.dart';
 import 'package:personal/src/data/services/negocio_service.dart';
+import 'package:personal/src/data/services/nomina_service.dart';
 import 'package:personal/src/data/services/pago_service.dart';
 import 'package:personal/src/data/services/prestamo_service.dart';
 import 'package:personal/src/data/services/ruta_service.dart';
@@ -36,6 +38,7 @@ import 'package:personal/src/domain/repository/config_repo.dart';
 import 'package:personal/src/domain/repository/gastos_repo.dart';
 import 'package:personal/src/domain/repository/movimiento_repo.dart';
 import 'package:personal/src/domain/repository/negocio_repo.dart';
+import 'package:personal/src/domain/repository/nomina_repo.dart';
 import 'package:personal/src/domain/repository/pago_repo.dart';
 import 'package:personal/src/domain/repository/presamo_repo.dart';
 import 'package:personal/src/domain/repository/ruta_repo.dart';
@@ -154,5 +157,14 @@ void initDep() {
 
   sl.registerLazySingleton<DashboardService>(
     () => DashboardServiceImpl(apiClient: sl()),
+  );
+
+  //Nomina
+  sl.registerLazySingleton<NominaRepo>(
+    () => NominaRepoImpl(nominaService: sl()),
+  );
+
+  sl.registerLazySingleton<NominaService>(
+    () => NominaServiceImpl(apiClient: sl()),
   );
 }

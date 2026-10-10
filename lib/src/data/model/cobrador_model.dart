@@ -2,6 +2,7 @@
 //
 //     final cobradorEntity = cobradorEntityFromJson(jsonString);
 
+import 'package:personal/src/data/model/nomina_model.dart';
 import 'package:personal/src/data/model/ruta_model.dart';
 import 'package:personal/src/domain/entities/cobrador_entity.dart';
 
@@ -32,6 +33,7 @@ class DatumCModel extends DatumCEntity {
     required super.estado,
     required super.rutas,
     super.usuario,
+    super.comision,
   });
 
   factory DatumCModel.fromJson(Map<String, dynamic> json) => DatumCModel(
@@ -43,6 +45,9 @@ class DatumCModel extends DatumCEntity {
     email: json["email"] ?? "",
     estado: json["estado"] ?? "",
     usuario: json["usuario"] ?? "",
+    comision: json.containsKey("comisionBase")
+        ? ComisionModel.fromJson(json)
+        : null,
     rutas: json["rutas"] == null
     ? []
     : List<DatumRModel>.from(

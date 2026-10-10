@@ -2,7 +2,9 @@ import 'package:dio/dio.dart';
 import 'package:personal/src/common/error/exceptions.dart';
 import 'package:personal/src/common/network/api_client.dart';
 import 'package:personal/src/data/model/cobrador_model.dart';
+import 'package:personal/src/data/model/nomina_model.dart';
 import 'package:personal/src/domain/dto/crear_cobrador_dto.dart';
+import 'package:personal/src/domain/dto/nomina_dto.dart';
 
 abstract class UsuarioService {
   Future<CobradorModel> listarCobradores();
@@ -11,6 +13,10 @@ abstract class UsuarioService {
   Future<dynamic> editarCobrador({
     required String id,
     required CrearCobradorDto dto,
+  });
+  Future<ComisionModel> actualizarComision({
+    required String id,
+    required ComisionDto dto,
   });
 }
 
@@ -73,6 +79,25 @@ class UsuarioServiceImpl implements UsuarioService {
       );
 
       return response.data;
+    } on DioException catch (e) {
+      throw ServerExceptions(message: e.response!.data["message"]);
+    } catch (e) {
+      throw Exception("Error inesperado");
+    }
+  }
+
+  @override
+  Future<ComisionModel> actualizarComision({
+    required String id,
+    required ComisionDto dto,
+  }) async {
+    try {
+      final response = await apiClient.dio.patch(
+        '/usuario/$id/comision',
+        data: dto.toJson(),
+      );
+
+      return ComisionModel.fromJson(response.data["data"]);
     } on DioException catch (e) {
       throw ServerExceptions(message: e.response!.data["message"]);
     } catch (e) {

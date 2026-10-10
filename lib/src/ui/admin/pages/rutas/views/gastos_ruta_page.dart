@@ -350,6 +350,7 @@ class _GastoCardState extends State<_GastoCard> {
     final color = anulado ? const Color(0xFFB0B6C0) : Colors.redAccent;
 
     final meta = [
+      if (g.empleadoNombre?.isNotEmpty ?? false) 'Pago a ${g.empleadoNombre}',
       if (g.fechaGasto != null) DateUtil.formatLectura(g.fechaGasto!),
       if (g.registradoPorNombre.isNotEmpty) g.registradoPorNombre,
     ].join(' · ');
