@@ -17,6 +17,7 @@ class ResumenReporteModel extends ResumenReporteEntity {
     required super.retiroSeguro,
     required super.utilidad,
     super.diferencia,
+    super.gastosRuta,
   });
 
   factory ResumenReporteModel.fromJson(Map<String, dynamic> json) =>
@@ -36,6 +37,7 @@ class ResumenReporteModel extends ResumenReporteEntity {
         retiroSeguro: json["retiroSeguro"] ?? 0,
         utilidad: json["utilidad"] ?? 0,
         diferencia: json["diferencia"],
+        gastosRuta: json["gastosRuta"] ?? 0,
       );
 }
 

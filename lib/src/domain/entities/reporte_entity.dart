@@ -15,6 +15,9 @@ class ResumenReporteEntity {
   final int utilidad;
   final int? diferencia;
 
+  /// Gastos de ruta (no dependen de una caja). Solo viene en los totales
+  final int gastosRuta;
+
   ResumenReporteEntity({
     required this.base,
     this.efectivoRecibido,
@@ -31,7 +34,39 @@ class ResumenReporteEntity {
     required this.retiroSeguro,
     required this.utilidad,
     this.diferencia,
+    this.gastosRuta = 0,
   });
+
+  /// Suma varias cajas (p. ej. todas las de una ruta en el día).
+  /// Efectivo recibido y diferencia quedan pendientes (null) solo si
+  /// ninguna caja los tiene todavía
+  factory ResumenReporteEntity.sumar(List<ResumenReporteEntity> cajas) {
+    int s(int Function(ResumenReporteEntity c) f) =>
+        cajas.fold(0, (t, c) => t + f(c));
+    int? sn(int? Function(ResumenReporteEntity c) f) {
+      final valores = cajas.map(f).whereType<int>();
+      return valores.isEmpty ? null : valores.fold<int>(0, (t, v) => t + v);
+    }
+
+    return ResumenReporteEntity(
+      base: s((c) => c.base),
+      efectivoRecibido: sn((c) => c.efectivoRecibido),
+      cantidadRecibida: s((c) => c.cantidadRecibida),
+      cantidadPrestada: s((c) => c.cantidadPrestada),
+      esperadoACobrar: s((c) => c.esperadoACobrar),
+      cantidadAbonos: s((c) => c.cantidadAbonos),
+      cantidadPrestamos: s((c) => c.cantidadPrestamos),
+      totalBoletas: s((c) => c.totalBoletas),
+      valorBoletas: s((c) => c.valorBoletas),
+      seguro: s((c) => c.seguro),
+      gastos: s((c) => c.gastos),
+      inyeccionCapital: s((c) => c.inyeccionCapital),
+      retiroSeguro: s((c) => c.retiroSeguro),
+      utilidad: s((c) => c.utilidad),
+      diferencia: sn((c) => c.diferencia),
+      gastosRuta: s((c) => c.gastosRuta),
+    );
+  }
 }
 
 class DatumReporteCajaEntity extends ResumenReporteEntity {

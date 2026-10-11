@@ -54,32 +54,18 @@ class ContabilidadCubit extends Cubit<ContabilidadState> {
       (l) {
         AppDialogUtil.error(state.context, message: l.props[0].toString());
         emit(
-          ContabilidadState(
-            context: state.context,
-            fecha: state.fecha,
-            rutas: state.rutas,
-            rutaSeleccionada: state.rutaSeleccionada,
-            totales: null,
-            cajas: const [],
-            cajaRuta: null,
-          ),
+          state.copyWith(limpiarTotales: true, cajas: const [], limpiarCaja: true),
         );
       },
-      (r) {
-        final cajas = r.data?.cajas ?? [];
-        final rutaSel = state.rutaSeleccionada;
-        emit(
-          ContabilidadState(
-            context: state.context,
-            fecha: state.fecha,
-            rutas: state.rutas,
-            rutaSeleccionada: rutaSel,
-            totales: r.data?.totales,
-            cajas: cajas,
-            cajaRuta: rutaSel == null ? null : _buscarCaja(cajas, rutaSel.id),
-          ),
-        );
-      },
+      (r) => emit(
+        state.copyWith(
+          totales: r.data?.totales,
+          limpiarTotales: r.data == null,
+          cajas: r.data?.cajas ?? const [],
+          // Las cajas cambian con la fecha: se vuelve a la suma
+          limpiarCaja: true,
+        ),
+      ),
     );
     emit(state.copyWith(loading: false));
   }
@@ -91,30 +77,16 @@ class ContabilidadCubit extends Cubit<ContabilidadState> {
     cargarReporte();
   }
 
-  void seleccionarRuta(DatumREntity? ruta) {
-    emit(
-      ContabilidadState(
-        context: state.context,
-        fecha: state.fecha,
-        loading: state.loading,
-        rutas: state.rutas,
-        totales: state.totales,
-        cajas: state.cajas,
-        rutaSeleccionada: ruta,
-        cajaRuta: ruta == null ? null : _buscarCaja(state.cajas, ruta.id),
-      ),
-    );
-  }
+  void seleccionarRuta(DatumREntity? ruta) => emit(
+    state.copyWith(
+      rutaSeleccionada: ruta,
+      limpiarRuta: ruta == null,
+      limpiarCaja: true,
+    ),
+  );
 
-  ///Otros
-  ///
-  DatumReporteCajaEntity? _buscarCaja(
-    List<DatumReporteCajaEntity> cajas,
-    String rutaId,
-  ) {
-    for (final c in cajas) {
-      if (c.rutaId == rutaId) return c;
-    }
-    return null;
-  }
+  /// null = ver la suma de las cajas visibles
+  void seleccionarCaja(DatumReporteCajaEntity? caja) => emit(
+    state.copyWith(cajaSeleccionada: caja, limpiarCaja: caja == null),
+  );
 }

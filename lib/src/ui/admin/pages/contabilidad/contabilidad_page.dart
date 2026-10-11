@@ -29,9 +29,7 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
         create: (_) => _cubit,
         child: BlocBuilder<ContabilidadCubit, ContabilidadState>(
           builder: (context, state) {
-            final ResumenReporteEntity? reporte = state.rutaSeleccionada == null
-                ? state.totales
-                : state.cajaRuta;
+            final reporte = state.reporte;
 
             return Scaffold(
               backgroundColor: const Color(0xFFF7F8FC),
@@ -63,6 +61,10 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
                       const SizedBox(height: 12),
                       _buildRuta(context, state),
                       const SizedBox(height: 12),
+                      if (!state.loading && state.cajasVisibles.isNotEmpty) ...[
+                        _buildCajas(state),
+                        const SizedBox(height: 12),
+                      ],
 
                       if (state.loading)
                         const Padding(
@@ -78,9 +80,18 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
                           titulo: 'Operación',
                           icono: Icons.receipt_long_outlined,
                           children: [
-                            _dato('Total boletas', reporte.totalBoletas.toString()),
-                            _dato('Cantidad recibida', _money(reporte.cantidadRecibida)),
-                            _dato('Cantidad de abonos', reporte.cantidadAbonos.toString()),
+                            _dato(
+                              'Total boletas',
+                              reporte.totalBoletas.toString(),
+                            ),
+                            _dato(
+                              'Cantidad recibida',
+                              _money(reporte.cantidadRecibida),
+                            ),
+                            _dato(
+                              'Cantidad de abonos',
+                              reporte.cantidadAbonos.toString(),
+                            ),
                           ],
                         ),
 
@@ -90,8 +101,14 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
                           titulo: 'Préstamos',
                           icono: Icons.account_balance_wallet_outlined,
                           children: [
-                            _dato('Préstamos', _money(reporte.cantidadPrestada)),
-                            _dato('Cantidad de préstamos', reporte.cantidadPrestamos.toString()),
+                            _dato(
+                              'Préstamos',
+                              _money(reporte.cantidadPrestada),
+                            ),
+                            _dato(
+                              'Cantidad de préstamos',
+                              reporte.cantidadPrestamos.toString(),
+                            ),
                             _dato('Seguro', _money(reporte.seguro)),
                           ],
                         ),
@@ -102,7 +119,10 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
                           titulo: 'Cobro',
                           icono: Icons.payments_outlined,
                           children: [
-                            _dato('Esperado a cobrar', _money(reporte.esperadoACobrar)),
+                            _dato(
+                              'Esperado a cobrar',
+                              _money(reporte.esperadoACobrar),
+                            ),
                             _dato('Recibido', _money(reporte.cantidadRecibida)),
                           ],
                         ),
@@ -114,7 +134,17 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
                           icono: Icons.point_of_sale_outlined,
                           children: [
                             _dato('Gastos', _money(reporte.gastos)),
-                            _dato('Inyección de capital', _money(reporte.inyeccionCapital)),
+                            // Los gastos de ruta no son de una caja: solo en los totales
+                            if (state.rutaSeleccionada == null &&
+                                state.cajaSeleccionada == null)
+                              _dato(
+                                'Gastos de ruta',
+                                _money(reporte.gastosRuta),
+                              ),
+                            _dato(
+                              'Inyección de capital',
+                              _money(reporte.inyeccionCapital),
+                            ),
                             _dato('Base', _money(reporte.base)),
                           ],
                         ),
@@ -137,6 +167,70 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
       ),
     );
   }
+
+  /// Una ruta puede tener varias cajas en el día: "Todas" muestra la suma
+  /// y cada chip el detalle de una caja
+  Widget _buildCajas(ContabilidadState state) {
+    final cajas = state.cajasVisibles;
+    final variasRutas = state.rutaSeleccionada == null;
+
+    // Número de la caja dentro de su ruta (Caja 1, Caja 2...)
+    final numero = <String, int>{};
+    final porRuta = <String, int>{};
+    for (final c in cajas) {
+      porRuta[c.rutaId] = (porRuta[c.rutaId] ?? 0) + 1;
+      numero[c.cajaId] = porRuta[c.rutaId]!;
+    }
+
+    String etiqueta(DatumReporteCajaEntity c) {
+      final n = (porRuta[c.rutaId] ?? 1) > 1 ? ' ${numero[c.cajaId]}' : '';
+      final nombre = variasRutas ? '${c.rutaNombre} · Caja$n' : 'Caja$n';
+      return '$nombre · ${_estado(c.estado)}';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '${cajas.length} ${cajas.length == 1 ? 'caja' : 'cajas'} en el día',
+          style: const TextStyle(fontSize: 13, color: Color(0xFF929BAB)),
+        ),
+        const SizedBox(height: 8),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              ChoiceChip(
+                label: Text(variasRutas ? 'Total del negocio' : 'Todas'),
+                selected: state.cajaSeleccionada == null,
+                onSelected: (_) => _cubit.seleccionarCaja(null),
+              ),
+              for (final c in cajas) ...[
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  avatar: Icon(
+                    c.estado == 'ABIERTA'
+                        ? Icons.lock_open_rounded
+                        : Icons.lock_outline_rounded,
+                    size: 16,
+                  ),
+                  label: Text(etiqueta(c)),
+                  selected: state.cajaSeleccionada?.cajaId == c.cajaId,
+                  onSelected: (_) => _cubit.seleccionarCaja(c),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _estado(String estado) => switch (estado) {
+    'ABIERTA' => 'Abierta',
+    'CERRADA' => 'Cerrada',
+    _ => estado,
+  };
 
   Widget _buildSinDatos() {
     return Container(
@@ -211,20 +305,8 @@ class _ContabilidadPageState extends State<ContabilidadPage> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              titulo,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF929BAB)),
-            ),
-          ),
-          Text(
-            valor,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF394354),
-            ),
-          ),
+          Expanded(child: Text(titulo)),
+          Text(valor, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
