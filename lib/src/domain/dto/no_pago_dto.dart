@@ -27,6 +27,7 @@ enum MotivoNoPago {
 
 class NoPagoDto {
   final String prestamoId;
+  final String cajaId;
   final MotivoNoPago motivo;
   final String? observacion;
   final DateTime? fechaPromesa;
@@ -34,12 +35,14 @@ class NoPagoDto {
   NoPagoDto({
     required this.prestamoId,
     required this.motivo,
+    required this.cajaId,
     this.observacion,
     this.fechaPromesa,
   });
 
   Map<String, dynamic> toJson() => {
     "prestamoId": prestamoId,
+    "cajaId": cajaId,
     "motivo": motivo.codigo,
     if (observacion != null && observacion!.trim().isNotEmpty)
       "observacion": observacion!.trim(),

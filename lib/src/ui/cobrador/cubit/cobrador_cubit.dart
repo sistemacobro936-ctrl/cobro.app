@@ -174,16 +174,30 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     if (!tieneRutas) return;
     emit(state.copyWith(loading: true));
 
-    final rutas = state.ruta!;
-    final idRutas = rutas.map((e) => e.id).join(',');
-    final fecha = DateUtil.formatDate(DateTime.now());
+    // Cajas abiertas de las rutas del cobrador; una ruta sin caja no se cobra hoy
+    final cajaIds = state.ruta!
+        .map((ruta) => state.cajaId(ruta.id))
+        .whereType<String>()
+        .toList();
+    if (cajaIds.isEmpty) {
+      emit(state.copyWith(loading: false));
+      AppDialogUtil.info(
+        state.context,
+        message:
+            'Ninguna de tus rutas tiene caja abierta hoy. Abre la caja para ver los clientes.',
+      );
+      return;
+    }
 
-    // Los no pagos de hoy se piden en paralelo, una petición por ruta
+    // Los no pagos se piden en paralelo, uno por caja
     final noPagosFuture = Future.wait(
-      rutas.map((ruta) => _pagoRepo.noPagosRuta(rutaId: ruta.id, fecha: fecha)),
+      cajaIds.map((cajaId) => _pagoRepo.noPagosRuta(rutaId: cajaId)),
     );
 
-    final r = await _rutaRepo.detalleRuta(idRuta: idRutas, esCobro: true);
+    final r = await _rutaRepo.detalleRuta(
+      idRuta: cajaIds.join(','),
+      esCobro: true,
+    );
 
     final noPagosInfo = <String, NoPagoRutaEntity>{};
     for (final resultado in await noPagosFuture) {
@@ -328,9 +342,29 @@ class CobradorRCubit extends Cubit<CobradorRState> {
   }
 
   void pagar({required String prestamoId, required int valorPago}) async {
+    // El pago se registra en la caja abierta de la ruta del cliente dueño
+    // del préstamo (un cobrador puede tener varias rutas, cada una con su caja)
+    final rutaId = [...?state.clientes, ...?state.pagados, ...?state.noPagados]
+        .where(
+          (d) => (d.cliente.prestamos ?? []).any((p) => p.id == prestamoId),
+        )
+        .firstOrNull
+        ?.cliente
+        .rutaId;
+    final cajaId = rutaId == null ? null : state.cajaId(rutaId);
+    if (cajaId == null) {
+      AppDialogUtil.error(
+        state.context,
+        message:
+            'La ruta de este cliente no tiene caja abierta hoy. Abre la caja para registrar el pago.',
+      );
+      return;
+    }
+
     emit(state.copyWith(btnLoading: true));
     final r = await _pagoRepo.pagar(
       dto: PagoDto(
+        cajaId: cajaId,
         prestamoId: prestamoId,
         valor: valorPago,
         fechaPago: DateTime.now(),
@@ -353,9 +387,26 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     String? observacion,
     DateTime? fechaPromesa,
   }) async {
+    final rutaId = [...?state.clientes, ...?state.pagados, ...?state.noPagados]
+        .where(
+          (d) => (d.cliente.prestamos ?? []).any((p) => p.id == prestamoId),
+        )
+        .firstOrNull
+        ?.cliente
+        .rutaId;
+    final cajaId = rutaId == null ? null : state.cajaId(rutaId);
+    if (cajaId == null) {
+      AppDialogUtil.error(
+        state.context,
+        message:
+            'La ruta de este cliente no tiene caja abierta hoy. Abre la caja para registrar el pago.',
+      );
+      return;
+    }
     emit(state.copyWith(btnLoading: true));
     final r = await _pagoRepo.noPago(
       dto: NoPagoDto(
+        cajaId: cajaId,
         prestamoId: prestamoId,
         motivo: motivo,
         observacion: observacion,
@@ -501,7 +552,9 @@ class CobradorRCubit extends Cubit<CobradorRState> {
   /// seleccionado para poder seguir directo a crearle el préstamo.
   Future<void> crearCliente() async {
     final rutas = state.ruta ?? <DatumREntity>[];
-    final ruta = rutas.length == 1 ? rutas.first : state.rutaClienteSeleccionada;
+    final ruta = rutas.length == 1
+        ? rutas.first
+        : state.rutaClienteSeleccionada;
 
     if (ruta == null ||
         nombresClienteController.text.trim().isEmpty ||
@@ -542,13 +595,11 @@ class CobradorRCubit extends Cubit<CobradorRState> {
 
     if (id != null) {
       final detalle = await _clienteRepo.obtenerCliente(id: id);
-      detalle.fold(
-        (l) {},
-        (cliente) => emit(state.copyWith(cliente: cliente)),
-      );
+      detalle.fold((l) {}, (cliente) => emit(state.copyWith(cliente: cliente)));
       AppDialogUtil.success(
         state.context,
-        message: 'Cliente creado con éxito. Ahora puedes asignarle el préstamo.',
+        message:
+            'Cliente creado con éxito. Ahora puedes asignarle el préstamo.',
       );
     }
 

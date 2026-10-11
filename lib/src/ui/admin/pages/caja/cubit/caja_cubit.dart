@@ -70,7 +70,7 @@ class CajaCubit extends Cubit<CajaState> {
           emit(state.copyWith(cajas: r.data!.first));
           emit(state.copyWith(child: DetalleCaja()));
           _gastosCaja();
-          _gestionCobros(rutaId: rutaId, fecha: fecha);
+          _gestionCobros(cajaId: r.data!.first.id);
         }
       },
     );
@@ -116,13 +116,11 @@ class CajaCubit extends Cubit<CajaState> {
   }
 
   /// Quiénes pagaron y quiénes no en la fecha de la caja
-  Future<void> _gestionCobros({
-    required String rutaId,
-    required String fecha,
-  }) async {
+  /// Pagos y no pagos registrados en la caja
+  Future<void> _gestionCobros({required String cajaId}) async {
     final resultados = await Future.wait([
-      _pagoRepo.pagosRuta(rutaId: rutaId, fecha: fecha),
-      _pagoRepo.noPagosRuta(rutaId: rutaId, fecha: fecha),
+      _pagoRepo.pagosRuta(rutaId: cajaId),
+      _pagoRepo.noPagosRuta(rutaId: cajaId),
     ]);
 
     var huboError = false;

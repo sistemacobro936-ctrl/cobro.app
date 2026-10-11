@@ -39,12 +39,10 @@ class PagoRepoImpl implements PagoRepo {
   @override
   Future<Either<Failure, List<PagoRutaEntity>>> pagosRuta({
     required String rutaId,
-    required String fecha,
   }) async {
     try {
       final response = await pagoService.pagosRuta(
         rutaId: rutaId,
-        fecha: fecha,
       );
       return Right(response);
     } on ServerExceptions catch (e) {
@@ -57,12 +55,10 @@ class PagoRepoImpl implements PagoRepo {
   @override
   Future<Either<Failure, List<NoPagoRutaEntity>>> noPagosRuta({
     required String rutaId,
-    required String fecha,
   }) async {
     try {
       final response = await pagoService.noPagosRuta(
         rutaId: rutaId,
-        fecha: fecha,
       );
       return Right(response);
     } on ServerExceptions catch (e) {

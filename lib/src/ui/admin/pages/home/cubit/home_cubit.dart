@@ -8,8 +8,10 @@ import 'package:personal/src/domain/dto/no_pago_dto.dart';
 import 'package:personal/src/domain/dto/pago_dto.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
 import 'package:personal/src/domain/entities/dashboard_entity.dart';
+import 'package:personal/src/domain/repository/caja_repo.dart';
 import 'package:personal/src/domain/repository/dashboard_repo.dart';
 import 'package:personal/src/domain/repository/pago_repo.dart';
+import 'package:personal/src/domain/repository/presamo_repo.dart';
 
 part 'home_state.dart';
 
@@ -19,6 +21,8 @@ class HomeCubit extends Cubit<HomeState> {
   ///
   final _pagoRepo = sl<PagoRepo>();
   final _dashboardRepo = sl<DashboardRepo>();
+  final _prestamoRepo = sl<PresamoRepo>();
+  final _cajaRepo = sl<CajaRepo>();
 
   ///Constructor
   HomeCubit({required BuildContext context})
@@ -75,8 +79,21 @@ class HomeCubit extends Cubit<HomeState> {
   Future<bool> pagar({required String id, required int monto}) async {
     emit(state.copyWith(loadPay: true));
     bool e = false;
+
+    // El pago se registra en la caja abierta de hoy de la ruta del cliente
+    final cajaId = await _cajaAbiertaDelPrestamo(id);
+    if (cajaId == null) {
+      emit(state.copyWith(loadPay: false));
+      return false;
+    }
+
     final r = await _pagoRepo.pagar(
-      dto: PagoDto(prestamoId: id, valor: monto, fechaPago: DateTime.now()),
+      dto: PagoDto(
+        cajaId: cajaId,
+        prestamoId: id,
+        valor: monto,
+        fechaPago: DateTime.now(),
+      ),
     );
     r.fold(
       (l) {
@@ -103,8 +120,16 @@ class HomeCubit extends Cubit<HomeState> {
   }) async {
     emit(state.copyWith(loadPay: true));
     bool e = false;
+
+    final cajaId = await _cajaAbiertaDelPrestamo(id);
+    if (cajaId == null) {
+      emit(state.copyWith(loadPay: false));
+      return false;
+    }
+
     final r = await _pagoRepo.noPago(
       dto: NoPagoDto(
+        cajaId: cajaId,
         prestamoId: id,
         motivo: motivo,
         observacion: observacion,
@@ -134,4 +159,32 @@ class HomeCubit extends Cubit<HomeState> {
   ///Otros
   ///
   ///
+
+  /// Préstamo → ruta del cliente → caja ABIERTA de hoy de esa ruta.
+  /// Devuelve null (y muestra por qué) si no se encuentra
+  Future<String?> _cajaAbiertaDelPrestamo(String prestamoId) async {
+    final prestamo = await _prestamoRepo.detallePrestamo(id: prestamoId);
+    final rutaId = prestamo.fold((l) {
+      AppDialogUtil.error(state.context, message: l.props[0].toString());
+      return null;
+    }, (p) => p.cliente.rutaId);
+    if (rutaId == null) return null;
+
+    final cajas = await _cajaRepo.obtenerCajas(
+      rutaId: rutaId,
+      fecha: DateUtil.formatDate(DateTime.now()),
+    );
+    final caja = cajas.fold(
+      (_) => null,
+      (r) => r.data?.where((c) => c.estado == 'ABIERTA').firstOrNull,
+    );
+    if (caja == null) {
+      AppDialogUtil.error(
+        state.context,
+        message:
+            'La ruta de este cliente no tiene caja abierta hoy. Abre la caja para registrar el cobro.',
+      );
+    }
+    return caja?.id;
+  }
 }

@@ -9,11 +9,9 @@ abstract class PagoRepo {
   Future<Either<Failure, dynamic>> noPago({required NoPagoDto dto});
   Future<Either<Failure, List<PagoRutaEntity>>> pagosRuta({
     required String rutaId,
-    required String fecha,
   });
   Future<Either<Failure, List<NoPagoRutaEntity>>> noPagosRuta({
     required String rutaId,
-    required String fecha,
   });
   Future<Either<Failure, dynamic>> revertirPago({required String idPago});
 }

@@ -10,11 +10,9 @@ abstract class PagoService {
   Future<dynamic> noPago({required NoPagoDto dto});
   Future<List<PagoRutaModel>> pagosRuta({
     required String rutaId,
-    required String fecha,
   });
   Future<List<NoPagoRutaModel>> noPagosRuta({
     required String rutaId,
-    required String fecha,
   });
   Future<dynamic> revertirPago({required String idPago});
 }
@@ -51,12 +49,10 @@ class PagoServiceImpl implements PagoService {
   @override
   Future<List<PagoRutaModel>> pagosRuta({
     required String rutaId,
-    required String fecha,
   }) async {
     try {
       final r = await apiClient.dio.get(
         "/pago/ruta/$rutaId",
-        queryParameters: {"fechaOperacion": fecha},
       );
       return List<PagoRutaModel>.from(
         (r.data["data"] as List).map((x) => PagoRutaModel.fromJson(x)),
@@ -71,12 +67,10 @@ class PagoServiceImpl implements PagoService {
   @override
   Future<List<NoPagoRutaModel>> noPagosRuta({
     required String rutaId,
-    required String fecha,
   }) async {
     try {
       final r = await apiClient.dio.get(
         "/pago/no-pago/ruta/$rutaId",
-        queryParameters: {"fechaOperacion": fecha},
       );
       return List<NoPagoRutaModel>.from(
         (r.data["data"] as List).map((x) => NoPagoRutaModel.fromJson(x)),

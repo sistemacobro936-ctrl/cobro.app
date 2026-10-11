@@ -254,6 +254,7 @@ class PrestamoCubit extends Cubit<PrestamoState> {
             .where((e) => e.esPasada)
             .map(
               (e) => PagoDto(
+                cajaId: "",
                 prestamoId: "",
                 valor: e.monto.toInt(),
                 fechaPago: e.fechaCobro,
