@@ -22,6 +22,13 @@ abstract class ClienteService {
   /// Mueve al cliente a esa posición dentro de su ruta; el backend reacomoda
   /// el orden de los demás clientes de la misma ruta
   Future<dynamic> reordenar({required String id, required int orden});
+
+  /// ACTIVO, INACTIVO o CLAVO (solo administradores)
+  Future<dynamic> cambiarEstado({
+    required String id,
+    required String estado,
+    String? motivo,
+  });
 }
 
 class ClienteServiceImpl implements ClienteService {
@@ -100,6 +107,28 @@ class ClienteServiceImpl implements ClienteService {
         data: {"orden": orden},
       );
 
+      return response.data;
+    } on DioException catch (e) {
+      throw ServerExceptions(message: e.response!.data["message"]);
+    } catch (e) {
+      throw Exception("Error inesperado");
+    }
+  }
+
+  @override
+  Future<dynamic> cambiarEstado({
+    required String id,
+    required String estado,
+    String? motivo,
+  }) async {
+    try {
+      final response = await apiClient.dio.patch(
+        '/cliente/$id/estado',
+        data: {
+          "estado": estado,
+          if (motivo != null && motivo.trim().isNotEmpty) "motivo": motivo,
+        },
+      );
       return response.data;
     } on DioException catch (e) {
       throw ServerExceptions(message: e.response!.data["message"]);

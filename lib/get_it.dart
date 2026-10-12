@@ -1,3 +1,6 @@
+import 'package:personal/src/data/repository/mora_repo_impl.dart';
+import 'package:personal/src/data/services/mora_service.dart';
+import 'package:personal/src/domain/repository/mora_repo.dart';
 import 'package:personal/src/data/repository/solicitud_cliente_repo_impl.dart';
 import 'package:personal/src/data/services/solicitud_cliente_service.dart';
 import 'package:personal/src/domain/repository/solicitud_cliente_repo.dart';
@@ -81,6 +84,14 @@ void initDep() {
 
   sl.registerLazySingleton<ClienteService>(
     () => ClienteServiceImpl(apiClient: sl()),
+  );
+
+  // MORA
+
+  sl.registerLazySingleton<MoraRepo>(() => MoraRepoImpl(moraService: sl()));
+
+  sl.registerLazySingleton<MoraService>(
+    () => MoraServiceImpl(apiClient: sl()),
   );
 
   // SOLICITUD DE CLIENTE

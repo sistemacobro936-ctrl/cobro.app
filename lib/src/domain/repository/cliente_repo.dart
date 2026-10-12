@@ -16,4 +16,10 @@ abstract class ClienteRepository {
     required String id,
     required int orden,
   });
+
+  Future<Either<Failure, dynamic>> cambiarEstado({
+    required String id,
+    required String estado,
+    String? motivo,
+  });
 }

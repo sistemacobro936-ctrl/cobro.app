@@ -93,6 +93,26 @@ class ClienteRepoImpl implements ClienteRepository {
   }
 
   @override
+  Future<Either<Failure, dynamic>> cambiarEstado({
+    required String id,
+    required String estado,
+    String? motivo,
+  }) async {
+    try {
+      final response = await clienteService.cambiarEstado(
+        id: id,
+        estado: estado,
+        motivo: motivo,
+      );
+      return Right(response);
+    } on ServerExceptions catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: "Error inesperado: $e"));
+    }
+  }
+
+  @override
   Future<Either<Failure, ClienteEntity>> buscar({required String q}) async {
     try {
       final response = await clienteService.buscar(q: q);

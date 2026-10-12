@@ -10,6 +10,9 @@ class HomeState extends Equatable {
   final bool loadingDashboard;
   final bool errorDashboard;
 
+  /// Los préstamos más atrasados y el resumen por nivel de mora
+  final AtrasadosPageEntity? atrasados;
+
   const HomeState({
     required this.context,
     this.currentIndex = 0,
@@ -19,6 +22,7 @@ class HomeState extends Equatable {
     this.dashboard,
     this.loadingDashboard = false,
     this.errorDashboard = false,
+    this.atrasados,
   });
 
   @override
@@ -31,6 +35,7 @@ class HomeState extends Equatable {
     dashboard,
     loadingDashboard,
     errorDashboard,
+    atrasados,
   ];
   HomeState copyWith({
     BuildContext? context,
@@ -41,6 +46,7 @@ class HomeState extends Equatable {
     DashboardEntity? dashboard,
     bool? loadingDashboard,
     bool? errorDashboard,
+    AtrasadosPageEntity? atrasados,
   }) {
     return HomeState(
       context: context ?? this.context,
@@ -51,6 +57,7 @@ class HomeState extends Equatable {
       dashboard: dashboard ?? this.dashboard,
       loadingDashboard: loadingDashboard ?? this.loadingDashboard,
       errorDashboard: errorDashboard ?? this.errorDashboard,
+      atrasados: atrasados ?? this.atrasados,
     );
   }
 }

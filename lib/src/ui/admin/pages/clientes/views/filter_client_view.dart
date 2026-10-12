@@ -16,6 +16,7 @@ class FilterClientView extends StatelessWidget {
     '': 'Todos',
     'ACTIVO': 'Activos',
     'INACTIVO': 'Inactivos',
+    'CLAVO': 'Clavos',
   };
 
   @override

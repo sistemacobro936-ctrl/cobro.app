@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/src/common/utils/contact_util.dart';
 import 'package:personal/src/ui/admin/pages/clientes/cubit/cliente_cubit.dart';
-import 'package:personal/src/ui/admin/pages/clientes/views/status_cliente_view.dart';
+import 'package:personal/src/ui/mora/mora_widgets.dart';
 
 class ClientCardView extends StatelessWidget {
   const ClientCardView({
@@ -13,7 +13,7 @@ class ClientCardView extends StatelessWidget {
     required this.route,
     required this.phone,
     required this.balance,
-    required this.active,
+    required this.estado,
     required this.id,
     this.orden=0,
     this.dragIndex,
@@ -26,7 +26,8 @@ class ClientCardView extends StatelessWidget {
   final String route;
   final String phone;
   final String balance;
-  final bool active;
+  /// ACTIVO, INACTIVO o CLAVO
+  final String estado;
   final int orden;
 
   /// Posición dentro del ReorderableListView; con esto la mano actúa como
@@ -107,7 +108,7 @@ class ClientCardView extends StatelessWidget {
 
                     const SizedBox(width: 6),
 
-                    StatusClienteView(active: active),
+                    EstadoClienteChip(estado: estado),
                   ],
                 ),
 

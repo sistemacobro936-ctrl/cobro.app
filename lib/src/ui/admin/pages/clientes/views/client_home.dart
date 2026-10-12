@@ -87,7 +87,7 @@ class ClientHome extends StatelessWidget {
                               route: _nombreRuta(state.rutas, cl.rutaId),
                               phone: cl.telefono,
                               balance: '\$${cl.totalPrestado}',
-                              active: cl.estado != 'INACTIVO',
+                              estado: cl.estado,
                             ),
                           );
                         },
@@ -131,7 +131,7 @@ class ClientHome extends StatelessWidget {
                                   route: _nombreRuta(state.rutas, cl.rutaId),
                                   phone: cl.telefono,
                                   balance: '\$${cl.totalPrestado}',
-                                  active: cl.estado != 'INACTIVO',
+                                  estado: cl.estado,
                                 ),
                               ),
                             ),

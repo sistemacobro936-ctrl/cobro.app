@@ -1,3 +1,4 @@
+import 'package:personal/src/ui/mora/rangos_mora_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/src/common/theme/theme.dart';
@@ -69,6 +70,20 @@ class _ConfigPageState extends State<ConfigPage> {
                           const SizedBox(height: 24),
 
                           // ==================================================
+                          // MORA (se guarda en su propia pantalla)
+                          // ==================================================
+                          _sectionTitle(
+                            icon: Icons.warning_amber_rounded,
+                            title: 'Mora',
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          _moraCard(),
+
+                          const SizedBox(height: 28),
+
+                          // ==================================================
                           // DÍAS
                           // ==================================================
                           _sectionTitle(
@@ -131,7 +146,7 @@ class _ConfigPageState extends State<ConfigPage> {
                             child: BtnWidget.btn(
                               text: 'Guardar configuración',
                               icon: Icons.check_rounded,
-                              onPressed: (){
+                              onPressed: () {
                                 _configCubit.actualizarConfiguracion();
                               },
                               enabled: true,
@@ -196,6 +211,54 @@ class _ConfigPageState extends State<ConfigPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // MORA
+  // ============================================================
+
+  Widget _moraCard() {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const RangosMoraPage()),
+        ),
+        child: const Padding(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(Icons.palette_outlined, color: Color(0xFF7B8494)),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Rangos de días de atraso',
+                      style: TextStyle(
+                        color: Color(0xFF202838),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Define los días y el color con que se identifican los '
+                      'clientes atrasados.',
+                      style: TextStyle(color: Color(0xFF929BAB)),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: Color(0xFFB0B6C0)),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -305,10 +368,7 @@ class _ConfigPageState extends State<ConfigPage> {
                     Expanded(
                       child: Text(
                         _daysDescription(days),
-                        style: const TextStyle(
-                          color: Color(0xFF687386),
-                          fontSize: 13,
-                        ),
+                        style: const TextStyle(color: Color(0xFF687386)),
                       ),
                     ),
                   ],
@@ -351,7 +411,7 @@ class _ConfigPageState extends State<ConfigPage> {
 
         Text(
           name.substring(0, 3),
-          style: const TextStyle(color: Color(0xFF929BAB), fontSize: 8),
+          style: const TextStyle(color: Color(0xFF929BAB)),
         ),
       ],
     );
@@ -423,7 +483,6 @@ class _ConfigPageState extends State<ConfigPage> {
       ),
     );
   }
-
 
   Widget _periodCard(SCobroEntity periodo) {
     return Container(
@@ -520,8 +579,6 @@ class _ConfigPageState extends State<ConfigPage> {
       ],
     );
   }
-
-
 }
 
 class PeriodoCobro {

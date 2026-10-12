@@ -4,9 +4,12 @@ import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/money_util.dart';
 import 'package:personal/src/domain/entities/dashboard_entity.dart';
+import 'package:personal/src/domain/entities/mora_entity.dart';
 import 'package:personal/src/ui/admin/pages/home/cubit/home_cubit.dart';
 import 'package:personal/src/ui/admin/pages/home/views/actividad_item.dart';
 import 'package:personal/src/ui/admin/pages/home/views/actividad_page.dart';
+import 'package:personal/src/ui/mora/atrasados_page.dart';
+import 'package:personal/src/ui/mora/mora_widgets.dart';
 import 'package:personal/src/ui/solicitudes/solicitudes_page.dart';
 import 'package:personal/src/ui/widgets/widgets.dart';
 
@@ -107,6 +110,18 @@ class ResumeHomeView extends StatelessWidget {
         const SizedBox(height: 14),
 
         _portfolioCard(d.cartera),
+
+        const SizedBox(height: 28),
+
+        _sectionTitle(
+          title: 'Clientes atrasados',
+          action: 'Ver todo',
+          onAction: () => _abrirAtrasados(context),
+        ),
+
+        const SizedBox(height: 14),
+
+        _atrasados(context),
 
         const SizedBox(height: 28),
 
@@ -325,6 +340,201 @@ class ResumeHomeView extends StatelessWidget {
     );
   }
 
+  // ============================================================
+  // CLIENTES ATRASADOS
+  // ============================================================
+
+  Future<void> _abrirAtrasados(
+    BuildContext context, {
+    int? nivel,
+    bool soloClavos = false,
+  }) async {
+    final home = context.read<HomeCubit>();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AtrasadosPage(nivel: nivel, soloClavos: soloClavos),
+      ),
+    );
+    // Pudo cambiar el estado de algún cliente
+    home.cargarAtrasados();
+  }
+
+  Widget _atrasados(BuildContext context) {
+    final atrasados = context.watch<HomeCubit>().state.atrasados;
+    if (atrasados == null) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(child: CircularProgressIndicator.adaptive()),
+      );
+    }
+
+    return _resumenMora(context, atrasados.resumen);
+  }
+
+  /// Tarjeta con la proporción por nivel y una fila por nivel (más Clavos);
+  /// tocar una fila abre la lista filtrada
+  Widget _resumenMora(BuildContext context, ResumenMoraEntity resumen) {
+    final total = resumen.total;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '$total',
+                style: const TextStyle(
+                  fontSize: 27,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1D2433),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 5),
+                child: Text(
+                  total == 1 ? 'préstamo vencido' : 'préstamos vencidos',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF7B8494),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Barra con la proporción de cada nivel
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: SizedBox(
+              height: 8,
+              child: total == 0
+                  ? Container(color: const Color(0xFFEDEFF3))
+                  : Row(
+                      children: [
+                        for (final n in resumen.niveles)
+                          if (n.cantidad > 0)
+                            Expanded(
+                              flex: n.cantidad,
+                              child: Container(color: n.color),
+                            ),
+                      ],
+                    ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final n in resumen.niveles)
+            _filaNivel(
+              color: n.color,
+              titulo: n.etiqueta,
+              subtitulo: '${n.textoDias} · ${MoneyUtil.format(n.saldo)}',
+              cantidad: n.cantidad,
+              onTap: () => _abrirAtrasados(context, nivel: n.indice),
+            ),
+          const Divider(height: 8),
+          _filaNivel(
+            color: colorClavo,
+            titulo: 'Clientes clavo',
+            subtitulo: 'Marcados, con préstamo vencido',
+            cantidad: resumen.clavos,
+            onTap: () => _abrirAtrasados(context, soloClavos: true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _filaNivel({
+    required Color color,
+    required String titulo,
+    required String subtitulo,
+    required int cantidad,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    titulo,
+                    style: const TextStyle(
+                      color: Color(0xFF1D2433),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitulo,
+                    style: const TextStyle(
+                      color: Color(0xFF7B8494),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              constraints: const BoxConstraints(minWidth: 32),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: cantidad > 0
+                    ? color.withValues(alpha: .15)
+                    : const Color(0xFFF1F2F4),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                '$cantidad',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: cantidad > 0
+                      ? Color.lerp(color, Colors.black, .4)
+                      : const Color(0xFF9AA2AF),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFFB0B6C0),
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _statCard({
     required IconData icon,
     required Color iconColor,
@@ -419,7 +629,7 @@ class ResumeHomeView extends StatelessWidget {
               const Expanded(
                 child: Text(
                   'Dinero en circulación',
-                  style: TextStyle(color: Colors.white70, ),
+                  style: TextStyle(color: Colors.white70),
                 ),
               ),
             ],
@@ -445,7 +655,7 @@ class ResumeHomeView extends StatelessWidget {
                   'Cumplimiento del día · esperado ${MoneyUtil.format(c.cobroEsperadoHoy)}',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white60, ),
+                  style: const TextStyle(color: Colors.white60),
                 ),
               ),
               Text(
@@ -510,7 +720,6 @@ class ResumeHomeView extends StatelessWidget {
       ),
     );
   }
-
 
   // ============================================================
   // ACTIVIDAD

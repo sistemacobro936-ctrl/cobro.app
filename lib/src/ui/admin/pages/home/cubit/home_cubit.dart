@@ -8,8 +8,10 @@ import 'package:personal/src/domain/dto/no_pago_dto.dart';
 import 'package:personal/src/domain/dto/pago_dto.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
 import 'package:personal/src/domain/entities/dashboard_entity.dart';
+import 'package:personal/src/domain/entities/mora_entity.dart';
 import 'package:personal/src/domain/repository/caja_repo.dart';
 import 'package:personal/src/domain/repository/dashboard_repo.dart';
+import 'package:personal/src/domain/repository/mora_repo.dart';
 import 'package:personal/src/domain/repository/pago_repo.dart';
 import 'package:personal/src/domain/repository/presamo_repo.dart';
 
@@ -23,6 +25,7 @@ class HomeCubit extends Cubit<HomeState> {
   final _dashboardRepo = sl<DashboardRepo>();
   final _prestamoRepo = sl<PresamoRepo>();
   final _cajaRepo = sl<CajaRepo>();
+  final _moraRepo = sl<MoraRepo>();
 
   ///Constructor
   HomeCubit({required BuildContext context})
@@ -60,6 +63,7 @@ class HomeCubit extends Cubit<HomeState> {
   ///
   ///
   Future<void> cargarDashboard() async {
+    cargarAtrasados();
     emit(state.copyWith(loadingDashboard: true, errorDashboard: false));
     final r = await _dashboardRepo.resumen(
       fecha: DateUtil.formatDate(DateTime.now()),
@@ -72,6 +76,13 @@ class HomeCubit extends Cubit<HomeState> {
       (d) => emit(state.copyWith(dashboard: d)),
     );
     emit(state.copyWith(loadingDashboard: false));
+  }
+
+  /// Los 5 más atrasados y los contadores por nivel; se calcula al día
+  Future<void> cargarAtrasados() async {
+    final r = await _moraRepo.atrasados(limit: 5);
+    if (isClosed) return;
+    r.fold((_) {}, (p) => emit(state.copyWith(atrasados: p)));
   }
 
   Future<bool> pagar({required String id, required int monto}) async {
