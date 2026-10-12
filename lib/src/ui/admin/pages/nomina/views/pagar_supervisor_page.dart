@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/money_util.dart';
+import 'package:personal/src/domain/entities/nomina_entity.dart';
 import 'package:personal/src/ui/admin/pages/nomina/cubit/pagar_supervisor_cubit.dart';
 import 'package:personal/src/ui/admin/pages/nomina/nomina_util.dart';
 import 'package:personal/src/ui/admin/pages/nomina/views/nomina_widgets.dart';
@@ -58,17 +59,48 @@ class _PagarSupervisorView extends StatelessWidget {
                     const SizedBox(height: 6),
                     const Text(
                       'Por ahora solo se listan administradores: falta un endpoint que liste supervisores.',
-                      style: TextStyle(color: nominaGris, fontSize: 12),
+                      style: TextStyle(color: nominaGris),
                     ),
                     const SizedBox(height: 14),
-                    ConceptoSelector(
-                      value: state.concepto,
-                      otroController: c.conceptoOtroTxt,
-                      onChanged: c.cambiarConcepto,
-                      errorOtro: state.errorConcepto,
-                      etiquetaNomina: conceptoSupervisor,
-                      enabled: !bloqueado,
+                    SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<ConceptoCalculo>(
+                        segments: const [
+                          ButtonSegment(
+                            value: ConceptoCalculo.nomina,
+                            icon: Icon(Icons.payments_outlined),
+                            label: Text('Nómina'),
+                          ),
+                          ButtonSegment(
+                            value: ConceptoCalculo.seguro,
+                            icon: Icon(Icons.shield_outlined),
+                            label: Text('Seguro'),
+                          ),
+                        ],
+                        selected: {state.tipo},
+                        onSelectionChanged: bloqueado
+                            ? null
+                            : (s) => c.cambiarTipo(s.first),
+                      ),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      state.seguro
+                          ? 'Retiro de seguro: cada parte sale de los seguros de su ruta.'
+                          : 'Cada parte sale del capital de su ruta.',
+                      style: const TextStyle(color: nominaGris),
+                    ),
+                    if (!state.seguro) ...[
+                      const SizedBox(height: 14),
+                      ConceptoSelector(
+                        value: state.concepto,
+                        otroController: c.conceptoOtroTxt,
+                        onChanged: c.cambiarConcepto,
+                        errorOtro: state.errorConcepto,
+                        etiquetaNomina: conceptoSupervisor,
+                        enabled: !bloqueado,
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     FechaPagoTile(
                       fecha: state.fecha,
@@ -174,16 +206,13 @@ class _PagarSupervisorView extends StatelessWidget {
 
   Future<void> _pagar(BuildContext context, PagarSupervisorCubit c) async {
     if (!c.validar()) return;
-    final sinCapital = c.rutasSinCapital;
+    // En seguro, validar() ya bloquea si no alcanza; en nómina solo se avisa
+    final sinCapital = c.state.seguro ? const <String>[] : c.rutasSinSaldo;
 
     final ok = await confirmarPagoNomina(
       context,
       empleado: c.state.empleado?.nombre ?? '',
-      concepto: textoConcepto(
-        c.state.concepto,
-        c.conceptoOtroTxt.text,
-        porDefecto: conceptoSupervisor,
-      )!,
+      concepto: c.conceptoPago,
       repartos: c.desglose,
       advertencias: [
         if (sinCapital.isNotEmpty)
@@ -280,6 +309,8 @@ class _FilaRepartoView extends StatelessWidget {
               label: 'Ruta',
               helperText: ruta == null
                   ? null
+                  : state.seguro
+                  ? 'Seguros ${MoneyUtil.format(ruta.seguros)}'
                   : 'Capital ${MoneyUtil.format(ruta.capital)}',
             ),
             items: opciones

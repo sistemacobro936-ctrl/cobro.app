@@ -231,7 +231,7 @@ class PagarCobradorCubit extends Cubit<PagarCobradorState> {
       ? 'Seguro'
       : textoConcepto(state.concepto, conceptoOtroTxt.text)!;
 
-  /// Nómina y seguro se pagan igual: pago de nómina que sale del capital
+  /// Nómina sale del capital de la ruta; seguro, de los seguros de la ruta
   Future<void> pagar(RutaCalculoNominaEntity ruta, int valor) async {
     emit(state.copyWith(pagando: ruta.rutaId));
     final r = await _nominaRepo.pagarCobrador(
@@ -239,7 +239,8 @@ class PagarCobradorCubit extends Cubit<PagarCobradorState> {
         rutaId: ruta.rutaId,
         empleadoId: state.empleadoId!,
         valor: valor,
-        concepto: conceptoPago.toUpperCase(),
+        tipo: state.tipo,
+        concepto: conceptoPago,
         observacion: observacionTxt.text.trim(),
         fechaPago: state.fecha,
       ),

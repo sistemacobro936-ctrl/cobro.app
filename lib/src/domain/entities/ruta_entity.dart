@@ -14,6 +14,9 @@ class DatumREntity {
   final String nombre;
   final String descripcion;
   final int capital;
+
+  /// Seguros (boletas) acumulados en la ruta
+  final int seguros;
   final bool habilitada;
   final DatumCEntity? cobrador;
   final List<DatumCajaEntity>? gestionRuta;
@@ -27,6 +30,7 @@ class DatumREntity {
     required this.descripcion,
     required this.habilitada,
     required this.capital,
+    this.seguros = 0,
     required this.cobrador,
     required this.cantidadClientes,
     required this.createdAt,

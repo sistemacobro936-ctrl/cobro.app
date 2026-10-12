@@ -18,6 +18,7 @@ class DatumRModel extends DatumREntity {
   DatumRModel({
     required super.id,
     required super.capital,
+    super.seguros,
     required super.nombre,
     required super.descripcion,
     required super.habilitada,
@@ -32,6 +33,7 @@ class DatumRModel extends DatumREntity {
     id: json["id"] ?? "",
     nombre: json["nombre"] ?? "",
     capital: json["capital"] ?? 0,
+    seguros: json["seguros"] ?? 0,
     descripcion: json["descripcion"] ?? "",
     habilitada: json["habilitada"] ?? false,
     cobrador: json["cobrador"] == null

@@ -1,9 +1,15 @@
 import 'package:personal/src/common/utils/date_util.dart';
+import 'package:personal/src/domain/entities/nomina_entity.dart';
 
 class PagoNominaCobradorDto {
   final String rutaId;
   final String empleadoId;
   final int valor;
+
+  /// De dónde sale: NOMINA (capital de la ruta) o SEGURO (seguros de la ruta)
+  final ConceptoCalculo tipo;
+
+  /// Texto del pago (Nómina, Prima, Seguro...); se envía como `descripcion`
   final String? concepto;
   final String? observacion;
   final DateTime? fechaPago;
@@ -12,6 +18,7 @@ class PagoNominaCobradorDto {
     required this.rutaId,
     required this.empleadoId,
     required this.valor,
+    required this.tipo,
     this.concepto,
     this.observacion,
     this.fechaPago,
@@ -21,7 +28,8 @@ class PagoNominaCobradorDto {
     "rutaId": rutaId,
     "empleadoId": empleadoId,
     "valor": valor,
-    if (concepto != null && concepto!.isNotEmpty) "concepto": concepto,
+    "concepto": tipo.api,
+    if (concepto != null && concepto!.isNotEmpty) "descripcion": concepto,
     if (observacion != null && observacion!.isNotEmpty)
       "observacion": observacion,
     if (fechaPago != null) "fechaPago": DateUtil.formatDate(fechaPago!),
@@ -40,6 +48,11 @@ class RepartoNominaDto {
 class PagoNominaSupervisorDto {
   final String empleadoId;
   final List<RepartoNominaDto> repartos;
+
+  /// De dónde sale cada reparto: NOMINA (capital) o SEGURO (seguros)
+  final ConceptoCalculo tipo;
+
+  /// Texto del pago; se envía como `descripcion`
   final String? concepto;
   final String? observacion;
   final DateTime? fechaPago;
@@ -47,6 +60,7 @@ class PagoNominaSupervisorDto {
   PagoNominaSupervisorDto({
     required this.empleadoId,
     required this.repartos,
+    required this.tipo,
     this.concepto,
     this.observacion,
     this.fechaPago,
@@ -55,7 +69,8 @@ class PagoNominaSupervisorDto {
   Map<String, dynamic> toJson() => {
     "empleadoId": empleadoId,
     "repartos": repartos.map((r) => r.toJson()).toList(),
-    if (concepto != null && concepto!.isNotEmpty) "concepto": concepto,
+    "concepto": tipo.api,
+    if (concepto != null && concepto!.isNotEmpty) "descripcion": concepto,
     if (observacion != null && observacion!.isNotEmpty)
       "observacion": observacion,
     if (fechaPago != null) "fechaPago": DateUtil.formatDate(fechaPago!),

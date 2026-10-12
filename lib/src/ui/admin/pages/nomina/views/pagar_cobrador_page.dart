@@ -94,7 +94,7 @@ class _PagarCobradorView extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         seguro
-                            ? 'Su parte de la boleta. Sale del capital de la ruta.'
+                            ? 'Su parte de la boleta. Sale de los seguros de la ruta.'
                             : 'Su sueldo: tú digitas el valor. Sale del capital de la ruta.',
                       ),
                       if (seguro && state.empleado != null) ...[

@@ -87,6 +87,7 @@ enum ConceptoNomina { nomina, prima, otro }
 const conceptoNomina = 'Nómina';
 const conceptoPrima = 'Prima';
 const conceptoSupervisor = 'Nómina - Supervisor';
+const conceptoSeguroSupervisor = 'Seguro - Supervisor';
 
 /// Texto del concepto a enviar; [porDefecto] cuando es nómina
 String? textoConcepto(

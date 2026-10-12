@@ -6,6 +6,7 @@ import 'package:personal/src/common/shared/shared.dart';
 import 'package:personal/src/common/utils/app_dialog_util.dart';
 import 'package:personal/src/common/utils/money_util.dart';
 import 'package:personal/src/domain/dto/nomina_dto.dart';
+import 'package:personal/src/domain/entities/nomina_entity.dart';
 import 'package:personal/src/domain/entities/ruta_entity.dart';
 import 'package:personal/src/domain/repository/negocio_repo.dart';
 import 'package:personal/src/domain/repository/nomina_repo.dart';
@@ -67,6 +68,12 @@ class PagarSupervisorCubit extends Cubit<PagarSupervisorState> {
   ///
   void seleccionarEmpleado(String? id) {
     if (id != null) emit(state.copyWith(empleadoId: id));
+  }
+
+  /// Nómina (capital) o Seguro (retiro de los seguros de cada ruta)
+  void cambiarTipo(ConceptoCalculo t) {
+    if (t == state.tipo) return;
+    emit(state.copyWith(tipo: t, errorRepartos: ''));
   }
 
   void cambiarConcepto(ConceptoNomina c) =>
@@ -162,13 +169,21 @@ class PagarSupervisorCubit extends Cubit<PagarSupervisorState> {
       (f) => f.rutaId != null && (f.valor ?? 0) >= 1,
     );
 
+    // Del seguro no se puede sacar más de lo que hay (el backend lo rechaza)
+    final sinSeguros = state.seguro ? rutasSinSaldo : const <String>[];
+
     emit(
       state.copyWith(
-        errorConcepto: state.concepto == ConceptoNomina.otro && otro.isEmpty
+        errorConcepto:
+            !state.seguro &&
+                state.concepto == ConceptoNomina.otro &&
+                otro.isEmpty
             ? 'Ingresa el concepto'
             : '',
         errorRepartos: _filas.isEmpty || !filasValidas
             ? 'Cada reparto necesita una ruta y un valor mayor a 0'
+            : sinSeguros.isNotEmpty
+            ? 'Los seguros no alcanzan en: ${sinSeguros.join(', ')}'
             : '',
       ),
     );
@@ -184,14 +199,24 @@ class PagarSupervisorCubit extends Cubit<PagarSupervisorState> {
   List<(String, int)> get desglose =>
       _filas.map((f) => (state.nombreRuta(f.rutaId), f.valor ?? 0)).toList();
 
-  /// Rutas cuyo capital conocido queda negativo con este pago
-  List<String> get rutasSinCapital => _filas
+  /// Rutas cuyo disponible (capital o seguros, según el tipo) no alcanza
+  /// para lo que se les asigna
+  List<String> get rutasSinSaldo => _filas
       .where((f) {
         final ruta = state.rutas.where((r) => r.id == f.rutaId).firstOrNull;
-        return ruta != null && (f.valor ?? 0) > ruta.capital;
+        return ruta != null && (f.valor ?? 0) > state.disponibleRuta(ruta);
       })
       .map((f) => state.nombreRuta(f.rutaId))
       .toList();
+
+  /// Texto del pago: en seguro es fijo; en nómina, Nómina/Prima/Otro
+  String get conceptoPago => state.seguro
+      ? conceptoSeguroSupervisor
+      : textoConcepto(
+          state.concepto,
+          conceptoOtroTxt.text,
+          porDefecto: conceptoSupervisor,
+        )!;
 
   Future<void> pagar() async {
     emit(state.copyWith(loadingBtn: true));
@@ -202,11 +227,8 @@ class PagarSupervisorCubit extends Cubit<PagarSupervisorState> {
         repartos: _filas
             .map((f) => RepartoNominaDto(rutaId: f.rutaId!, valor: f.valor!))
             .toList(),
-        concepto: textoConcepto(
-          state.concepto,
-          conceptoOtroTxt.text,
-          porDefecto: conceptoSupervisor,
-        ),
+        tipo: state.tipo,
+        concepto: conceptoPago,
         observacion: observacionTxt.text.trim(),
         fechaPago: state.fecha,
       ),
@@ -228,10 +250,10 @@ class PagarSupervisorCubit extends Cubit<PagarSupervisorState> {
     AppDialogUtil.success(
       state.context,
       message:
-          'Se registró el pago de ${MoneyUtil.format(pago.totalPagado)} repartido en ${pago.pagos.length} ${pago.pagos.length == 1 ? 'ruta' : 'rutas'}.',
+          'Se registró el pago de ${state.seguro ? 'seguro ' : ''}${MoneyUtil.format(pago.totalPagado)} repartido en ${pago.pagos.length} ${pago.pagos.length == 1 ? 'ruta' : 'rutas'}.',
     );
 
-    // El capital de las rutas cambió
+    // El capital o los seguros de las rutas cambiaron
     final rutas = await _rutaRepo.listar();
     if (isClosed) return;
     rutas.fold((_) {}, (r) {
