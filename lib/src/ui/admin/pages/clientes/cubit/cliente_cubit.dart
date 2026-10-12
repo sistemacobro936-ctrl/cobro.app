@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/get_it.dart';
+import 'package:personal/src/common/error/failures.dart';
 import 'package:personal/src/common/shared/shared.dart';
 import 'package:personal/src/common/utils/app_dialog_util.dart';
 import 'package:personal/src/common/utils/update_util.dart';
@@ -65,8 +66,13 @@ class ClienteCubit extends Cubit<ClienteState> {
   ///Peticiones
   ///
   ///
-  /// Carga las rutas y muestra los clientes de la primera
+  /// Carga las rutas y muestra los clientes de la primera. Si el inicio pidió
+  /// un estado (p. ej. los pendientes de aprobación), se listan los de todas
+  /// las rutas con ese estado.
   Future<void> iniciar() async {
+    final estadoInicial =
+        state.context.read<HomeCubit>().tomarFiltroEstadoClientes();
+
     var rutas = Shared.getRutas;
     if (rutas == null) {
       final r = await _rutaRepo.listar();
@@ -82,7 +88,9 @@ class ClienteCubit extends Cubit<ClienteState> {
       state.copyWith(
         rutas: lista,
         // Sin rutas se listan todos los clientes ('')
-        filtroRutaId: lista.isEmpty ? '' : lista.first.id,
+        filtroRutaId:
+            lista.isEmpty || estadoInicial != null ? '' : lista.first.id,
+        filtroEstado: estadoInicial,
       ),
     );
     await cargarClientes();
@@ -98,6 +106,7 @@ class ClienteCubit extends Cubit<ClienteState> {
   Future<void> cargarClientes() async {
     final id = ++_solicitud;
     final ruta = state.filtroRutaId ?? '';
+    final estado = state.filtroEstado.isEmpty ? null : state.filtroEstado;
 
     emit(
       state.copyWith(
@@ -110,11 +119,12 @@ class ClienteCubit extends Cubit<ClienteState> {
     );
 
     final r = ruta.isEmpty
-        ? await _clienteRepo.listar()
+        ? await _clienteRepo.listar(estado: estado)
         : await _clienteRepo.clientesPorRuta(
             idRuta: ruta,
             page: 1,
             limit: _limit,
+            estado: estado,
           );
     if (isClosed || id != _solicitud) return;
 
@@ -124,7 +134,8 @@ class ClienteCubit extends Cubit<ClienteState> {
       },
       (r) {
         emit(state.copyWith(clientes: r.data, paginationClientes: r.pagination));
-        if (ruta.isEmpty) Shared.setClientes = r.data;
+        // El caché global es la lista completa, sin filtro de estado
+        if (ruta.isEmpty && estado == null) Shared.setClientes = r.data;
       },
     );
     emit(state.copyWith(loadingLista: false,));
@@ -149,6 +160,7 @@ class ClienteCubit extends Cubit<ClienteState> {
       idRuta: ruta,
       page: pagination.page + 1,
       limit: _limit,
+      estado: state.filtroEstado.isEmpty ? null : state.filtroEstado,
     );
     if (isClosed || id != _solicitud) return;
 
@@ -172,9 +184,22 @@ class ClienteCubit extends Cubit<ClienteState> {
     cargarClientes();
   }
 
+  /// Filtra la lista (y la búsqueda) por estado; '' = todos
+  void seleccionarEstado(String estado) {
+    if (estado == state.filtroEstado) return;
+    emit(state.copyWith(filtroEstado: estado));
+    if (state.busqueda.isNotEmpty) {
+      buscar(state.busqueda);
+    } else {
+      cargarClientes();
+    }
+  }
+
   Future<void> _actualizarCache() async {
-    // Con "todos" seleccionado, cargarClientes ya actualiza el caché
-    if ((state.filtroRutaId ?? '').isEmpty) return;
+    // Con "todos" y sin filtro de estado, cargarClientes ya actualiza el caché
+    if ((state.filtroRutaId ?? '').isEmpty && state.filtroEstado.isEmpty) {
+      return;
+    }
     final r = await _clienteRepo.listar();
     r.fold((l) {}, (r) => Shared.setClientes = r.data);
   }
@@ -182,6 +207,24 @@ class ClienteCubit extends Cubit<ClienteState> {
   void crearCliente(CrearClienteDto dto) async {
     emit(state.copyWith(loadingBtn: true));
     final r = await _clienteRepo.crear(dto: dto);
+    if (isClosed) return;
+
+    final failure = r.fold((l) => l, (_) => null);
+    if (failure is ServerFailure &&
+        failure.codigo == 'CLIENTE_EN_OTRO_NEGOCIO') {
+      emit(state.copyWith(loadingBtn: false));
+      final agregar = await AppDialogUtil.confirmar(
+        state.context,
+        title: 'Cliente de otro negocio',
+        message: '${failure.message}\n¿Desea agregarlo también a su negocio?',
+        confirmText: 'Agregar',
+      );
+      if (agregar && !isClosed) {
+        crearCliente(dto.copyWith(agregarExistente: true));
+      }
+      return;
+    }
+
     r.fold(
       (l) {
         AppDialogUtil.error(state.context, message: l.props[0].toString());
@@ -273,6 +316,57 @@ class ClienteCubit extends Cubit<ClienteState> {
     emit(state.copyWith(loadingLista: false));
   }
 
+  /// Aprueba un cliente que un cobrador registró siendo de otro negocio
+  Future<void> aprobarCliente(String id) async {
+    emit(state.copyWith(loadingBtn: true));
+    final r = await _clienteRepo.aprobar(id: id);
+    if (isClosed) return;
+    emit(state.copyWith(loadingBtn: false));
+
+    r.fold(
+      (l) {
+        AppDialogUtil.error(state.context, message: l.props[0].toString());
+      },
+      (_) {
+        AppDialogUtil.success(
+          state.context,
+          message: 'Cliente aprobado. Ya se le puede asignar préstamo.',
+        );
+        detalleCliente(id);
+        listClientes();
+      },
+    );
+  }
+
+  /// Rechaza (elimina) un cliente pendiente de aprobación
+  Future<void> rechazarCliente(DatumClEntity cliente) async {
+    final ok = await AppDialogUtil.confirmar(
+      state.context,
+      title: 'Rechazar cliente',
+      message:
+          'Se eliminará el registro de ${cliente.nombres} ${cliente.apellidos}. '
+          '¿Deseas continuar?',
+      confirmText: 'Rechazar',
+    );
+    if (!ok || isClosed) return;
+
+    emit(state.copyWith(loadingBtn: true));
+    final r = await _clienteRepo.rechazar(id: cliente.id);
+    if (isClosed) return;
+    emit(state.copyWith(loadingBtn: false));
+
+    r.fold(
+      (l) {
+        AppDialogUtil.error(state.context, message: l.props[0].toString());
+      },
+      (_) {
+        AppDialogUtil.success(state.context, message: 'Registro rechazado.');
+        setChild(ClientHome());
+        listClientes();
+      },
+    );
+  }
+
   void detalleCliente(String id) async {
     emit(state.copyWith(loading: true));
     final r = await _clienteRepo.obtenerCliente(id: id);
@@ -307,11 +401,15 @@ class ClienteCubit extends Cubit<ClienteState> {
     if (isClosed || id != _solicitud) return;
 
     r.fold((l) {}, (r) {
+      // La búsqueda es global; el filtro de estado se aplica aquí
+      final resultados = state.filtroEstado.isEmpty
+          ? r.data
+          : r.data.where((c) => c.estado == state.filtroEstado).toList();
       emit(
         state.copyWith(
-          clientes: r.data,
+          clientes: resultados,
           limpiarPaginacion: true,
-          filtroRutaId: _rutaParaResultados(r.data),
+          filtroRutaId: _rutaParaResultados(resultados),
         ),
       );
     });

@@ -108,8 +108,8 @@ void dialogoGasto(
                                   width: 42,
                                   height: 42,
                                   decoration: BoxDecoration(
-                                    color: AppTheme.primaryColor.withOpacity(
-                                      .10,
+                                    color: AppTheme.primaryColor.withValues(
+                                      alpha: .10,
                                     ),
                                     borderRadius: BorderRadius.circular(12),
                                   ),

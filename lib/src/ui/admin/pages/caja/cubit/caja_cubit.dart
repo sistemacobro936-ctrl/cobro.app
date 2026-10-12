@@ -57,8 +57,7 @@ class CajaCubit extends Cubit<CajaState> {
   ///
   void listarCajar({required String rutaId}) async {
     emit(state.copyWith(loading: true, showArqueo: false));
-    final fecha = DateUtil.formatDate(DateTime.now());
-    final r = await _cajaRepo.obtenerCajas(rutaId: rutaId, fecha: fecha);
+    final r = await _cajaRepo.obtenerCajas(rutaId: rutaId, );
     r.fold(
       (l) {
         emit(state.copyWith(child: AbrirCajaView(rutaId: rutaId)));
@@ -142,6 +141,7 @@ class CajaCubit extends Cubit<CajaState> {
 
     if (huboError) {
       AppDialogUtil.error(
+        // ignore: use_build_context_synchronously
         state.context,
         message: "Se presentó un error al listar los pagos y no pagos.",
       );

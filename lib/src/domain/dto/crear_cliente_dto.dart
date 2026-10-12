@@ -11,6 +11,9 @@ class CrearClienteDto {
   final String? observacion;
   final int? orden;
 
+  /// Confirma registrar en este negocio a alguien que ya es cliente de otro
+  final bool? agregarExistente;
+
   CrearClienteDto({
     this.nombres,
     this.apellidos,
@@ -23,7 +26,25 @@ class CrearClienteDto {
     this.barrio,
     this.observacion,
     this.orden,
+    this.agregarExistente,
   });
+
+  CrearClienteDto copyWith({bool? agregarExistente}) {
+    return CrearClienteDto(
+      nombres: nombres,
+      apellidos: apellidos,
+      cedula: cedula,
+      telefono: telefono,
+      whatsapp: whatsapp,
+      direccion: direccion,
+      descripcionDireccion: descripcionDireccion,
+      rutaId: rutaId,
+      barrio: barrio,
+      observacion: observacion,
+      orden: orden,
+      agregarExistente: agregarExistente ?? this.agregarExistente,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     final data = {
@@ -37,7 +58,8 @@ class CrearClienteDto {
       "rutaId": rutaId,
       "barrio": barrio,
       "observacion": observacion,
-      "orden":orden
+      "orden":orden,
+      "agregarExistente": agregarExistente,
     };
 
     data.removeWhere(

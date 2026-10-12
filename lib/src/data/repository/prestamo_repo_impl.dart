@@ -45,9 +45,9 @@ class PrestamoRepoImpl implements PresamoRepo {
   }
 
   @override
-  Future<Either<Failure, PrestamoEntity>> listar() async {
+  Future<Either<Failure, PrestamoEntity>> listar({String? estado}) async {
     try {
-      final response = await prestamoService.listar();
+      final response = await prestamoService.listar(estado: estado);
 
       return Right(response);
     } on ServerExceptions catch (e) {

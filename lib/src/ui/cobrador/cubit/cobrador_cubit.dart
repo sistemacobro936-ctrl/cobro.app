@@ -4,6 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:personal/get_it.dart';
+import 'package:personal/src/common/error/failures.dart';
 import 'package:personal/src/common/shared/shared.dart';
 import 'package:personal/src/common/utils/app_dialog_util.dart';
 import 'package:personal/src/common/utils/date_util.dart';
@@ -286,7 +287,18 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     });
 
     if (match == null) {
-      if (!isClosed) emit(state.copyWith(buscando: false));
+      // No es cliente del negocio. Si lo es de otro, se ofrece registrarlo
+      // aquí (pendiente de aprobación) con sus nombres ya cargados.
+      final enOtroNegocio = r.fold((l) => null, (res) => res.enOtroNegocio);
+
+      if (enOtroNegocio != null) {
+        nombresClienteController.text = enOtroNegocio.nombres;
+        apellidosClienteController.text = enOtroNegocio.apellidos;
+      }
+
+      if (!isClosed) {
+        emit(state.copyWith(buscando: false, enOtroNegocio: enOtroNegocio));
+      }
       return;
     }
 
@@ -587,7 +599,34 @@ class CobradorRCubit extends Cubit<CobradorRState> {
       rutaId: ruta.id,
     );
 
-    final r = await _clienteRepo.crear(dto: dto);
+    // Si la búsqueda ya avisó que es cliente de otro negocio, se envía
+    // directamente para aprobación (el usuario ya lo vio en pantalla).
+    var r = await _clienteRepo.crear(
+      dto: state.enOtroNegocio != null
+          ? dto.copyWith(agregarExistente: true)
+          : dto,
+    );
+
+    // Ya es cliente de otro negocio: el cobrador puede enviarlo al
+    // administrador, que debe aprobarlo antes de poder prestarle
+    final failure = r.fold((l) => l, (_) => null);
+    if (failure is ServerFailure &&
+        failure.codigo == 'CLIENTE_EN_OTRO_NEGOCIO') {
+      final agregar = await AppDialogUtil.confirmar(
+        state.context,
+        title: 'Cliente de otro negocio',
+        message:
+            '${failure.message}\n\nPara agregarlo a tu negocio, el administrador '
+            'debe aprobarlo. ¿Deseas enviarlo para aprobación?',
+        confirmText: 'Enviar',
+      );
+      if (!agregar || isClosed) {
+        if (!isClosed) emit(state.copyWith(loadingBtn: false));
+        return;
+      }
+      r = await _clienteRepo.crear(dto: dto.copyWith(agregarExistente: true));
+    }
+
     final id = r.fold<String?>((l) {
       AppDialogUtil.error(state.context, message: l.props[0].toString());
       return null;
@@ -595,12 +634,24 @@ class CobradorRCubit extends Cubit<CobradorRState> {
 
     if (id != null) {
       final detalle = await _clienteRepo.obtenerCliente(id: id);
-      detalle.fold((l) {}, (cliente) => emit(state.copyWith(cliente: cliente)));
-      AppDialogUtil.success(
-        state.context,
-        message:
-            'Cliente creado con éxito. Ahora puedes asignarle el préstamo.',
-      );
+      final cliente = detalle.fold((l) => null, (cliente) => cliente);
+      if (cliente != null) emit(state.copyWith(cliente: cliente));
+
+      if (cliente?.pendienteAprobacion ?? false) {
+        AppDialogUtil.info(
+          state.context,
+          title: 'Pendiente de aprobación',
+          message:
+              'El cliente quedó registrado y pendiente de aprobación del '
+              'administrador. Podrás asignarle el préstamo cuando lo apruebe.',
+        );
+      } else {
+        AppDialogUtil.success(
+          state.context,
+          message:
+              'Cliente creado con éxito. Ahora puedes asignarle el préstamo.',
+        );
+      }
     }
 
     emit(state.copyWith(loadingBtn: false));

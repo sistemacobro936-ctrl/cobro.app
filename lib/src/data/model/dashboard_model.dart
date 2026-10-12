@@ -7,6 +7,7 @@ class DashboardModel extends DashboardEntity {
     required super.adminNombre,
     required super.adminApellido,
     required super.clientesActivos,
+    required super.clientesPendientes,
     required super.cobradores,
     required super.cartera,
     required super.actividadReciente,
@@ -24,6 +25,7 @@ class DashboardModel extends DashboardEntity {
       adminNombre: admin['nombre'] ?? '',
       adminApellido: admin['apellido'] ?? '',
       clientesActivos: resumen['clientesActivos'] ?? 0,
+      clientesPendientes: resumen['clientesPendientes'] ?? 0,
       cobradores: resumen['cobradores'] ?? 0,
       cartera: CarteraModel.fromJson(cartera),
       actividadReciente: List<ActividadEntity>.from(

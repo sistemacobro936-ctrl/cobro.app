@@ -17,6 +17,9 @@ class PrestamoState extends Equatable {
   final List<DatumPEntity>? prestamos;
   final List<CuotaEsperada>? cuotaEsperada;
   final DatumPEntity? prestamo;
+
+  /// Estado de los préstamos listados: ACTIVO, PAGADO, CANCELADO o TODOS
+  final String filtroEstado;
   const PrestamoState({
     required this.context,
     this.child = const SizedBox(),
@@ -34,6 +37,7 @@ class PrestamoState extends Equatable {
     this.prestamos,
     this.prestamo,
     this.cuotaEsperada,
+    this.filtroEstado = 'ACTIVO',
   });
 
   @override
@@ -53,7 +57,8 @@ class PrestamoState extends Equatable {
     loadingInfoCliente,
     prestamos,
     prestamo,
-    cuotaEsperada
+    cuotaEsperada,
+    filtroEstado,
   ];
   PrestamoState copyWith({
     BuildContext? context,
@@ -74,6 +79,7 @@ class PrestamoState extends Equatable {
     bool limpiarCliente = false,
     bool limpiarPeriodo = false,
     List<CuotaEsperada>? cuotaEsperada,
+    String? filtroEstado,
   }) => PrestamoState(
     context: context ?? this.context,
     listClientes: listClientes ?? this.listClientes,
@@ -92,6 +98,7 @@ class PrestamoState extends Equatable {
     loadingInfoCliente: loadingInfoCliente ?? this.loadingInfoCliente,
     prestamos: prestamos ?? this.prestamos,
     prestamo: prestamo ?? this.prestamo,
-    cuotaEsperada: cuotaEsperada ?? this.cuotaEsperada
+    cuotaEsperada: cuotaEsperada ?? this.cuotaEsperada,
+    filtroEstado: filtroEstado ?? this.filtroEstado,
   );
 }

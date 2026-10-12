@@ -16,7 +16,6 @@ class HeaderCCiew extends StatelessWidget {
     return BlocBuilder<CobradorCubit, CobradorState>(
       builder: (context, state) {
         final c = context.read<CobradorCubit>();
-        final cobradores = state.cobradores ??[];
         return HeaderWidget(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,24 +93,4 @@ class HeaderCCiew extends StatelessWidget {
     );
   }
 
-  Widget _headerMetric({required String value, required String label}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 21,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white54, fontSize: 12),
-        ),
-      ],
-    );
-  }
 }

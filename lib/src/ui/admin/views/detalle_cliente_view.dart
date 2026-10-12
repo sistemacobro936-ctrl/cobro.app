@@ -13,11 +13,15 @@ class DetalleClienteView extends StatelessWidget {
     required this.onBack,
     required this.onEdit,
     this.showEdit = false,
+    this.acciones,
   });
   final DatumClEntity cliente;
   final Function() onBack;
   final Function() onEdit;
   final bool showEdit;
+
+  /// Contenido extra bajo la cabecera (p. ej. aprobar un cliente pendiente)
+  final Widget? acciones;
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +52,11 @@ class DetalleClienteView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _clienteHeader(),
+
+            if (acciones != null) ...[
+              const SizedBox(height: 16),
+              acciones!,
+            ],
 
             const SizedBox(height: 22),
 

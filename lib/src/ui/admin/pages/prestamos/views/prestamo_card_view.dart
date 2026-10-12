@@ -19,6 +19,7 @@ class PrestamoCardView extends StatelessWidget {
     required this.id,
     required this.statusColor,
     required this.statusBackground,
+    this.cobrable = true,
   });
 
   final String client;
@@ -31,6 +32,9 @@ class PrestamoCardView extends StatelessWidget {
   final String id;
   final Color statusColor;
   final Color statusBackground;
+
+  /// Solo los préstamos activos se pueden cobrar
+  final bool cobrable;
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +87,25 @@ class PrestamoCardView extends StatelessWidget {
                               color: Color(0xFF202838),
 
                               fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusBackground,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
@@ -148,6 +171,7 @@ class PrestamoCardView extends StatelessWidget {
                 ),
               ),
 
+              if (cobrable)
               Expanded(
                 child: GestureDetector(
                   onTap: () {

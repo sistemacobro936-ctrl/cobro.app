@@ -51,7 +51,10 @@ class CrearPrestamoCobradorView extends StatelessWidget {
                 if (state.buscoAlgunaVez &&
                     !state.buscando &&
                     state.cliente == null) ...[
-                  _clienteNoEncontrado(),
+                  if (state.enOtroNegocio != null)
+                    _clienteEnOtroNegocio(state.enOtroNegocio!)
+                  else
+                    _clienteNoEncontrado(),
                   const SizedBox(height: 16),
                   _formularioClienteNuevo(c, state),
                 ],
@@ -59,7 +62,10 @@ class CrearPrestamoCobradorView extends StatelessWidget {
                 if (state.cliente != null) ...[
                   _clienteEncontrado(c, state.cliente!),
                   const SizedBox(height: 24),
-                  _FormularioPrestamo(cliente: state.cliente!),
+                  if (state.cliente!.pendienteAprobacion)
+                    _pendienteAprobacion()
+                  else
+                    _FormularioPrestamo(cliente: state.cliente!),
                 ],
               ],
             ),
@@ -183,6 +189,56 @@ class CrearPrestamoCobradorView extends StatelessWidget {
     );
   }
 
+  /// La cédula es de un cliente de otro negocio: se puede registrar aquí,
+  /// pero queda pendiente hasta que el administrador lo apruebe.
+  Widget _clienteEnOtroNegocio(ClienteEnOtroNegocioEntity info) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7E8),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF5C26B)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.storefront_outlined,
+                size: 20,
+                color: Color(0xFFB7791F),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Ya es cliente de otro negocio',
+                  style: TextStyle(
+                    color: Color(0xFF8A5A0B),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${info.nombres} ${info.apellidos} (CC ${info.cedula}) tiene '
+            'contrato con: ${info.negocios.join(', ')}.',
+            style: const TextStyle(color: Color(0xFF6B4A16)),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Puedes registrarlo en tu negocio: quedará pendiente hasta que el '
+            'administrador lo apruebe.',
+            style: TextStyle(color: Color(0xFF8A5A0B)),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ============================================================
   // Cliente no encontrado: formulario para registrarlo (propio del
   // cobrador). Si tiene más de una ruta asignada, debe elegir en cuál.
@@ -201,9 +257,11 @@ class CrearPrestamoCobradorView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Registrar cliente',
-            style: TextStyle(
+          Text(
+            state.enOtroNegocio != null
+                ? 'Registrar en tu negocio'
+                : 'Registrar cliente',
+            style: const TextStyle(
               color: Color(0xFF202838),
               fontSize: 16,
               fontWeight: FontWeight.w800,
@@ -291,7 +349,7 @@ class CrearPrestamoCobradorView extends StatelessWidget {
                         (r) => _chipRuta(
                           r,
                           selected: state.rutaClienteSeleccionada?.id == r.id,
-                          onTap: (){},
+                          onTap: () => c.onRutaClienteSeleccionada(r),
                         ),
                       )
                       .toList(),
@@ -300,8 +358,12 @@ class CrearPrestamoCobradorView extends StatelessWidget {
           const SizedBox(height: 20),
 
           BtnWidget.btn(
-            text: 'Registrar cliente',
-            icon: Icons.person_add_alt_1_rounded,
+            text: state.enOtroNegocio != null
+                ? 'Enviar para aprobación'
+                : 'Registrar cliente',
+            icon: state.enOtroNegocio != null
+                ? Icons.send_rounded
+                : Icons.person_add_alt_1_rounded,
             loading: state.loadingBtn,
             onPressed: rutas.isEmpty ? null : c.crearCliente,
             backgroundColor: AppTheme.primaryColor,
@@ -336,6 +398,40 @@ class CrearPrestamoCobradorView extends StatelessWidget {
   // ============================================================
   // Cliente encontrado: datos básicos + resumen de préstamos existentes
   // (con la ruta de cada uno), como advertencia antes de crear el nuevo.
+  // ============================================================
+  Widget _pendienteAprobacion() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF7E8),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFF5C26B)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.hourglass_top_rounded,
+            size: 20,
+            color: Color(0xFFB7791F),
+          ),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Pendiente de aprobación del administrador. '
+              'Podrás asignarle un préstamo cuando sea aprobado.',
+              style: TextStyle(
+                color: Color(0xFF8A5A0B),
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ============================================================
   Widget _clienteEncontrado(CobradorRCubit c, DatumClEntity cliente) {
     final prestamos = cliente.prestamos ?? <DatumPEntity>[];
@@ -591,7 +687,7 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
                 children: [
                   Switch(
                     value: state.aplicaSeguro,
-                    activeColor: AppTheme.primaryColor,
+                    activeThumbColor: AppTheme.primaryColor,
                     onChanged: (v) {
                       c.onAplicaSeguro(v);
                       setState(() {});

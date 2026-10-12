@@ -17,7 +17,6 @@ class HeaderClienteView extends StatelessWidget {
     return BlocBuilder<ClienteCubit, ClienteState>(
       builder: (context, state) {
         final c = context.read<ClienteCubit>();
-        final clientes = state.clientes ?? [];
         return HeaderWidget(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,24 +94,4 @@ class HeaderClienteView extends StatelessWidget {
     );
   }
 
-  Widget _metric({required String value, required String label}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 19,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white54, fontSize: 11),
-        ),
-      ],
-    );
-  }
 }

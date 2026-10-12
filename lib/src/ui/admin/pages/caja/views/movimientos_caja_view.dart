@@ -314,7 +314,7 @@ class MovimientosCajaView extends StatelessWidget {
                             icon: Icons.error_outline_rounded,
                             color: Colors.redAccent,
                             titulo: _cliente(
-                              e.clienteNombre + "\nCC: ${e.clienteCedula}",
+                              "${e.clienteNombre}\nCC: ${e.clienteCedula}",
                             ),
                             subtitulo: [
                               'Cuota \$${e.valorCuota}',

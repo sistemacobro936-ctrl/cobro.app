@@ -14,6 +14,7 @@ class PrestamosHome extends StatelessWidget {
     return BlocBuilder<PrestamoCubit, PrestamoState>(
       builder: (context, state) {
         final prestamos = state.prestamos ?? [];
+        final c = context.read<PrestamoCubit>();
         return Column(
           children: [
             HeaderPView(),
@@ -34,7 +35,8 @@ class PrestamosHome extends StatelessWidget {
                           child: Text(
                             state.prestamos == null
                                 ? ""
-                                : '${state.prestamos!.length} préstamos registrados',
+                                : '${prestamos.length} ${prestamos.length == 1 ? 'préstamo' : 'préstamos'}'
+                                  '${state.filtroEstado == 'TODOS' ? '' : ' ${FilterButton.opciones[state.filtroEstado]?.toLowerCase() ?? ''}'}',
                             style: TextStyle(
                               color: Color(0xFF929BAB),
                            
@@ -42,7 +44,10 @@ class PrestamosHome extends StatelessWidget {
                             ),
                           ),
                         ),
-                        FilterButton(),
+                        FilterButton(
+                          estado: state.filtroEstado,
+                          onSelected: c.seleccionarEstado,
+                        ),
                       ],
                     ),
 
@@ -57,9 +62,10 @@ class PrestamosHome extends StatelessWidget {
                           installment: '\$${e.valorCuota}',
                           paid: 'Cobrar',
                           id: e.id,
-                          status: 'Activo',
-                          statusColor: const Color(0xFF4164E8),
-                          statusBackground: const Color(0xFFEEF4FF),
+                          status: _etiqueta(e.estado),
+                          statusColor: _color(e.estado),
+                          statusBackground: _color(e.estado).withValues(alpha: .10),
+                          cobrable: e.estado == 'ACTIVO',
                         ),
                       ),
                     ),
@@ -72,4 +78,17 @@ class PrestamosHome extends StatelessWidget {
       },
     );
   }
+
+  String _etiqueta(String estado) => switch (estado) {
+    'ACTIVO' => 'Activo',
+    'PAGADO' => 'Pagado',
+    'CANCELADO' => 'Cancelado',
+    _ => estado,
+  };
+
+  Color _color(String estado) => switch (estado) {
+    'ACTIVO' => const Color(0xFF4164E8),
+    'PAGADO' => const Color(0xFF1E9E5A),
+    _ => const Color(0xFF8A93A3),
+  };
 }

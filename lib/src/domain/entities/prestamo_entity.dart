@@ -75,4 +75,5 @@ class FechasPagoPEntity {
   });
 }
 
+// ignore: constant_identifier_names
 enum Frecuencia { DIARIO, SEMANAL }

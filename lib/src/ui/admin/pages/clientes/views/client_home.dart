@@ -4,6 +4,7 @@ import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/domain/entities/ruta_entity.dart';
 import 'package:personal/src/ui/admin/pages/clientes/cubit/cliente_cubit.dart';
 import 'package:personal/src/ui/admin/pages/clientes/views/client_card_view.dart';
+import 'package:personal/src/ui/admin/pages/clientes/views/filter_client_view.dart';
 import 'package:personal/src/ui/admin/pages/clientes/views/header_cliente_view.dart';
 import 'package:personal/src/ui/admin/pages/clientes/views/search_cliente_view.dart';
 
@@ -25,8 +26,11 @@ class ClientHome extends StatelessWidget {
 
         // El orden (y por lo tanto arrastrar para reordenar) solo tiene
         // sentido filtrado a una ruta puntual y sin una búsqueda activa
-        final reordenable =
-            !buscando && (state.filtroRutaId ?? '').isNotEmpty;
+        // (con un filtro de estado se ve solo una parte de la ruta, así que
+        // tampoco se reordena)
+        final reordenable = !buscando &&
+            (state.filtroRutaId ?? '').isNotEmpty &&
+            state.filtroEstado.isEmpty;
         final mostrarReorder = reordenable && !cargando && clientes.isNotEmpty;
 
         final cabecera = _cabecera(state, c, total, buscando);
@@ -83,7 +87,8 @@ class ClientHome extends StatelessWidget {
                               route: _nombreRuta(state.rutas, cl.rutaId),
                               phone: cl.telefono,
                               balance: '\$${cl.totalPrestado}',
-                              active: true,
+                              active: cl.estado != 'INACTIVO',
+                              pendiente: cl.pendienteAprobacion,
                             ),
                           );
                         },
@@ -112,7 +117,7 @@ class ClientHome extends StatelessWidget {
                               ),
                             )
                           else if (clientes.isEmpty)
-                            _vacio(buscando)
+                            _vacio(buscando, state.filtroEstado.isNotEmpty)
                           else
                             ...clientes.map(
                               (cl) => Container(
@@ -127,7 +132,8 @@ class ClientHome extends StatelessWidget {
                                   route: _nombreRuta(state.rutas, cl.rutaId),
                                   phone: cl.telefono,
                                   balance: '\$${cl.totalPrestado}',
-                                  active: true,
+                                  active: cl.estado != 'INACTIVO',
+                                  pendiente: cl.pendienteAprobacion,
                                 ),
                               ),
                             ),
@@ -182,6 +188,11 @@ class ClientHome extends StatelessWidget {
               ),
             ),
 
+            FilterClientView(
+              estado: state.filtroEstado,
+              onSelected: c.seleccionarEstado,
+            ),
+
             if (buscando)
               TextButton.icon(
                 onPressed: c.limpiarBusqueda,
@@ -211,6 +222,9 @@ class ClientHome extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
+          // Sin rutas la lista ya es de todos los clientes
+          if (rutas.isNotEmpty)
+           
           ...rutas.map(
             (r) => _chip(
               label: r.nombre,
@@ -254,7 +268,7 @@ class ClientHome extends StatelessWidget {
     );
   }
 
-  Widget _vacio(bool buscando) {
+  Widget _vacio(bool buscando, bool conFiltro) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Column(
@@ -268,7 +282,9 @@ class ClientHome extends StatelessWidget {
           Text(
             buscando
                 ? 'Ningún cliente coincide con la búsqueda.'
-                : 'No hay clientes en esta ruta.',
+                : conFiltro
+                    ? 'No hay clientes con este estado.'
+                    : 'No hay clientes en esta ruta.',
             textAlign: TextAlign.center,
             style: const TextStyle(color: Color(0xFF929BAB)),
           ),

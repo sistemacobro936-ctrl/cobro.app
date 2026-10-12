@@ -95,6 +95,10 @@ class ResumeHomeView extends StatelessWidget {
 
         _statistics(d),
 
+        const SizedBox(height: 14),
+
+        _pendientes(context, d.clientesPendientes),
+
         const SizedBox(height: 28),
 
         _sectionTitle(title: 'Estado de cartera'),
@@ -237,6 +241,73 @@ class ResumeHomeView extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  /// Clientes que registró un cobrador y esperan aprobación; abre Clientes
+  /// filtrado por ese estado
+  Widget _pendientes(BuildContext context, int pendientes) {
+    final hay = pendientes > 0;
+    final color = hay ? const Color(0xFFB7791F) : const Color(0xFF7B8494);
+
+    return Material(
+      color: hay ? const Color(0xFFFFF7E8) : Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: context.read<HomeCubit>().verClientesPendientes,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: hay
+                  ? const Color(0xFFF5C26B)
+                  : Colors.black.withValues(alpha: .04),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 45,
+                height: 45,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(Icons.hourglass_top_rounded, color: color),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$pendientes',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1D2433),
+                      ),
+                    ),
+                    Text(
+                      pendientes == 1
+                          ? 'Cliente por aprobar'
+                          : 'Clientes por aprobar',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF7B8494),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: color),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

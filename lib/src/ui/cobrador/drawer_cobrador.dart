@@ -372,23 +372,4 @@ class DrawerCobrador extends StatelessWidget {
     );
   }
 
-  Widget _resumenDato(String titulo, String valor, Color color) {
-    return Column(
-      children: [
-        Text(
-          titulo,
-          style: const TextStyle(color: Color(0xFF929BAB), fontSize: 11),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          valor,
-          style: TextStyle(
-            color: color,
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ],
-    );
-  }
 }

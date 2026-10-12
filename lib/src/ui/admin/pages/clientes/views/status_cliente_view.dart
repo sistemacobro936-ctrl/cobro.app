@@ -2,15 +2,28 @@ import 'package:flutter/material.dart';
 
 class StatusClienteView extends StatelessWidget {
   final bool active;
-  const StatusClienteView({super.key, required this.active});
+
+  /// Pendiente de aprobación del administrador; tiene prioridad sobre [active]
+  final bool pendiente;
+  const StatusClienteView({
+    super.key,
+    required this.active,
+    this.pendiente = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-      final color = active ? const Color(0xFF4164E8) : const Color(0xFF8A93A3);
+    final color = pendiente
+        ? const Color(0xFFB7791F)
+        : active
+            ? const Color(0xFF4164E8)
+            : const Color(0xFF8A93A3);
 
-    final background = active
-        ? const Color(0xFFEEF4FF)
-        : const Color(0xFFF1F2F4);
+    final background = pendiente
+        ? const Color(0xFFFFF7E8)
+        : active
+            ? const Color(0xFFEEF4FF)
+            : const Color(0xFFF1F2F4);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
       decoration: BoxDecoration(
@@ -29,7 +42,7 @@ class StatusClienteView extends StatelessWidget {
           const SizedBox(width: 4),
 
           Text(
-            active ? 'Activo' : 'Inactivo',
+            pendiente ? 'Por aprobar' : active ? 'Activo' : 'Inactivo',
             style: TextStyle(
               color: color,
               fontSize: 9,

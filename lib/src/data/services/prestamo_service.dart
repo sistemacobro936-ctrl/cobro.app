@@ -8,7 +8,8 @@ import 'package:personal/src/domain/dto/reembolso_dto.dart';
 abstract class PrestamoService {
   Future<dynamic> crear({required CrearPrestamoDto dto});
   Future<dynamic> crearHistorico({required CrearPrestamoDto dto});
-  Future<PrestamoModel> listar();
+  /// [estado]: ACTIVO (por defecto en el backend), PAGADO, CANCELADO o TODOS
+  Future<PrestamoModel> listar({String? estado});
   Future<DatumPModel> detallePrestamo({required String id});
   Future<dynamic> reembolso({
     required String prestamoId,
@@ -46,9 +47,12 @@ class PrestamoServiceImpl implements PrestamoService {
   }
 
   @override
-  Future<PrestamoModel> listar() async {
+  Future<PrestamoModel> listar({String? estado}) async {
     try {
-      final r = await apiClient.dio.get("/prestamo");
+      final r = await apiClient.dio.get(
+        "/prestamo",
+        queryParameters: {if (estado != null) "estado": estado},
+      );
       return PrestamoModel.fromJson(r.data);
     } on DioException catch (e) {
       throw ServerExceptions(message: e.response!.data["message"]);

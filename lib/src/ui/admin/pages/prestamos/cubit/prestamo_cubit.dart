@@ -307,9 +307,16 @@ class PrestamoCubit extends Cubit<PrestamoState> {
     emit(state.copyWith(loading: false));
   }
 
+  /// Lista los préstamos con el estado seleccionado
+  void seleccionarEstado(String estado) {
+    if (estado == state.filtroEstado) return;
+    emit(state.copyWith(filtroEstado: estado));
+    listarPrestamo();
+  }
+
   void listarPrestamo() async {
     emit(state.copyWith(loading: true));
-    final r = await _prestamosRepo.listar();
+    final r = await _prestamosRepo.listar(estado: state.filtroEstado);
     r.fold(
       (l) {
         AppDialogUtil.error(state.context, message: l.props[0].toString());

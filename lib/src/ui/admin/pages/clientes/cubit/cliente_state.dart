@@ -25,6 +25,10 @@ class ClienteState extends Equatable {
 
   /// Texto de la búsqueda activa; vacío si no se está buscando
   final String busqueda;
+
+  /// Estado de cliente por el que se filtra (ACTIVO, PENDIENTE_APROBACION...);
+  /// vacío = todos
+  final String filtroEstado;
   final PaginationEntity? paginationClientes;
 
   const ClienteState({
@@ -42,6 +46,7 @@ class ClienteState extends Equatable {
     this.rutas,
     this.filtroRutaId,
     this.busqueda = '',
+    this.filtroEstado = '',
     this.paginationClientes,
   });
 
@@ -61,6 +66,7 @@ class ClienteState extends Equatable {
     rutas ?? [],
     filtroRutaId,
     busqueda,
+    filtroEstado,
     paginationClientes,
   ];
 
@@ -80,6 +86,7 @@ class ClienteState extends Equatable {
     List<DatumREntity>? rutas,
     String? filtroRutaId,
     String? busqueda,
+    String? filtroEstado,
     PaginationEntity? paginationClientes,
     bool limpiarPaginacion = false,
   }) {
@@ -98,6 +105,7 @@ class ClienteState extends Equatable {
       rutas: rutas ?? this.rutas,
       filtroRutaId: filtroRutaId ?? this.filtroRutaId,
       busqueda: busqueda ?? this.busqueda,
+      filtroEstado: filtroEstado ?? this.filtroEstado,
       paginationClientes: limpiarPaginacion
           ? null
           : paginationClientes ?? this.paginationClientes,

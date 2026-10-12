@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 class RutaDto {
   final String? nombre;

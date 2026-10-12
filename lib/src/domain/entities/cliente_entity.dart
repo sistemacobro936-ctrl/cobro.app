@@ -7,8 +7,34 @@ class ClienteEntity {
   final List<DatumClEntity> data;
   final PaginationEntity? pagination;
 
+  /// Solo en la búsqueda (`/cliente/buscar`): la cédula buscada no es de un
+  /// cliente de este negocio, pero sí de otro. Null en los demás casos.
+  final ClienteEnOtroNegocioEntity? enOtroNegocio;
 
-  ClienteEntity({required this.exito, required this.msg, required this.data, this.pagination});
+  ClienteEntity({
+    required this.exito,
+    required this.msg,
+    required this.data,
+    this.pagination,
+    this.enOtroNegocio,
+  });
+}
+
+/// Cliente que ya tiene contrato con otro(s) negocio(s). Se puede registrar
+/// en este negocio con `agregarExistente`; si lo hace un cobrador, queda
+/// pendiente de aprobación del administrador.
+class ClienteEnOtroNegocioEntity {
+  final String cedula;
+  final String nombres;
+  final String apellidos;
+  final List<String> negocios;
+
+  ClienteEnOtroNegocioEntity({
+    required this.cedula,
+    required this.nombres,
+    required this.apellidos,
+    required this.negocios,
+  });
 }
 
 class DatumClEntity {
@@ -45,5 +71,9 @@ class DatumClEntity {
     required this.orden,
     this.prestamos,
   });
+
+  /// Un cobrador lo registró siendo cliente de otro negocio y aún no lo
+  /// aprueba un administrador: no se le pueden crear préstamos
+  bool get pendienteAprobacion => estado == 'PENDIENTE_APROBACION';
 }
 

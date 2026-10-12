@@ -14,12 +14,10 @@ class CajaRepoImpl implements CajaRepo {
   @override
   Future<Either<Failure, CajaEntity>> obtenerCajas({
     required String rutaId,
-    required String fecha,
   }) async {
     try {
       final response = await cajaService.obtenerCajas(
         rutaId: rutaId,
-        fecha: fecha,
       );
 
       return Right(response);

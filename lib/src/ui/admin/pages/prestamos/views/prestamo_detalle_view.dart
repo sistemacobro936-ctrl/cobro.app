@@ -8,6 +8,7 @@ import 'package:personal/src/ui/admin/pages/prestamos/views/dialogo_reembolso.da
 import 'package:personal/src/ui/admin/pages/prestamos/views/pagos.dart';
 import 'package:personal/src/ui/admin/pages/prestamos/views/prestamos_home.dart';
 
+// ignore: must_be_immutable
 class PrestamoDetalleView extends StatelessWidget {
   PrestamoDetalleView({super.key});
   late DatumPEntity pEntity;

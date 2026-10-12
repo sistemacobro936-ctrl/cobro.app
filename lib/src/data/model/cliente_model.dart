@@ -8,11 +8,15 @@ class ClienteModel extends ClienteEntity {
     required super.msg,
     required super.data,
     super.pagination,
+    super.enOtroNegocio,
   });
 
   factory ClienteModel.fromJson(Map<String, dynamic> json) => ClienteModel(
     exito: json["exito"],
     msg: json["msg"],
+    enOtroNegocio: json["enOtroNegocio"] == null
+        ? null
+        : ClienteEnOtroNegocioModel.fromJson(json["enOtroNegocio"]),
     pagination: json["pagination"] == null
         ? PaginationModel.fromJson({})
         : PaginationModel.fromJson(json["pagination"]),
@@ -20,6 +24,23 @@ class ClienteModel extends ClienteEntity {
       json["data"].map((x) => DatumClModel.fromJson(x)),
     ),
   );
+}
+
+class ClienteEnOtroNegocioModel extends ClienteEnOtroNegocioEntity {
+  ClienteEnOtroNegocioModel({
+    required super.cedula,
+    required super.nombres,
+    required super.apellidos,
+    required super.negocios,
+  });
+
+  factory ClienteEnOtroNegocioModel.fromJson(Map<String, dynamic> json) =>
+      ClienteEnOtroNegocioModel(
+        cedula: json["cedula"] ?? "",
+        nombres: json["nombres"] ?? "",
+        apellidos: json["apellidos"] ?? "",
+        negocios: List<String>.from(json["negocios"] ?? const []),
+      );
 }
 
 class DatumClModel extends DatumClEntity {

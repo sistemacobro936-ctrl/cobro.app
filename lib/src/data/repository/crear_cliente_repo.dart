@@ -12,9 +12,9 @@ class ClienteRepoImpl implements ClienteRepository {
   ClienteRepoImpl({required this.clienteService});
 
   @override
-  Future<Either<Failure, ClienteEntity>> listar() async {
+  Future<Either<Failure, ClienteEntity>> listar({String? estado}) async {
     try {
-      final response = await clienteService.listar();
+      final response = await clienteService.listar(estado: estado);
 
       return Right(response);
     } on ServerExceptions catch (e) {
@@ -33,7 +33,7 @@ class ClienteRepoImpl implements ClienteRepository {
 
       return Right(response);
     } on ServerExceptions catch (e) {
-      final failure = ServerFailure(message: e.message);
+      final failure = ServerFailure(message: e.message, codigo: e.codigo);
       return Left(failure);
     } catch (e) {
       final failure = ServerFailure(message: "Error inesperado: $e");
@@ -93,6 +93,34 @@ class ClienteRepoImpl implements ClienteRepository {
   }
 
   @override
+  Future<Either<Failure, dynamic>> aprobar({required String id}) async {
+    try {
+      final response = await clienteService.aprobar(id: id);
+      return Right(response);
+    } on ServerExceptions catch (e) {
+      final failure = ServerFailure(message: e.message);
+      return Left(failure);
+    } catch (e) {
+      final failure = ServerFailure(message: "Error inesperado: $e");
+      return Left(failure);
+    }
+  }
+
+  @override
+  Future<Either<Failure, dynamic>> rechazar({required String id}) async {
+    try {
+      final response = await clienteService.rechazar(id: id);
+      return Right(response);
+    } on ServerExceptions catch (e) {
+      final failure = ServerFailure(message: e.message);
+      return Left(failure);
+    } catch (e) {
+      final failure = ServerFailure(message: "Error inesperado: $e");
+      return Left(failure);
+    }
+  }
+
+  @override
   Future<Either<Failure, ClienteEntity>> buscar({required String q}) async {
     try {
       final response = await clienteService.buscar(q: q);
@@ -111,12 +139,14 @@ class ClienteRepoImpl implements ClienteRepository {
     required String idRuta,
     int page = 1,
     int limit = 10,
+    String? estado,
   }) async {
     try {
       final response = await clienteService.clientesPorRuta(
         idRuta: idRuta,
         page: page,
         limit: limit,
+        estado: estado,
       );
       return Right(response);
     } on ServerExceptions catch (e) {

@@ -96,24 +96,4 @@ class HeaderPView extends StatelessWidget {
     );
   }
 
-  Widget _metric({required String value, required String label}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white54, fontSize: 11),
-        ),
-      ],
-    );
-  }
 }

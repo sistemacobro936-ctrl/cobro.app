@@ -30,6 +30,10 @@ class CobradorRState extends Equatable {
 
   final DatumClEntity? cliente;
 
+  /// La cédula buscada no es de un cliente del negocio pero sí de otro: se
+  /// puede registrar aquí (queda pendiente de aprobación del administrador).
+  final ClienteEnOtroNegocioEntity? enOtroNegocio;
+
   final bool loadingConfig;
   final List<SCobroEntity> periodos;
   final SCobroEntity? periodoSeleccionado;
@@ -72,6 +76,7 @@ class CobradorRState extends Equatable {
     this.cajaPorRuta = const {},
     this.gastosPorRuta = const {},
     this.cliente,
+    this.enOtroNegocio,
     this.fechasPago,
     this.rutaClienteSeleccionada,
     this.ordenClienteNuevo,
@@ -102,6 +107,7 @@ class CobradorRState extends Equatable {
     buscando,
     buscoAlgunaVez,
     cliente,
+    enOtroNegocio,
     loadingConfig,
     periodos,
     periodoSeleccionado,
@@ -134,6 +140,7 @@ class CobradorRState extends Equatable {
     bool? formGasto,
     bool? buscoAlgunaVez,
     DatumClEntity? cliente,
+    ClienteEnOtroNegocioEntity? enOtroNegocio,
     bool? loadingConfig,
     List<SCobroEntity>? periodos,
     SCobroEntity? periodoSeleccionado,
@@ -164,6 +171,7 @@ class CobradorRState extends Equatable {
     buscando: buscando ?? this.buscando,
     buscoAlgunaVez: buscoAlgunaVez ?? this.buscoAlgunaVez,
     cliente: limpiarCliente ? null : cliente ?? this.cliente,
+    enOtroNegocio: limpiarCliente ? null : enOtroNegocio ?? this.enOtroNegocio,
     loadingConfig: loadingConfig ?? this.loadingConfig,
     periodos: periodos ?? this.periodos,
     periodoSeleccionado: periodoSeleccionado ?? this.periodoSeleccionado,

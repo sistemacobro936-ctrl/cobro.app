@@ -8,7 +8,6 @@ import 'package:personal/src/domain/dto/caja_dto.dart';
 abstract class CajaService {
   Future<CajaModel> obtenerCajas({
     required String rutaId,
-    required String fecha,
   });
   Future<dynamic> crearCaja({required CajaDto dto});
   Future<dynamic> cerrar({required String cajaId, required CajaDto dto});
@@ -33,10 +32,9 @@ class CajaServiceImpl implements CajaService {
   @override
   Future<CajaModel> obtenerCajas({
     required String rutaId,
-    required String fecha,
   }) async {
     try {
-      final r = await apiClient.dio.get("/caja/$rutaId?q= $fecha");
+      final r = await apiClient.dio.get("/caja/$rutaId");
       return CajaModel(
         exito: r.data["exito"],
         msg: r.data["msg"],

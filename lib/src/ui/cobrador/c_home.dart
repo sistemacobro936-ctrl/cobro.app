@@ -4,7 +4,6 @@ import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/ui/cobrador/cubit/cobrador_cubit.dart';
 import 'package:personal/src/ui/cobrador/dialogo_gasto.dart';
 import 'package:personal/src/ui/cobrador/drawer_cobrador.dart';
-import 'package:personal/src/ui/cobrador/views/crear_prestamo_cobrador_view.dart';
 import 'package:personal/src/ui/widgets/btn_widget.dart' show BtnWidget;
 
 class CHome extends StatefulWidget {

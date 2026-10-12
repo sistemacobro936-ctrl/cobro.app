@@ -7,7 +7,6 @@ import 'package:personal/src/domain/entities/movimientos_caja_entity.dart';
 abstract class CajaRepo {
   Future<Either<Failure, CajaEntity>> obtenerCajas({
     required String rutaId,
-    required String fecha,
   });
 
   Future<Either<Failure, dynamic>> crearCaja({required CajaDto dto});

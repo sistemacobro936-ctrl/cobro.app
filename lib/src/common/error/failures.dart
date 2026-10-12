@@ -8,16 +8,19 @@ abstract class Failure extends Equatable {
 class ServerFailure extends Failure {
   final String? message;
   final int? statusCode;
+  final String? codigo;
 
   const ServerFailure({
     this.message,
     this.statusCode,
+    this.codigo,
   });
 
   @override
   List<Object?> get props => [
         message,
         statusCode,
+        codigo,
       ];
 }
 
