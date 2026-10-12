@@ -66,13 +66,8 @@ class ClienteCubit extends Cubit<ClienteState> {
   ///Peticiones
   ///
   ///
-  /// Carga las rutas y muestra los clientes de la primera. Si el inicio pidió
-  /// un estado (p. ej. los pendientes de aprobación), se listan los de todas
-  /// las rutas con ese estado.
+  /// Carga las rutas y muestra los clientes de la primera
   Future<void> iniciar() async {
-    final estadoInicial =
-        state.context.read<HomeCubit>().tomarFiltroEstadoClientes();
-
     var rutas = Shared.getRutas;
     if (rutas == null) {
       final r = await _rutaRepo.listar();
@@ -88,9 +83,7 @@ class ClienteCubit extends Cubit<ClienteState> {
       state.copyWith(
         rutas: lista,
         // Sin rutas se listan todos los clientes ('')
-        filtroRutaId:
-            lista.isEmpty || estadoInicial != null ? '' : lista.first.id,
-        filtroEstado: estadoInicial,
+        filtroRutaId: lista.isEmpty ? '' : lista.first.id,
       ),
     );
     await cargarClientes();
@@ -314,57 +307,6 @@ class ClienteCubit extends Cubit<ClienteState> {
       (_) => cargarClientes(),
     );
     emit(state.copyWith(loadingLista: false));
-  }
-
-  /// Aprueba un cliente que un cobrador registró siendo de otro negocio
-  Future<void> aprobarCliente(String id) async {
-    emit(state.copyWith(loadingBtn: true));
-    final r = await _clienteRepo.aprobar(id: id);
-    if (isClosed) return;
-    emit(state.copyWith(loadingBtn: false));
-
-    r.fold(
-      (l) {
-        AppDialogUtil.error(state.context, message: l.props[0].toString());
-      },
-      (_) {
-        AppDialogUtil.success(
-          state.context,
-          message: 'Cliente aprobado. Ya se le puede asignar préstamo.',
-        );
-        detalleCliente(id);
-        listClientes();
-      },
-    );
-  }
-
-  /// Rechaza (elimina) un cliente pendiente de aprobación
-  Future<void> rechazarCliente(DatumClEntity cliente) async {
-    final ok = await AppDialogUtil.confirmar(
-      state.context,
-      title: 'Rechazar cliente',
-      message:
-          'Se eliminará el registro de ${cliente.nombres} ${cliente.apellidos}. '
-          '¿Deseas continuar?',
-      confirmText: 'Rechazar',
-    );
-    if (!ok || isClosed) return;
-
-    emit(state.copyWith(loadingBtn: true));
-    final r = await _clienteRepo.rechazar(id: cliente.id);
-    if (isClosed) return;
-    emit(state.copyWith(loadingBtn: false));
-
-    r.fold(
-      (l) {
-        AppDialogUtil.error(state.context, message: l.props[0].toString());
-      },
-      (_) {
-        AppDialogUtil.success(state.context, message: 'Registro rechazado.');
-        setChild(ClientHome());
-        listClientes();
-      },
-    );
   }
 
   void detalleCliente(String id) async {

@@ -1,3 +1,6 @@
+import 'package:personal/src/data/repository/solicitud_cliente_repo_impl.dart';
+import 'package:personal/src/data/services/solicitud_cliente_service.dart';
+import 'package:personal/src/domain/repository/solicitud_cliente_repo.dart';
 import 'package:get_it/get_it.dart';
 import 'package:personal/src/common/network/api_client.dart';
 import 'package:personal/src/common/utils/secure_storage_util.dart';
@@ -78,6 +81,16 @@ void initDep() {
 
   sl.registerLazySingleton<ClienteService>(
     () => ClienteServiceImpl(apiClient: sl()),
+  );
+
+  // SOLICITUD DE CLIENTE
+
+  sl.registerLazySingleton<SolicitudClienteRepo>(
+    () => SolicitudClienteRepoImpl(solicitudService: sl()),
+  );
+
+  sl.registerLazySingleton<SolicitudClienteService>(
+    () => SolicitudClienteServiceImpl(apiClient: sl()),
   );
 
   // CONFIGURACION

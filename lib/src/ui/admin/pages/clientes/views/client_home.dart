@@ -88,7 +88,6 @@ class ClientHome extends StatelessWidget {
                               phone: cl.telefono,
                               balance: '\$${cl.totalPrestado}',
                               active: cl.estado != 'INACTIVO',
-                              pendiente: cl.pendienteAprobacion,
                             ),
                           );
                         },
@@ -133,7 +132,6 @@ class ClientHome extends StatelessWidget {
                                   phone: cl.telefono,
                                   balance: '\$${cl.totalPrestado}',
                                   active: cl.estado != 'INACTIVO',
-                                  pendiente: cl.pendienteAprobacion,
                                 ),
                               ),
                             ),

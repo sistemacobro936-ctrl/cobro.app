@@ -26,8 +26,8 @@ class DashboardEntity {
   final String adminApellido;
   final int clientesActivos;
 
-  /// Registrados por un cobrador que esperan aprobación del administrador
-  final int clientesPendientes;
+  /// Solicitudes de cobradores (cliente de otro negocio + préstamo) por aprobar
+  final int solicitudesPendientes;
   final int cobradores;
   final CarteraEntity cartera;
   final List<ActividadEntity> actividadReciente;
@@ -37,7 +37,7 @@ class DashboardEntity {
     required this.adminNombre,
     required this.adminApellido,
     required this.clientesActivos,
-    required this.clientesPendientes,
+    required this.solicitudesPendientes,
     required this.cobradores,
     required this.cartera,
     required this.actividadReciente,

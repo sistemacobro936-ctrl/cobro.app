@@ -31,8 +31,12 @@ class CobradorRState extends Equatable {
   final DatumClEntity? cliente;
 
   /// La cédula buscada no es de un cliente del negocio pero sí de otro: se
-  /// puede registrar aquí (queda pendiente de aprobación del administrador).
+  /// puede registrar aquí enviando una solicitud al administrador.
   final ClienteEnOtroNegocioEntity? enOtroNegocio;
+
+  /// Datos del cliente de otro negocio ya diligenciados: falta el préstamo
+  /// para enviar la solicitud (cliente + préstamo) al administrador
+  final CrearClienteDto? solicitudCliente;
 
   final bool loadingConfig;
   final List<SCobroEntity> periodos;
@@ -53,7 +57,7 @@ class CobradorRState extends Equatable {
   const CobradorRState({
     required this.context,
     this.btnLoading = false,
-    this.aplicaSeguro = false,
+    this.aplicaSeguro = true,
     this.buscoAlgunaVez = false,
     this.loadingBtn = false,
     this.periodos = const [],
@@ -77,6 +81,7 @@ class CobradorRState extends Equatable {
     this.gastosPorRuta = const {},
     this.cliente,
     this.enOtroNegocio,
+    this.solicitudCliente,
     this.fechasPago,
     this.rutaClienteSeleccionada,
     this.ordenClienteNuevo,
@@ -108,6 +113,7 @@ class CobradorRState extends Equatable {
     buscoAlgunaVez,
     cliente,
     enOtroNegocio,
+    solicitudCliente,
     loadingConfig,
     periodos,
     periodoSeleccionado,
@@ -141,6 +147,8 @@ class CobradorRState extends Equatable {
     bool? buscoAlgunaVez,
     DatumClEntity? cliente,
     ClienteEnOtroNegocioEntity? enOtroNegocio,
+    CrearClienteDto? solicitudCliente,
+    bool limpiarSolicitud = false,
     bool? loadingConfig,
     List<SCobroEntity>? periodos,
     SCobroEntity? periodoSeleccionado,
@@ -172,6 +180,9 @@ class CobradorRState extends Equatable {
     buscoAlgunaVez: buscoAlgunaVez ?? this.buscoAlgunaVez,
     cliente: limpiarCliente ? null : cliente ?? this.cliente,
     enOtroNegocio: limpiarCliente ? null : enOtroNegocio ?? this.enOtroNegocio,
+    solicitudCliente: limpiarCliente || limpiarSolicitud
+        ? null
+        : solicitudCliente ?? this.solicitudCliente,
     loadingConfig: loadingConfig ?? this.loadingConfig,
     periodos: periodos ?? this.periodos,
     periodoSeleccionado: periodoSeleccionado ?? this.periodoSeleccionado,

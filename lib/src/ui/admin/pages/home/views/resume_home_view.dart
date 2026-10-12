@@ -7,6 +7,7 @@ import 'package:personal/src/domain/entities/dashboard_entity.dart';
 import 'package:personal/src/ui/admin/pages/home/cubit/home_cubit.dart';
 import 'package:personal/src/ui/admin/pages/home/views/actividad_item.dart';
 import 'package:personal/src/ui/admin/pages/home/views/actividad_page.dart';
+import 'package:personal/src/ui/solicitudes/solicitudes_page.dart';
 import 'package:personal/src/ui/widgets/widgets.dart';
 
 class ResumeHomeView extends StatelessWidget {
@@ -97,7 +98,7 @@ class ResumeHomeView extends StatelessWidget {
 
         const SizedBox(height: 14),
 
-        _pendientes(context, d.clientesPendientes),
+        _pendientes(context, d.solicitudesPendientes),
 
         const SizedBox(height: 28),
 
@@ -244,8 +245,8 @@ class ResumeHomeView extends StatelessWidget {
     );
   }
 
-  /// Clientes que registró un cobrador y esperan aprobación; abre Clientes
-  /// filtrado por ese estado
+  /// Solicitudes de cobradores (cliente de otro negocio + préstamo) que
+  /// esperan aprobación; abre la lista de solicitudes
   Widget _pendientes(BuildContext context, int pendientes) {
     final hay = pendientes > 0;
     final color = hay ? const Color(0xFFB7791F) : const Color(0xFF7B8494);
@@ -255,7 +256,20 @@ class ResumeHomeView extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: context.read<HomeCubit>().verClientesPendientes,
+        onTap: () async {
+          final home = context.read<HomeCubit>();
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => SolicitudesPage(
+                esAdmin: true,
+                onAprobada: () => home.onCurrenteIndex(0),
+              ),
+            ),
+          );
+          // Al volver se refresca el contador
+          if (context.mounted) context.read<HomeCubit>().cargarDashboard();
+        },
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -292,8 +306,8 @@ class ResumeHomeView extends StatelessWidget {
                     ),
                     Text(
                       pendientes == 1
-                          ? 'Cliente por aprobar'
-                          : 'Clientes por aprobar',
+                          ? 'Solicitud de cliente por aprobar'
+                          : 'Solicitudes de clientes por aprobar',
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF7B8494),

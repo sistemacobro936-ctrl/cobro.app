@@ -120,13 +120,7 @@ class MovimientosCajaView extends StatelessWidget {
             '\$ ${r.totalRetiradoCapital}',
             Colors.redAccent,
           ),
-          const SizedBox(height: 12),
-          _filaResumen(
-            'Retiros de seguro',
-            '${r.cantidadRetirosSeguro}',
-            '\$ ${r.totalRetiradoSeguro}',
-            Colors.orange,
-          ),
+          
           const SizedBox(height: 12),
           _filaResumen(
             'Multiples pagos',

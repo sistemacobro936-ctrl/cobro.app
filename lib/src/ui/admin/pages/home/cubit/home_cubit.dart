@@ -34,7 +34,6 @@ class HomeCubit extends Cubit<HomeState> {
   ///
   ///
   final GlobalKey<ScaffoldState> scaffoldKey = GlobalKey<ScaffoldState>();
-  String? _filtroEstadoClientes;
 
   ///Eventos
   ///
@@ -48,21 +47,6 @@ class HomeCubit extends Cubit<HomeState> {
   void onAsignarPrestamo(bool e) {
     emit(state.copyWith(asignarPrestamo: e));
   }
-
-  /// Abre la pestaña de Clientes mostrando solo los pendientes de aprobación
-  void verClientesPendientes() {
-    _filtroEstadoClientes = 'PENDIENTE_APROBACION';
-    onCurrenteIndex(2);
-  }
-
-  /// Filtro de estado pedido para la pestaña de Clientes; se consume una vez
-  String? tomarFiltroEstadoClientes() {
-    final filtro = _filtroEstadoClientes;
-    _filtroEstadoClientes = null;
-    return filtro;
-  }
-
-
 
   void setLoadPay(bool e) {
     emit(state.copyWith(loadPay: e));

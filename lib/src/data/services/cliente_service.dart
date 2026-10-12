@@ -22,11 +22,6 @@ abstract class ClienteService {
   /// Mueve al cliente a esa posición dentro de su ruta; el backend reacomoda
   /// el orden de los demás clientes de la misma ruta
   Future<dynamic> reordenar({required String id, required int orden});
-
-  /// Solo administradores: decide sobre un cliente PENDIENTE_APROBACION.
-  /// Rechazarlo lo elimina.
-  Future<dynamic> aprobar({required String id});
-  Future<dynamic> rechazar({required String id});
 }
 
 class ClienteServiceImpl implements ClienteService {
@@ -105,30 +100,6 @@ class ClienteServiceImpl implements ClienteService {
         data: {"orden": orden},
       );
 
-      return response.data;
-    } on DioException catch (e) {
-      throw ServerExceptions(message: e.response!.data["message"]);
-    } catch (e) {
-      throw Exception("Error inesperado");
-    }
-  }
-
-  @override
-  Future<dynamic> aprobar({required String id}) async {
-    try {
-      final response = await apiClient.dio.patch('/cliente/$id/aprobar');
-      return response.data;
-    } on DioException catch (e) {
-      throw ServerExceptions(message: e.response!.data["message"]);
-    } catch (e) {
-      throw Exception("Error inesperado");
-    }
-  }
-
-  @override
-  Future<dynamic> rechazar({required String id}) async {
-    try {
-      final response = await apiClient.dio.patch('/cliente/$id/rechazar');
       return response.data;
     } on DioException catch (e) {
       throw ServerExceptions(message: e.response!.data["message"]);

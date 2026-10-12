@@ -26,67 +26,8 @@ class ClienteDetalleView extends StatelessWidget {
           onEdit: () {
             c.setChild(CreateClientView(isEdit: true));
           },
-          acciones: cliente.pendienteAprobacion
-              ? _aprobacion(c, state.loadingBtn)
-              : null,
         );
       },
-    );
-  }
-
-  Widget _aprobacion(ClienteCubit c, bool cargando) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF7E8),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF5C26B)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Icons.hourglass_top_rounded,
-                size: 20,
-                color: Color(0xFFB7791F),
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Un cobrador registró este cliente, que ya tiene contrato '
-                  'con otro negocio. Apruébalo para poder prestarle.',
-                  style: TextStyle(
-                    color: Color(0xFF8A5A0B),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: cargando ? null : () => c.rechazarCliente(cliente),
-                  child: const Text('Rechazar'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: cargando ? null : () => c.aprobarCliente(cliente.id),
-                  child: const Text('Aprobar'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

@@ -15,7 +15,6 @@ class FilterClientView extends StatelessWidget {
   static const opciones = {
     '': 'Todos',
     'ACTIVO': 'Activos',
-    'PENDIENTE_APROBACION': 'Por aprobar',
     'INACTIVO': 'Inactivos',
   };
 

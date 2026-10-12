@@ -16,7 +16,4 @@ abstract class ClienteRepository {
     required String id,
     required int orden,
   });
-
-  Future<Either<Failure, dynamic>> aprobar({required String id});
-  Future<Either<Failure, dynamic>> rechazar({required String id});
 }

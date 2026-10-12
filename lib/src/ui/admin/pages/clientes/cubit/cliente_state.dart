@@ -26,7 +26,7 @@ class ClienteState extends Equatable {
   /// Texto de la búsqueda activa; vacío si no se está buscando
   final String busqueda;
 
-  /// Estado de cliente por el que se filtra (ACTIVO, PENDIENTE_APROBACION...);
+  /// Estado de cliente por el que se filtra (ACTIVO, INACTIVO);
   /// vacío = todos
   final String filtroEstado;
   final PaginationEntity? paginationClientes;

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/common/utils/money_util.dart';
+import 'package:personal/src/domain/dto/crear_cliente_dto.dart';
 import 'package:personal/src/domain/entities/cliente_entity.dart';
 import 'package:personal/src/domain/entities/prestamo_entity.dart';
 import 'package:personal/src/domain/entities/ruta_entity.dart';
@@ -48,7 +49,11 @@ class CrearPrestamoCobradorView extends StatelessWidget {
 
                 const SizedBox(height: 16),
 
-                if (state.buscoAlgunaVez &&
+                if (state.solicitudCliente != null) ...[
+                  _resumenSolicitud(c, state.solicitudCliente!),
+                  const SizedBox(height: 24),
+                  const _FormularioPrestamo(solicitud: true),
+                ] else if (state.buscoAlgunaVez &&
                     !state.buscando &&
                     state.cliente == null) ...[
                   if (state.enOtroNegocio != null)
@@ -62,10 +67,7 @@ class CrearPrestamoCobradorView extends StatelessWidget {
                 if (state.cliente != null) ...[
                   _clienteEncontrado(c, state.cliente!),
                   const SizedBox(height: 24),
-                  if (state.cliente!.pendienteAprobacion)
-                    _pendienteAprobacion()
-                  else
-                    _FormularioPrestamo(cliente: state.cliente!),
+                  const _FormularioPrestamo(),
                 ],
               ],
             ),
@@ -94,7 +96,7 @@ class CrearPrestamoCobradorView extends StatelessWidget {
             const SizedBox(height: 4),
             const Text(
               'Ingresa la cédula del cliente al que le vas a asignar el préstamo.',
-              style: TextStyle(color: Color(0xFF929BAB), fontSize: 12),
+              style: TextStyle(color: Color(0xFF929BAB)),
             ),
             const SizedBox(height: 12),
             Row(
@@ -139,14 +141,18 @@ class CrearPrestamoCobradorView extends StatelessWidget {
                 ),
               ],
             ),
-            if (state.cliente != null) ...[
+            // Tras cualquier búsqueda (encontrado, no encontrado, de otro
+            // negocio o con la solicitud en curso) se puede empezar de nuevo
+            if (state.buscoAlgunaVez ||
+                state.cliente != null ||
+                state.solicitudCliente != null) ...[
               const SizedBox(height: 8),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
-                  onPressed: c.limpiarBusqueda,
+                  onPressed: state.buscando ? null : c.limpiarBusqueda,
                   icon: const Icon(Icons.close_rounded, size: 16),
-                  label: const Text('Buscar otro cliente'),
+                  label: const Text('Limpiar búsqueda'),
                   style: TextButton.styleFrom(
                     foregroundColor: AppTheme.primaryColor,
                     visualDensity: VisualDensity.compact,
@@ -230,8 +236,8 @@ class CrearPrestamoCobradorView extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           const Text(
-            'Puedes registrarlo en tu negocio: quedará pendiente hasta que el '
-            'administrador lo apruebe.',
+            'Puedes registrarlo en tu negocio: completa sus datos y el '
+            'préstamo, y se enviarán al administrador para su aprobación.',
             style: TextStyle(color: Color(0xFF8A5A0B)),
           ),
         ],
@@ -315,7 +321,7 @@ class CrearPrestamoCobradorView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           InputWidget.input(
-            label: 'Observación (opcional)',
+            label: 'Observación',
             prefixIcon: Icons.notes_rounded,
             controller: c.observacionClienteController,
             maxLines: 3,
@@ -357,18 +363,34 @@ class CrearPrestamoCobradorView extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          BtnWidget.btn(
-            text: state.enOtroNegocio != null
-                ? 'Enviar para aprobación'
-                : 'Registrar cliente',
-            icon: state.enOtroNegocio != null
-                ? Icons.send_rounded
-                : Icons.person_add_alt_1_rounded,
-            loading: state.loadingBtn,
-            onPressed: rutas.isEmpty ? null : c.crearCliente,
-            backgroundColor: AppTheme.primaryColor,
-            foregroundColor: Colors.white,
+          // Se habilita solo con los campos obligatorios y la ruta; al
+          // tocarlo se validan además las longitudes (crearCliente)
+          ListenableBuilder(
+            listenable: Listenable.merge(c.camposObligatoriosCliente),
+            builder: (context, _) {
+              final completo =
+                  c.camposObligatoriosCliente.every(
+                    (campo) => campo.text.trim().isNotEmpty,
+                  ) &&
+                  (rutas.length == 1 || state.rutaClienteSeleccionada != null);
+
+              return BtnWidget.btn(
+                text: state.enOtroNegocio != null
+                    ? 'Continuar con el préstamo'
+                    : 'Registrar cliente',
+                icon: state.enOtroNegocio != null
+                    ? Icons.arrow_forward_rounded
+                    : Icons.person_add_alt_1_rounded,
+                loading: state.loadingBtn,
+                enabled: completo,
+                onPressed: rutas.isEmpty ? null : c.crearCliente,
+                backgroundColor: AppTheme.primaryColor,
+                foregroundColor: Colors.white,
+              );
+            },
           ),
+          const SizedBox(height: 6),
+         
         ],
       ),
     );
@@ -399,33 +421,52 @@ class CrearPrestamoCobradorView extends StatelessWidget {
   // Cliente encontrado: datos básicos + resumen de préstamos existentes
   // (con la ruta de cada uno), como advertencia antes de crear el nuevo.
   // ============================================================
-  Widget _pendienteAprobacion() {
+  /// Cliente de otro negocio ya diligenciado: se enviará con el préstamo
+  Widget _resumenSolicitud(CobradorRCubit c, CrearClienteDto cliente) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF7E8),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFF5C26B)),
       ),
-      child: const Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.hourglass_top_rounded,
-            size: 20,
-            color: Color(0xFFB7791F),
-          ),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Pendiente de aprobación del administrador. '
-              'Podrás asignarle un préstamo cuando sea aprobado.',
-              style: TextStyle(
-                color: Color(0xFF8A5A0B),
-                fontWeight: FontWeight.w700,
+          Row(
+            children: [
+              const Icon(
+                Icons.how_to_reg_outlined,
+                size: 20,
+                color: Color(0xFFB7791F),
               ),
-            ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  '${cliente.nombres} ${cliente.apellidos}',
+                  style: const TextStyle(
+                    color: Color(0xFF8A5A0B),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: c.editarSolicitud,
+                child: const Text('Editar datos'),
+              ),
+            ],
+          ),
+          Text(
+            'CC ${cliente.cedula} · ${c.nombreRuta(cliente.rutaId ?? '')}',
+            style: const TextStyle(color: Color(0xFF6B4A16)),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Ya es cliente de otro negocio. Completa el préstamo: el cliente y '
+            'el préstamo se enviarán al administrador y se crearán cuando los '
+            'apruebe.',
+            style: TextStyle(color: Color(0xFF8A5A0B)),
           ),
         ],
       ),
@@ -553,8 +594,11 @@ class CrearPrestamoCobradorView extends StatelessWidget {
 // ══════════════════════════════════════════════════════════════════════════
 
 class _FormularioPrestamo extends StatefulWidget {
-  const _FormularioPrestamo({required this.cliente});
-  final DatumClEntity cliente;
+  const _FormularioPrestamo({this.solicitud = false});
+
+  /// El préstamo va en una solicitud (cliente de otro negocio) en lugar de
+  /// crearse directamente
+  final bool solicitud;
 
   @override
   State<_FormularioPrestamo> createState() => _FormularioPrestamoState();
@@ -655,8 +699,8 @@ class _FormularioPrestamoState extends State<_FormularioPrestamo> {
             const SizedBox(height: 24),
 
             BtnWidget.btn(
-              text: 'Crear préstamo',
-              icon: Icons.check_rounded,
+              text: widget.solicitud ? 'Enviar solicitud' : 'Crear préstamo',
+              icon: widget.solicitud ? Icons.send_rounded : Icons.check_rounded,
               loading: state.loadingBtn,
               enabled: canCreate,
               onPressed: canCreate ? c.crearPrestamo : null,

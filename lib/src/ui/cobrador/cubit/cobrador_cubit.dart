@@ -10,6 +10,7 @@ import 'package:personal/src/common/utils/app_dialog_util.dart';
 import 'package:personal/src/common/utils/date_util.dart';
 import 'package:personal/src/domain/dto/crear_cliente_dto.dart';
 import 'package:personal/src/domain/dto/crear_prestamo_dto.dart';
+import 'package:personal/src/domain/dto/crear_solicitud_cliente_dto.dart';
 import 'package:personal/src/domain/dto/gasto_dto.dart';
 import 'package:personal/src/domain/dto/no_pago_dto.dart';
 import 'package:personal/src/domain/dto/pago_dto.dart';
@@ -28,6 +29,7 @@ import 'package:personal/src/domain/repository/gastos_repo.dart';
 import 'package:personal/src/domain/repository/pago_repo.dart';
 import 'package:personal/src/domain/repository/presamo_repo.dart';
 import 'package:personal/src/domain/repository/ruta_repo.dart';
+import 'package:personal/src/domain/repository/solicitud_cliente_repo.dart';
 import 'package:personal/src/ui/cobrador/c_home.dart';
 import 'package:personal/src/ui/cobrador/clientes.dart';
 
@@ -40,6 +42,7 @@ class CobradorRCubit extends Cubit<CobradorRState> {
   final _clienteRepo = sl<ClienteRepository>();
   final _configRepo = sl<ConfiguracionRepository>();
   final _prestamosRepo = sl<PresamoRepo>();
+  final _solicitudRepo = sl<SolicitudClienteRepo>();
 
   static const maxCuotas = 365;
 
@@ -559,6 +562,46 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     );
   }
 
+  /// Campos obligatorios del cliente nuevo; el botón se habilita cuando
+  /// todos tienen algo
+  List<TextEditingController> get camposObligatoriosCliente => [
+    nombresClienteController,
+    apellidosClienteController,
+    telefonoClienteController,
+    direccionClienteController,
+    barrioClienteController,
+  ];
+
+  /// Primer problema del formulario del cliente (con las mismas reglas del
+  /// backend), o null si está completo. Así no se avanza al préstamo con
+  /// datos que el servidor rechazaría al enviar la solicitud.
+  String? errorFormularioCliente() {
+    final cedula = cedulaController.text.trim();
+    final nombres = nombresClienteController.text.trim();
+    final apellidos = apellidosClienteController.text.trim();
+    final telefono = telefonoClienteController.text.trim();
+    final whatsapp = whatsappClienteController.text.trim();
+
+    if (cedula.length < 5 || cedula.length > 20) {
+      return 'La cédula debe tener entre 5 y 20 caracteres.';
+    }
+    if (nombres.length < 2) return 'Escribe los nombres del cliente.';
+    if (apellidos.length < 2) return 'Escribe los apellidos del cliente.';
+    if (telefono.length < 7 || telefono.length > 20) {
+      return 'El teléfono debe tener entre 7 y 20 dígitos.';
+    }
+    if (whatsapp.isNotEmpty && (whatsapp.length < 7 || whatsapp.length > 20)) {
+      return 'El WhatsApp debe tener entre 7 y 20 dígitos.';
+    }
+    if (direccionClienteController.text.trim().isEmpty) {
+      return 'Escribe la dirección del cliente.';
+    }
+    if (barrioClienteController.text.trim().isEmpty) {
+      return 'Escribe el barrio o sector del cliente.';
+    }
+    return null;
+  }
+
   /// Crea el cliente cuando la búsqueda por cédula no encontró a nadie, con
   /// la cédula ya buscada. Al terminar, deja a ese cliente como el
   /// seleccionado para poder seguir directo a crearle el préstamo.
@@ -568,16 +611,16 @@ class CobradorRCubit extends Cubit<CobradorRState> {
         ? rutas.first
         : state.rutaClienteSeleccionada;
 
-    if (ruta == null ||
-        nombresClienteController.text.trim().isEmpty ||
-        apellidosClienteController.text.trim().isEmpty ||
-        telefonoClienteController.text.trim().isEmpty ||
-        direccionClienteController.text.trim().isEmpty ||
-        barrioClienteController.text.trim().isEmpty) {
+    if (ruta == null) {
       AppDialogUtil.error(
         state.context,
-        message: 'Completa los campos obligatorios y selecciona una ruta.',
+        message: 'Selecciona la ruta del cliente.',
       );
+      return;
+    }
+    final error = errorFormularioCliente();
+    if (error != null) {
+      AppDialogUtil.error(state.context, message: error);
       return;
     }
 
@@ -599,32 +642,34 @@ class CobradorRCubit extends Cubit<CobradorRState> {
       rutaId: ruta.id,
     );
 
-    // Si la búsqueda ya avisó que es cliente de otro negocio, se envía
-    // directamente para aprobación (el usuario ya lo vio en pantalla).
-    var r = await _clienteRepo.crear(
-      dto: state.enOtroNegocio != null
-          ? dto.copyWith(agregarExistente: true)
-          : dto,
-    );
+    // Si la búsqueda ya avisó que es cliente de otro negocio, no se crea:
+    // se completa el préstamo y se envía todo como solicitud
+    if (state.enOtroNegocio != null) {
+      emit(state.copyWith(solicitudCliente: dto, loadingBtn: false));
+      return;
+    }
 
-    // Ya es cliente de otro negocio: el cobrador puede enviarlo al
-    // administrador, que debe aprobarlo antes de poder prestarle
+    final r = await _clienteRepo.crear(dto: dto);
+
+    // Ya es cliente de otro negocio (la búsqueda no lo detectó): se ofrece
+    // enviar la solicitud con el préstamo
     final failure = r.fold((l) => l, (_) => null);
     if (failure is ServerFailure &&
-        failure.codigo == 'CLIENTE_EN_OTRO_NEGOCIO') {
-      final agregar = await AppDialogUtil.confirmar(
+        (failure.codigo == 'CLIENTE_EN_OTRO_NEGOCIO' ||
+            failure.codigo == 'REQUIERE_SOLICITUD')) {
+      emit(state.copyWith(loadingBtn: false));
+      final continuar = await AppDialogUtil.confirmar(
         state.context,
         title: 'Cliente de otro negocio',
         message:
-            '${failure.message}\n\nPara agregarlo a tu negocio, el administrador '
-            'debe aprobarlo. ¿Deseas enviarlo para aprobación?',
-        confirmText: 'Enviar',
+            '${failure.message}\n\nPara registrarlo en tu negocio, completa '
+            'el préstamo y se enviará como solicitud al administrador.',
+        confirmText: 'Continuar',
       );
-      if (!agregar || isClosed) {
-        if (!isClosed) emit(state.copyWith(loadingBtn: false));
-        return;
+      if (continuar && !isClosed) {
+        emit(state.copyWith(solicitudCliente: dto));
       }
-      r = await _clienteRepo.crear(dto: dto.copyWith(agregarExistente: true));
+      return;
     }
 
     final id = r.fold<String?>((l) {
@@ -634,27 +679,20 @@ class CobradorRCubit extends Cubit<CobradorRState> {
 
     if (id != null) {
       final detalle = await _clienteRepo.obtenerCliente(id: id);
-      final cliente = detalle.fold((l) => null, (cliente) => cliente);
-      if (cliente != null) emit(state.copyWith(cliente: cliente));
-
-      if (cliente?.pendienteAprobacion ?? false) {
-        AppDialogUtil.info(
-          state.context,
-          title: 'Pendiente de aprobación',
-          message:
-              'El cliente quedó registrado y pendiente de aprobación del '
-              'administrador. Podrás asignarle el préstamo cuando lo apruebe.',
-        );
-      } else {
-        AppDialogUtil.success(
-          state.context,
-          message:
-              'Cliente creado con éxito. Ahora puedes asignarle el préstamo.',
-        );
-      }
+      detalle.fold((l) {}, (cliente) => emit(state.copyWith(cliente: cliente)));
+      AppDialogUtil.success(
+        state.context,
+        message:
+            'Cliente creado con éxito. Ahora puedes asignarle el préstamo.',
+      );
     }
 
     emit(state.copyWith(loadingBtn: false));
+  }
+
+  /// Vuelve a los datos del cliente de la solicitud (sin perderlos)
+  void editarSolicitud() {
+    emit(state.copyWith(limpiarSolicitud: true));
   }
 
   List<DateTime> generarFechasPago() {
@@ -731,14 +769,18 @@ class CobradorRCubit extends Cubit<CobradorRState> {
 
   /// Crea el préstamo para el cliente encontrado en el buscador de "Nuevo
   /// préstamo" del cobrador. Propia del cobrador: no usa PrestamoCubit/admin.
+  /// Crea el préstamo del cliente seleccionado o, si es un cliente de otro
+  /// negocio ([CobradorRState.solicitudCliente]), envía la solicitud con el
+  /// cliente y el préstamo para que la apruebe el administrador.
   Future<void> crearPrestamo() async {
     final cliente = state.cliente;
+    final solicitud = state.solicitudCliente;
     final periodo = state.periodoSeleccionado;
     final monto = int.tryParse(montoController.text) ?? 0;
     final interesPct = int.tryParse(interesController.text) ?? 0;
     final cuotas = numeroCuotas;
 
-    if (cliente == null ||
+    if ((cliente == null && solicitud == null) ||
         periodo == null ||
         monto <= 0 ||
         cuotas <= 0 ||
@@ -752,33 +794,38 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     final interes = (monto * (interesPct / 100)).toInt();
     final cuota = ((monto + interes) / cuotas).toInt();
 
-    final r = await _prestamosRepo.crear(
-      dto: CrearPrestamoDto(
-        clienteId: cliente.id,
-        valorSeguro: valorSeguro,
-        monto: monto,
-        interes: interesPct,
-        numeroCuotas: cuotas,
-        montoInteres: interes,
-        valorCuota: cuota,
-        frecuencia: periodo.codigo!,
-        fechaInicio: DateUtil.formatDate(state.fechaInicial!),
-        fechaFin: DateUtil.formatDate(state.fechaFinal!),
-        fechas: periodo.codigo == 'SEMANAL' || periodo.codigo == 'QUINCENAL'
-            ? state.fechasPago!
-                  .asMap()
-                  .entries
-                  .map(
-                    (entry) => PrestamoFechaDto(
-                      fechaPago: DateUtil.formatDate(entry.value),
-                      numero: entry.key + 1,
-                      valor: cuota,
-                    ),
-                  )
-                  .toList()
-            : [],
-      ),
+    final dto = CrearPrestamoDto(
+      clienteId: cliente?.id ?? '',
+      valorSeguro: valorSeguro,
+      monto: monto,
+      interes: interesPct,
+      numeroCuotas: cuotas,
+      montoInteres: interes,
+      valorCuota: cuota,
+      frecuencia: periodo.codigo!,
+      fechaInicio: DateUtil.formatDate(state.fechaInicial!),
+      fechaFin: DateUtil.formatDate(state.fechaFinal!),
+      fechas: periodo.codigo == 'SEMANAL' || periodo.codigo == 'QUINCENAL'
+          ? state.fechasPago!
+                .asMap()
+                .entries
+                .map(
+                  (entry) => PrestamoFechaDto(
+                    fechaPago: DateUtil.formatDate(entry.value),
+                    numero: entry.key + 1,
+                    valor: cuota,
+                  ),
+                )
+                .toList()
+          : [],
     );
+
+    if (solicitud != null) {
+      await _enviarSolicitud(solicitud, dto);
+      return;
+    }
+
+    final r = await _prestamosRepo.crear(dto: dto);
 
     r.fold(
       (l) => AppDialogUtil.error(state.context, message: l.props[0].toString()),
@@ -795,6 +842,34 @@ class CobradorRCubit extends Cubit<CobradorRState> {
     );
 
     emit(state.copyWith(loadingBtn: false));
+  }
+
+  Future<void> _enviarSolicitud(
+    CrearClienteDto cliente,
+    CrearPrestamoDto prestamo,
+  ) async {
+    final r = await _solicitudRepo.crear(
+      dto: CrearSolicitudClienteDto(cliente: cliente, prestamo: prestamo),
+    );
+    if (isClosed) return;
+    emit(state.copyWith(loadingBtn: false));
+
+    r.fold(
+      (l) => AppDialogUtil.error(state.context, message: l.props[0].toString()),
+      (_) => AppDialogUtil.success(
+        state.context,
+        title: 'Solicitud enviada',
+        message:
+            'El administrador debe aprobarla. Al aprobarla se crean el '
+            'cliente y el préstamo: entrega el dinero solo después de eso. '
+            'Puedes ver el estado en "Mis solicitudes".',
+        onPressed: () {
+          montoController.clear();
+          limpiarBusqueda();
+          clientesRuta();
+        },
+      ),
+    );
   }
 
   /// Renueva el crédito de un préstamo activo mientras el cobrador está

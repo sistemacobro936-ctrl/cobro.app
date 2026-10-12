@@ -71,9 +71,5 @@ class DatumClEntity {
     required this.orden,
     this.prestamos,
   });
-
-  /// Un cobrador lo registró siendo cliente de otro negocio y aún no lo
-  /// aprueba un administrador: no se le pueden crear préstamos
-  bool get pendienteAprobacion => estado == 'PENDIENTE_APROBACION';
 }
 

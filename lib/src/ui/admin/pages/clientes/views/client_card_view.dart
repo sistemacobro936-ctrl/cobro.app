@@ -15,7 +15,6 @@ class ClientCardView extends StatelessWidget {
     required this.balance,
     required this.active,
     required this.id,
-    this.pendiente = false,
     this.orden=0,
     this.dragIndex,
   });
@@ -28,7 +27,6 @@ class ClientCardView extends StatelessWidget {
   final String phone;
   final String balance;
   final bool active;
-  final bool pendiente;
   final int orden;
 
   /// Posición dentro del ReorderableListView; con esto la mano actúa como
@@ -109,7 +107,7 @@ class ClientCardView extends StatelessWidget {
 
                     const SizedBox(width: 6),
 
-                    StatusClienteView(active: active, pendiente: pendiente),
+                    StatusClienteView(active: active),
                   ],
                 ),
 

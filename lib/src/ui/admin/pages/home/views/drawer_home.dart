@@ -1,4 +1,7 @@
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:personal/src/ui/admin/pages/home/cubit/home_cubit.dart';
+import 'package:personal/src/ui/solicitudes/solicitudes_page.dart';
 import 'package:flutter/material.dart';
 import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/secure_storage_util.dart';
@@ -53,6 +56,26 @@ class DrawerHome extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const RutaPage()),
+                      );
+                    },
+                  ),
+
+                  _drawerItem(
+                    icon: Icons.how_to_reg_outlined,
+                    title: 'Solicitudes de clientes',
+                    onTap: () {
+                      final home = context.read<HomeCubit>();
+                      Navigator.pop(context);
+
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SolicitudesPage(
+                            esAdmin: true,
+                            // Al aprobar se vuelve al Inicio, ya actualizado
+                            onAprobada: () => home.onCurrenteIndex(0),
+                          ),
+                        ),
                       );
                     },
                   ),

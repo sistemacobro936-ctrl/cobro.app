@@ -4,6 +4,7 @@ import 'package:personal/src/common/theme/theme.dart';
 import 'package:personal/src/common/utils/secure_storage_util.dart';
 import 'package:personal/src/ui/auth/auth_page.dart';
 import 'package:personal/src/ui/cobrador/cubit/cobrador_cubit.dart';
+import 'package:personal/src/ui/solicitudes/solicitudes_page.dart';
 
 class DrawerCobrador extends StatelessWidget {
   const DrawerCobrador({super.key});
@@ -40,6 +41,26 @@ class DrawerCobrador extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   children: [
+                    _sectionTitle('GESTIÓN'),
+
+                    _item(
+                      icon: Icons.how_to_reg_outlined,
+                      title: 'Mis solicitudes',
+                      subtitle: 'Clientes de otro negocio',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const SolicitudesPage(esAdmin: false),
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
                     _sectionTitle('SESIÓN'),
 
                     _logoutItem(
@@ -202,6 +223,52 @@ class DrawerCobrador extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w800,
           letterSpacing: 1,
+        ),
+      ),
+    );
+  }
+
+  Widget _item({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: ListTile(
+        onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withValues(alpha: .08),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Icon(icon, color: AppTheme.primaryColor, size: 20),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF394354),
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(color: Color(0xFF929BAB), fontSize: 11),
+        ),
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: Color(0xFFB0B6C0),
+          size: 20,
         ),
       ),
     );
